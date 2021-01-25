@@ -1,1 +1,3 @@
 # opentelemetry-log-collection
+
+test
