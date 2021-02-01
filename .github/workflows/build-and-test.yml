@@ -28,7 +28,7 @@ jobs:
           cache-name: cache-go-modules
         with:
           path: /home/runner/go/pkg/mod
-          key: go-pkg-mod-${{ runner.os }}-${{ hashFiles('./go.mod') }}
+          key: go-pkg-mod-${{ runner.os }}-${{ hashFiles('**/go.mod') }}
       - name: Restore tools binaries
         id: tool-cache
         uses: actions/cache@v2
@@ -36,7 +36,7 @@ jobs:
           cache-name: cache-tool-binaries
         with:
           path: /home/runner/go/bin
-          key: tools-${{ runner.os }}-${{ hashFiles('./internal/tools/go.mod') }}
+          key: tools-${{ runner.os }}-${{ hashFiles('/home/runner/go/bin') }}
       - name: Install tools
         if: steps.tool-cache.outputs.cache-hit != 'true'
         run: make install-tools
@@ -62,7 +62,7 @@ jobs:
           cache-name: cache-go-modules
         with:
           path: /home/runner/go/pkg/mod
-          key: go-pkg-mod-${{ runner.os }}-${{ hashFiles('./go.mod') }}
+          key: go-pkg-mod-${{ runner.os }}-${{ hashFiles('**/go.mod') }}
       - name: Download Tool Binaries
         uses: actions/download-artifact@v1
         with:
@@ -89,8 +89,8 @@ jobs:
         env:
           cache-name: cache-go-modules
         with:
-          path: \Users\runneradmin\go\pkg\mod
-          key: go-pkg-mod-${{ runner.os }}-${{ hashFiles('./go.mod') }}
+          path: /home/runner/go/bin
+          key: go-pkg-mod-${{ runner.os }}-${{ hashFiles('**/go.mod') }}
       - name: Run Unit Tests
         run: make test
         
@@ -108,8 +108,8 @@ jobs:
         env:
           cache-name: cache-go-modules
         with:
-          path: \Users\runneradmin\go\pkg\mod
-          key: go-pkg-mod-${{ runner.os }}-${{ hashFiles('./go.mod') }}
+          path: /home/runner/go/bin
+          key: go-pkg-mod-${{ runner.os }}-${{ hashFiles('**/go.mod') }}
       - name: Run Unit Tests
         run: make test
         
@@ -127,8 +127,8 @@ jobs:
         env:
           cache-name: cache-go-modules
         with:
-          path: \Users\runneradmin\go\pkg\mod
-          key: go-pkg-mod-${{ runner.os }}-${{ hashFiles('./go.mod') }}
+          path: /Users/runneradmin/go/pkg/mod
+          key: go-pkg-mod-${{ runner.os }}-${{ hashFiles('**/go.mod') }}
       - name: Run Unit Tests
         run: make test
           
