@@ -36,11 +36,6 @@ jobs:
       - name: Install tools
         if: steps.tool-cache.outputs.cache-hit != 'true'
         run: make install-tools
-      - name: Upload Tool Binaries
-        uses: actions/upload-artifact@v1
-        with:
-          name: tool-binaries
-          path: '~/go/bin'
 
   lint:
     runs-on: ubuntu-latest
