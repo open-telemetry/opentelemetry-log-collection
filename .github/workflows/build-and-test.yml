@@ -71,7 +71,7 @@ jobs:
       - name: Add Permissions to Tool Binaries
         run: chmod -R +x /home/runner/go/bin
       - name: Vet
-          make vet
+        run: make vet
       - name: Lint
         run: make lint
 
