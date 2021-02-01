@@ -805,7 +805,7 @@ func TestRotation(t *testing.T) {
 
 	cases := []rotationTest{
 		{
-			name:            "Fast/NoRotation",
+			name:            "NoRotation",
 			totalLines:      10,
 			maxLinesPerFile: 10,
 			maxBackupFiles:  1,
@@ -813,7 +813,7 @@ func TestRotation(t *testing.T) {
 			pollInterval:    20 * time.Millisecond,
 		},
 		{
-			name:            "Fast/NoDeletion",
+			name:            "NoDeletion",
 			totalLines:      20,
 			maxLinesPerFile: 10,
 			maxBackupFiles:  1,
@@ -821,7 +821,7 @@ func TestRotation(t *testing.T) {
 			pollInterval:    20 * time.Millisecond,
 		},
 		{
-			name:            "Fast/Deletion",
+			name:            "Deletion",
 			totalLines:      30,
 			maxLinesPerFile: 10,
 			maxBackupFiles:  1,
@@ -830,45 +830,13 @@ func TestRotation(t *testing.T) {
 			ephemeralLines:  true,
 		},
 		{
-			name:            "Fast/Deletion/ExceedFingerprint",
+			name:            "Deletion/ExceedFingerprint",
 			totalLines:      300,
 			maxLinesPerFile: 100,
 			maxBackupFiles:  1,
 			writeInterval:   time.Millisecond,
 			pollInterval:    20 * time.Millisecond,
 			ephemeralLines:  true,
-		},
-		{
-			name:            "Slow/NoRotation",
-			totalLines:      10,
-			maxLinesPerFile: 10,
-			maxBackupFiles:  1,
-			writeInterval:   3 * time.Millisecond,
-			pollInterval:    20 * time.Millisecond,
-		},
-		{
-			name:            "Slow/NoDeletion",
-			totalLines:      20,
-			maxLinesPerFile: 10,
-			maxBackupFiles:  1,
-			writeInterval:   3 * time.Millisecond,
-			pollInterval:    20 * time.Millisecond,
-		},
-		{
-			name:            "Slow/Deletion",
-			totalLines:      30,
-			maxLinesPerFile: 10,
-			maxBackupFiles:  1,
-			writeInterval:   3 * time.Millisecond,
-			pollInterval:    20 * time.Millisecond,
-		},
-		{
-			name:            "Slow/Deletion/ExceedFingerprint",
-			totalLines:      100,
-			maxLinesPerFile: 25, // ~20 is just enough to exceed 1000 bytes fingerprint at 50 chars per line
-			maxBackupFiles:  2,
-			writeInterval:   3 * time.Millisecond,
-			pollInterval:    20 * time.Millisecond,
 		},
 	}
 
