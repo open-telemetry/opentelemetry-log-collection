@@ -18,25 +18,21 @@ jobs:
         uses: actions/setup-go@v2.1.3
         with:
           go-version: 1.15
-      - name: Setup Go Environment
-        run: |
-          echo "GOPATH=$(go env GOPATH)" >> $GITHUB_ENV
-          echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
       - name: Cache Go Modules
         uses: actions/cache@v2
         env:
           cache-name: cache-go-modules
         with:
-          path: /home/runner/go/pkg/mod
-          key: go-pkg-mod-${{ runner.os }}-${{ hashFiles('**/go.mod') }}
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-${{ hashFiles('~/go.mod') }}
       - name: Restore tools binaries
         id: tool-cache
         uses: actions/cache@v2
         env:
           cache-name: cache-tool-binaries
         with:
-          path: /home/runner/go/bin
-          key: tools-${{ runner.os }}-${{ hashFiles('/home/runner/go/bin') }}
+          path: ~/go/bin
+          key: tools-${{ runner.os }}-${{ hashFiles('~/go/bin') }}
       - name: Install tools
         if: steps.tool-cache.outputs.cache-hit != 'true'
         run: make install-tools
@@ -44,7 +40,7 @@ jobs:
         uses: actions/upload-artifact@v1
         with:
           name: tool-binaries
-          path: /home/runner/go/bin
+          path: ~/go/bin
 
   lint:
     runs-on: ubuntu-latest
@@ -61,15 +57,15 @@ jobs:
         env:
           cache-name: cache-go-modules
         with:
-          path: /home/runner/go/pkg/mod
-          key: go-pkg-mod-${{ runner.os }}-${{ hashFiles('**/go.mod') }}
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-${{ hashFiles('**/go.mod') }}
       - name: Download Tool Binaries
         uses: actions/download-artifact@v1
         with:
           name: tool-binaries
-          path: /home/runner/go/bin
+          path: ~/go/bin
       - name: Add Permissions to Tool Binaries
-        run: chmod -R +x /home/runner/go/bin
+        run: chmod -R +x ~/go/bin
       - name: Vet
         run: make vet
       - name: Lint
@@ -89,8 +85,8 @@ jobs:
         env:
           cache-name: cache-go-modules
         with:
-          path: /home/runner/go/bin
-          key: go-pkg-mod-${{ runner.os }}-${{ hashFiles('**/go.mod') }}
+          path: ~/go/bin
+          key: ${{ runner.os }}-${{ hashFiles('**/go.mod') }}
       - name: Run Unit Tests
         run: make test
         
@@ -108,8 +104,8 @@ jobs:
         env:
           cache-name: cache-go-modules
         with:
-          path: /home/runner/go/bin
-          key: go-pkg-mod-${{ runner.os }}-${{ hashFiles('**/go.mod') }}
+          path: ~/go/bin
+          key: ${{ runner.os }}-${{ hashFiles('**/go.mod') }}
       - name: Run Unit Tests
         run: make test
         
@@ -128,7 +124,7 @@ jobs:
           cache-name: cache-go-modules
         with:
           path: /Users/runneradmin/go/pkg/mod
-          key: go-pkg-mod-${{ runner.os }}-${{ hashFiles('**/go.mod') }}
+          key: ${{ runner.os }}-${{ hashFiles('**/go.mod') }}
       - name: Run Unit Tests
         run: make test
           
