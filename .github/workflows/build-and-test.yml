@@ -40,7 +40,7 @@ jobs:
         uses: actions/upload-artifact@v1
         with:
           name: tool-binaries
-          path: ~/go/bin
+          path: '~/go/bin'
 
   lint:
     runs-on: ubuntu-latest
