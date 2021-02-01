@@ -9,37 +9,8 @@ on:
 
 jobs:
 
-  setup-environment:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Repo
-        uses: actions/checkout@v2
-      - name: Setup Go
-        uses: actions/setup-go@v2.1.3
-        with:
-          go-version: 1.15
-      - name: Cache Go Modules
-        uses: actions/cache@v2
-        env:
-          cache-name: cache-go-modules
-        with:
-          path: ~/go/pkg/mod
-          key: ${{ runner.os }}-${{ hashFiles('~/go.mod') }}
-      - name: Cache Tools Binaries
-        id: tool-cache
-        uses: actions/cache@v2
-        env:
-          cache-name: cache-tool-binaries
-        with:
-          path: ~/go/bin
-          key: tools-${{ runner.os }}-${{ hashFiles('~/go/bin') }}
-      - name: Install tools
-        if: steps.tool-cache.outputs.cache-hit != 'true'
-        run: make install-tools
-
   lint:
     runs-on: ubuntu-latest
-    needs: [setup-environment]
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v2
@@ -54,14 +25,9 @@ jobs:
         with:
           path: ~/go/pkg/mod
           key: ${{ runner.os }}-${{ hashFiles('**/go.mod') }}
-      - name: Cache Tools Binaries
-        id: tool-cache
-        uses: actions/cache@v2
-        env:
-          cache-name: cache-tool-binaries
-        with:
-          path: ~/go/bin
-          key: tools-${{ runner.os }}-${{ hashFiles('~/go/bin') }}
+      - name: Install tools
+        if: steps.tool-cache.outputs.cache-hit != 'true'
+        run: make install-tools
       - name: Add Permissions to Tool Binaries
         run: chmod -R +x ~/go/bin
       - name: Vet

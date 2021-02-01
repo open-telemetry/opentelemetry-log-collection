@@ -784,7 +784,7 @@ func (rt rotationTest) run(tc rotationTest, copyTruncate, sequential bool) func(
 			select {
 			case e := <-logReceived:
 				received = append(received, e.Record.(string))
-			case <-time.After(100 * time.Millisecond):
+			case <-time.After(200 * time.Millisecond):
 				break LOOP
 			}
 		}
