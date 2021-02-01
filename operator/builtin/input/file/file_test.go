@@ -810,7 +810,7 @@ func TestRotation(t *testing.T) {
 			maxLinesPerFile: 10,
 			maxBackupFiles:  1,
 			writeInterval:   time.Millisecond,
-			pollInterval:    20 * time.Millisecond,
+			pollInterval:    10 * time.Millisecond,
 		},
 		{
 			name:            "NoDeletion",
@@ -818,7 +818,7 @@ func TestRotation(t *testing.T) {
 			maxLinesPerFile: 10,
 			maxBackupFiles:  1,
 			writeInterval:   time.Millisecond,
-			pollInterval:    20 * time.Millisecond,
+			pollInterval:    10 * time.Millisecond,
 		},
 		{
 			name:            "Deletion",
@@ -826,7 +826,7 @@ func TestRotation(t *testing.T) {
 			maxLinesPerFile: 10,
 			maxBackupFiles:  1,
 			writeInterval:   time.Millisecond,
-			pollInterval:    20 * time.Millisecond,
+			pollInterval:    10 * time.Millisecond,
 			ephemeralLines:  true,
 		},
 		{
@@ -835,7 +835,7 @@ func TestRotation(t *testing.T) {
 			maxLinesPerFile: 100,
 			maxBackupFiles:  1,
 			writeInterval:   time.Millisecond,
-			pollInterval:    20 * time.Millisecond,
+			pollInterval:    10 * time.Millisecond,
 			ephemeralLines:  true,
 		},
 	}
