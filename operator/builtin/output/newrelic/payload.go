@@ -15,8 +15,8 @@
 package newrelic
 
 import (
-	"github.com/opentelemetry/opentelemetry-log-collection/entry"
-	"github.com/opentelemetry/opentelemetry-log-collection/version"
+	"github.com/open-telemetry/opentelemetry-log-collection/entry"
+	"github.com/open-telemetry/opentelemetry-log-collection/version"
 )
 
 // LogPayloadFromEntries creates a new []*LogPayload from an array of entries

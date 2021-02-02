@@ -18,8 +18,8 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/opentelemetry/opentelemetry-log-collection/entry"
-	"github.com/opentelemetry/opentelemetry-log-collection/version"
+	"github.com/open-telemetry/opentelemetry-log-collection/entry"
+	"github.com/open-telemetry/opentelemetry-log-collection/version"
 	"go.opentelemetry.io/collector/consumer/pdata"
 )
 

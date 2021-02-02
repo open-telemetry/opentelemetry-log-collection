@@ -15,7 +15,7 @@
 package googlecloud
 
 import (
-	"github.com/opentelemetry/opentelemetry-log-collection/entry"
+	"github.com/open-telemetry/opentelemetry-log-collection/entry"
 	sev "google.golang.org/genproto/googleapis/logging/type"
 )
 
