@@ -1,7 +1,9 @@
 package syslog
 
 import (
+	"fmt"
 	"github.com/open-telemetry/opentelemetry-log-collection/operator/builtin/input/tcp"
+	"github.com/open-telemetry/opentelemetry-log-collection/operator/builtin/input/udp"
 	"github.com/open-telemetry/opentelemetry-log-collection/operator/builtin/parser/syslog"
 	"github.com/open-telemetry/opentelemetry-log-collection/pipeline"
 	"github.com/open-telemetry/opentelemetry-log-collection/testutil"
@@ -12,63 +14,83 @@ import (
 )
 
 func TestSyslogInput(t *testing.T) {
+	basicConfig := func() *syslog.SyslogParserConfig {
+		cfg := syslog.NewSyslogParserConfig("test_syslog_parser")
+		return cfg
+	}
 
-	t.Run("Simple", SyslogTcpInputTest([]byte("<86>1 2015-08-05T21:58:59.693Z 192.168.2.132 SecureAuth0 23108 ID52020 [SecureAuth@27389 UserHostAddress=\"192.168.2.132\" Realm=\"SecureAuth0\" UserID=\"Tester2\" PEN=\"27389\"] Found the user for retrieving user's profile\n"),
-		map[string]interface{}{
-			"appname":  "SecureAuth0",
-			"facility": 10,
-			"hostname": "192.168.2.132",
-			"message":  "Found the user for retrieving user's profile",
-			"msg_id":   "ID52020",
-			"priority": 86,
-			"proc_id":  "23108",
-			"structured_data": map[string]map[string]string{
-				"SecureAuth@27389": {
-					"PEN":             "27389",
-					"Realm":           "SecureAuth0",
-					"UserHostAddress": "192.168.2.132",
-					"UserID":          "Tester2",
-				},
-			},
-			"version": 1,
-		}))
+	cases, err := syslog.CreateCases(basicConfig)
+	require.NoError(t, err)
 
+	for _, tc := range cases {
+		t.Run(fmt.Sprintf("TCP-%s", tc.Name), func(t *testing.T) {
+			SyslogInputTest(t, NewSyslogInputConfigWithTcp(tc.Config), tc)
+		})
+		//t.Run(fmt.Sprintf("UDP-%s", tc.Name), func(t *testing.T) {
+		//	SyslogInputTest(t, NewSyslogInputConfigWithUdp(tc.Config), tc)
+		//})
+	}
 }
 
-func SyslogTcpInputTest(input []byte, expected interface{}) func(t *testing.T) {
-	return func(t *testing.T) {
-		cfg := NewSyslogInputConfig("test_syslog")
-		cfg.Tcp = tcp.NewTCPInputConfig("test_syslog_tcp")
-		cfg.Tcp.ListenAddress = ":22345"
-		cfg.Syslog = syslog.NewSyslogParserConfig("test_syslog_parser")
-		cfg.Syslog.Protocol = "rfc5424"
-		cfg.OutputIDs = []string{"fake"}
+func SyslogInputTest(t *testing.T, cfg *SyslogInputConfig, tc syslog.Case) {
+	ops, err := cfg.Build(testutil.NewBuildContext(t))
+	require.NoError(t, err)
 
-		ops, err := cfg.Build(testutil.NewBuildContext(t))
-		require.NoError(t, err)
-		fake := testutil.NewFakeOutput(t)
+	fake := testutil.NewFakeOutput(t)
+	ops = append(ops, fake)
+	p, err := pipeline.NewDirectedPipeline(ops)
+	require.NoError(t, err)
 
-		ops = append(ops, fake)
-		require.NoError(t, err)
-		p, err := pipeline.NewDirectedPipeline(ops)
-		require.NoError(t, err)
+	err = p.Start()
+	require.NoError(t, err)
+	defer p.Stop()
 
-		err = p.Start()
+	var conn net.Conn
+	if cfg.Tcp != nil {
+		conn, err = net.Dial("tcp", cfg.Tcp.ListenAddress)
 		require.NoError(t, err)
-		defer p.Stop()
-
-		conn, err := net.Dial("tcp", cfg.Tcp.ListenAddress)
-		require.NoError(t, err)
-		defer conn.Close()
-
-		_, err = conn.Write(input)
-		require.NoError(t, err)
-
-		select {
-		case e := <-fake.Received:
-			require.Equal(t, expected, e.Record)
-		case <-time.After(time.Second):
-			require.FailNow(t, "Timed out waiting for entry to be processed")
-		}
 	}
+	if cfg.Udp != nil {
+		conn, err = net.Dial("udp", cfg.Udp.ListenAddress)
+		require.NoError(t, err)
+	}
+
+
+	switch tc.InputRecord.(type) {
+	case string:
+		_, err = conn.Write([]byte(tc.InputRecord.(string)))
+	case []byte:
+		_, err = conn.Write(tc.InputRecord.([]byte))
+	}
+
+	conn.Close()
+	require.NoError(t, err)
+
+	select {
+	case e := <-fake.Received:
+		require.Equal(t, tc.ExpectedRecord, e.Record)
+		require.Equal(t, tc.ExpectedTimestamp, e.Timestamp)
+		require.Equal(t, tc.ExpectedSeverity, e.Severity)
+		require.Equal(t, tc.ExpectedSeverityText, e.SeverityText)
+	case <-time.After(time.Second):
+		require.FailNow(t, "Timed out waiting for entry to be processed")
+	}
+}
+
+func NewSyslogInputConfigWithTcp(syslogCfg *syslog.SyslogParserConfig) *SyslogInputConfig {
+	cfg := NewSyslogInputConfig("test_syslog")
+	cfg.Tcp = tcp.NewTCPInputConfig("test_syslog_tcp")
+	cfg.Tcp.ListenAddress = ":14201"
+	cfg.OutputIDs = []string{"fake"}
+	cfg.Syslog = syslogCfg
+	return cfg
+}
+
+func NewSyslogInputConfigWithUdp(syslogCfg *syslog.SyslogParserConfig) *SyslogInputConfig {
+	cfg := NewSyslogInputConfig("test_syslog")
+	cfg.Udp = udp.NewUDPInputConfig("test_syslog_udp")
+	cfg.Udp.ListenAddress = ":12032"
+	cfg.OutputIDs = []string{"fake"}
+	cfg.Syslog = syslogCfg
+	return cfg
 }
