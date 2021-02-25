@@ -62,6 +62,11 @@ func (f *Field) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	return err
 }
 
+func (f *Field) UnmarshalText(text []byte) (err error) {
+	*f, err = fieldFromString(string(text))
+	return err
+}
+
 func fieldFromString(s string) (Field, error) {
 	split, err := splitField(s)
 	if err != nil {
@@ -177,6 +182,10 @@ func splitField(s string) ([]string, error) {
 		return nil, fmt.Errorf("found unclosed single quote")
 	case InUnbracketedToken:
 		fields = append(fields, s[tokenStart:])
+	}
+
+	if len(fields)==0 {
+		return nil, fmt.Errorf("fields size is 0")
 	}
 
 	return fields, nil

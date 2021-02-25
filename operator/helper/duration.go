@@ -72,6 +72,10 @@ func (d *Duration) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	return err
 }
 
+func (d *Duration) UnmarshalText(text []byte) error {
+	return d.UnmarshalJSON(text)
+}
+
 func durationFromInterface(val interface{}) (time.Duration, error) {
 	switch value := val.(type) {
 	case float64:
