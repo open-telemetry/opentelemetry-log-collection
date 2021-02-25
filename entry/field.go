@@ -184,7 +184,7 @@ func splitField(s string) ([]string, error) {
 		fields = append(fields, s[tokenStart:])
 	}
 
-	if len(fields)==0 {
+	if len(fields) == 0 {
 		return nil, fmt.Errorf("fields size is 0")
 	}
 
