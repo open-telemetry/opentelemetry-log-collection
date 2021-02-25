@@ -26,9 +26,9 @@ func TestSyslogInput(t *testing.T) {
 		t.Run(fmt.Sprintf("TCP-%s", tc.Name), func(t *testing.T) {
 			SyslogInputTest(t, NewSyslogInputConfigWithTcp(tc.Config), tc)
 		})
-		//t.Run(fmt.Sprintf("UDP-%s", tc.Name), func(t *testing.T) {
-		//	SyslogInputTest(t, NewSyslogInputConfigWithUdp(tc.Config), tc)
-		//})
+		t.Run(fmt.Sprintf("UDP-%s", tc.Name), func(t *testing.T) {
+			SyslogInputTest(t, NewSyslogInputConfigWithUdp(tc.Config), tc)
+		})
 	}
 }
 
@@ -43,7 +43,6 @@ func SyslogInputTest(t *testing.T, cfg *SyslogInputConfig, tc syslog.Case) {
 
 	err = p.Start()
 	require.NoError(t, err)
-	defer p.Stop()
 
 	var conn net.Conn
 	if cfg.Tcp != nil {
@@ -68,11 +67,14 @@ func SyslogInputTest(t *testing.T, cfg *SyslogInputConfig, tc syslog.Case) {
 
 	select {
 	case e := <-fake.Received:
+		// close pipeline to avoid data race
+		p.Stop()
 		require.Equal(t, tc.ExpectedRecord, e.Record)
 		require.Equal(t, tc.ExpectedTimestamp, e.Timestamp)
 		require.Equal(t, tc.ExpectedSeverity, e.Severity)
 		require.Equal(t, tc.ExpectedSeverityText, e.SeverityText)
 	case <-time.After(time.Second):
+		p.Stop()
 		require.FailNow(t, "Timed out waiting for entry to be processed")
 	}
 }
