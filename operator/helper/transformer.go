@@ -36,9 +36,9 @@ func NewTransformerConfig(operatorID, operatorType string) TransformerConfig {
 
 // TransformerConfig provides a basic implementation of a transformer config.
 type TransformerConfig struct {
-	WriterConfig `yaml:",inline"`
-	OnError      string `json:"on_error" yaml:"on_error"`
-	IfExpr       string `json:"if"                  yaml:"if"`
+	WriterConfig        `mapstructure:",squash"  yaml:",inline"`
+	OnError      string `mapstructure:"on_error" json:"on_error" yaml:"on_error"`
+	IfExpr       string `mapstructure:"if"       json:"if"       yaml:"if"`
 }
 
 // Build will build a transformer operator.

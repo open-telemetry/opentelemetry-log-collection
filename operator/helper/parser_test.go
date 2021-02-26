@@ -17,6 +17,7 @@ package helper
 import (
 	"context"
 	"fmt"
+	"github.com/mitchellh/mapstructure"
 	"strings"
 	"testing"
 	"time"
@@ -388,4 +389,71 @@ func TestParserPreserve(t *testing.T) {
 			require.Equal(t, tc.outputRecord, e.Record)
 		})
 	}
+}
+func NewTestParserConfig() ParserConfig {
+	except := NewParserConfig("parser_config", "test_type")
+	except.ParseFrom = entry.NewRecordField("from")
+	except.ParseTo = entry.NewRecordField("to")
+	tp := NewTimeParser()
+	sp := NewSeverityParserConfig()
+	sp.Mapping = map[interface{}]interface{}{
+		"30":             "3xx",
+		int(entry.Error): "4xx"}
+	except.TimeParser = &tp
+	except.SeverityParserConfig = &sp
+
+	return except
+}
+
+func TestMapStructureDecodeParserConfigWithHook(t *testing.T) {
+	except := NewTestParserConfig()
+	input := map[string]interface{}{
+		"id":         "parser_config",
+		"type":       "test_type",
+		"on_error":   "send",
+		"parse_from": "$record.from",
+		"parse_to":   "$record.to",
+		"timestamp": map[string]interface{}{
+			"layout_type": "strptime",
+		},
+		"severity": map[string]interface{}{
+			"mapping": map[interface{}]interface{}{
+				"30": "3xx",
+				60:   "4xx",
+			},
+		},
+	}
+
+	var actual ParserConfig
+	dc := &mapstructure.DecoderConfig{Result: &actual, DecodeHook: mapstructure.TextUnmarshallerHookFunc()}
+	ms, err := mapstructure.NewDecoder(dc)
+	require.NoError(t, err)
+	err = ms.Decode(input)
+	require.NoError(t, err)
+	require.Equal(t, except, actual)
+}
+
+func TestMapStructureDecodeParserConfig(t *testing.T) {
+	except := NewTestParserConfig()
+	input := map[string]interface{}{
+		"id":         "parser_config",
+		"type":       "test_type",
+		"on_error":   "send",
+		"parse_from": entry.NewRecordField("from"),
+		"parse_to":   entry.NewRecordField("to"),
+		"timestamp": map[string]interface{}{
+			"layout_type": "strptime",
+		},
+		"severity": map[string]interface{}{
+			"mapping": map[interface{}]interface{}{
+				"30": "3xx",
+				60:   "4xx",
+			},
+		},
+	}
+
+	var actual ParserConfig
+	err := mapstructure.Decode(input, &actual)
+	require.NoError(t, err)
+	require.Equal(t, except, actual)
 }

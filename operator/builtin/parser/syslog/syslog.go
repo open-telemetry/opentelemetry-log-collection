@@ -42,8 +42,8 @@ func NewSyslogParserConfig(operatorID string) *SyslogParserConfig {
 type SyslogParserConfig struct {
 	helper.ParserConfig `yaml:",inline"`
 
-	Protocol string `json:"protocol,omitempty" yaml:"protocol,omitempty"`
-	Location string `json:"location,omitempty" yaml:"location,omitempty"`
+	Protocol string `mapstructure:"protocol,omitempty" json:"protocol,omitempty" yaml:"protocol,omitempty"`
+	Location string `mapstructure:"location,omitempty" json:"location,omitempty" yaml:"location,omitempty"`
 }
 
 // Build will build a JSON parser operator.
