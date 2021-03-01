@@ -19,28 +19,34 @@ import (
 	"io/ioutil"
 	"path"
 	"testing"
+	"time"
 
+	"github.com/open-telemetry/opentelemetry-log-collection/operator/helper"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v2"
 )
 
 type testCase struct {
-	name   string
-	expect *InputConfig
+	name      string
+	expectErr bool
+	expect    *InputConfig
 }
 
 func TestConfig(t *testing.T) {
 	cases := []testCase{
 		{
 			"default",
+			false,
 			defaultCfg(),
 		},
 		{
 			"id_custom",
+			false,
 			NewInputConfig("test_id"),
 		},
 		{
 			"include_one",
+			false,
 			func() *InputConfig {
 				cfg := defaultCfg()
 				cfg.Include = append(cfg.Include, "one.log")
@@ -49,6 +55,7 @@ func TestConfig(t *testing.T) {
 		},
 		{
 			"include_multi",
+			false,
 			func() *InputConfig {
 				cfg := defaultCfg()
 				cfg.Include = append(cfg.Include, "one.log", "two.log", "three.log")
@@ -57,6 +64,7 @@ func TestConfig(t *testing.T) {
 		},
 		{
 			"include_glob",
+			false,
 			func() *InputConfig {
 				cfg := defaultCfg()
 				cfg.Include = append(cfg.Include, "*.log")
@@ -65,6 +73,7 @@ func TestConfig(t *testing.T) {
 		},
 		{
 			"include_inline",
+			false,
 			func() *InputConfig {
 				cfg := defaultCfg()
 				cfg.Include = append(cfg.Include, "a.log", "b.log")
@@ -73,6 +82,7 @@ func TestConfig(t *testing.T) {
 		},
 		{
 			"exclude_one",
+			false,
 			func() *InputConfig {
 				cfg := defaultCfg()
 				cfg.Include = append(cfg.Include, "*.log")
@@ -82,6 +92,7 @@ func TestConfig(t *testing.T) {
 		},
 		{
 			"exclude_multi",
+			false,
 			func() *InputConfig {
 				cfg := defaultCfg()
 				cfg.Include = append(cfg.Include, "*.log")
@@ -91,6 +102,7 @@ func TestConfig(t *testing.T) {
 		},
 		{
 			"exclude_glob",
+			false,
 			func() *InputConfig {
 				cfg := defaultCfg()
 				cfg.Include = append(cfg.Include, "*.log")
@@ -100,10 +112,92 @@ func TestConfig(t *testing.T) {
 		},
 		{
 			"exclude_inline",
+			false,
 			func() *InputConfig {
 				cfg := defaultCfg()
 				cfg.Include = append(cfg.Include, "*.log")
 				cfg.Exclude = append(cfg.Exclude, "a.log", "b.log")
+				return cfg
+			}(),
+		},
+		{
+			"poll_interval_no_units",
+			false,
+			func() *InputConfig {
+				cfg := defaultCfg()
+				cfg.PollInterval = helper.NewDuration(time.Second)
+				return cfg
+			}(),
+		},
+		{
+			"poll_interval_1s",
+			false,
+			func() *InputConfig {
+				cfg := defaultCfg()
+				cfg.PollInterval = helper.NewDuration(time.Second)
+				return cfg
+			}(),
+		},
+		{
+			"poll_interval_1ms",
+			false,
+			func() *InputConfig {
+				cfg := defaultCfg()
+				cfg.PollInterval = helper.NewDuration(time.Millisecond)
+				return cfg
+			}(),
+		},
+		{
+			"poll_interval_1000ms",
+			false,
+			func() *InputConfig {
+				cfg := defaultCfg()
+				cfg.PollInterval = helper.NewDuration(time.Second)
+				return cfg
+			}(),
+		},
+		{
+			"fingerprint_size_no_units",
+			false,
+			func() *InputConfig {
+				cfg := defaultCfg()
+				cfg.FingerprintSize = helper.ByteSize(1000)
+				return cfg
+			}(),
+		},
+		{
+			"fingerprint_size_1kb_lower",
+			false,
+			func() *InputConfig {
+				cfg := defaultCfg()
+				cfg.FingerprintSize = helper.ByteSize(1000)
+				return cfg
+			}(),
+		},
+		{
+			"fingerprint_size_1KB",
+			false,
+			func() *InputConfig {
+				cfg := defaultCfg()
+				cfg.FingerprintSize = helper.ByteSize(1000)
+				return cfg
+			}(),
+		},
+		{
+			"fingerprint_size_1kib_lower",
+			false,
+			func() *InputConfig {
+				cfg := defaultCfg()
+				cfg.FingerprintSize = helper.ByteSize(1024)
+				return cfg
+			}(),
+		},
+		{
+			"fingerprint_size_1KiB",
+			false,
+			func() *InputConfig {
+				cfg := defaultCfg()
+				cfg.FingerprintSize = helper.ByteSize(1024)
 				return cfg
 			}(),
 		},
