@@ -88,7 +88,6 @@ type ParserOperator struct {
 // ProcessWith will run ParseWith on the entry, then forward the entry on to the next operators.
 func (p *ParserOperator) ProcessWith(ctx context.Context, entry *entry.Entry, parse ParseFunction) error {
 	return p.ProcessWithCallback(ctx, entry, parse, nil)
-
 }
 
 func (p *ParserOperator) ProcessWithCallback(ctx context.Context, entry *entry.Entry, parse ParseFunction, cb func(*entry.Entry) error) error {
