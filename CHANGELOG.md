@@ -8,9 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - Optional `max_buffer_size` parameter to `tcp_input` operator ([PR35](https://github.com/open-telemetry/opentelemetry-log-collection/pull/35))
-
-### Changed
-- Added TLS support to `tcp_input` operator ([PR29](https://github.com/open-telemetry/opentelemetry-log-collection/pull/29))
+- TLS support to `tcp_input` operator ([PR29](https://github.com/open-telemetry/opentelemetry-log-collection/pull/29))
 
 ### Fixed 
 - Data race in syslog parser ([PR32](https://github.com/open-telemetry/opentelemetry-log-collection/pull/32))
