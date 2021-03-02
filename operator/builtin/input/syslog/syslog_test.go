@@ -108,4 +108,18 @@ udp:
 	require.Equal(t, "utc5404", cfg.Protocol)
 	require.Equal(t, "localhost:1234", cfg.Udp.ListenAddress)
 
+
+	base = `type: syslog_input
+protocol: utc5404
+tcp:
+  listen_address: localhost:1234
+  tls:
+    enable: true
+`
+	err = yaml.Unmarshal([]byte(base), &cfg)
+	require.NoError(t, err)
+	require.Equal(t, "utc5404", cfg.Protocol)
+	require.Equal(t, "localhost:1234", cfg.Tcp.ListenAddress)
+	require.Equal(t, true, cfg.Tcp.TLS.Enable)
+
 }
