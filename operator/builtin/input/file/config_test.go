@@ -201,6 +201,143 @@ func TestConfig(t *testing.T) {
 				return cfg
 			}(),
 		},
+		{
+			"include_file_name_lower",
+			false,
+			func() *InputConfig {
+				cfg := defaultCfg()
+				cfg.Include = append(cfg.Include, "one.log")
+				cfg.IncludeFileName = true
+				return cfg
+			}(),
+		},
+		{
+			"include_file_name_upper",
+			false,
+			func() *InputConfig {
+				cfg := defaultCfg()
+				cfg.Include = append(cfg.Include, "one.log")
+				cfg.IncludeFileName = true
+				return cfg
+			}(),
+		},
+		{
+			"include_file_name_on",
+			false,
+			func() *InputConfig {
+				cfg := defaultCfg()
+				cfg.Include = append(cfg.Include, "one.log")
+				cfg.IncludeFileName = true
+				return cfg
+			}(),
+		},
+		{
+			"include_file_name_yes",
+			false,
+			func() *InputConfig {
+				cfg := defaultCfg()
+				cfg.Include = append(cfg.Include, "one.log")
+				cfg.IncludeFileName = true
+				return cfg
+			}(),
+		},
+		{
+			"include_file_path_lower",
+			false,
+			func() *InputConfig {
+				cfg := defaultCfg()
+				cfg.Include = append(cfg.Include, "one.log")
+				cfg.IncludeFilePath = true
+				return cfg
+			}(),
+		},
+		{
+			"include_file_path_upper",
+			false,
+			func() *InputConfig {
+				cfg := defaultCfg()
+				cfg.Include = append(cfg.Include, "one.log")
+				cfg.IncludeFilePath = true
+				return cfg
+			}(),
+		},
+		{
+			"include_file_path_on",
+			false,
+			func() *InputConfig {
+				cfg := defaultCfg()
+				cfg.Include = append(cfg.Include, "one.log")
+				cfg.IncludeFilePath = true
+				return cfg
+			}(),
+		},
+		{
+			"include_file_path_yes",
+			false,
+			func() *InputConfig {
+				cfg := defaultCfg()
+				cfg.Include = append(cfg.Include, "one.log")
+				cfg.IncludeFilePath = true
+				return cfg
+			}(),
+		},
+		{
+			"multiline_line_start_string",
+			false,
+			func() *InputConfig {
+				cfg := defaultCfg()
+				var newMulti *MultilineConfig
+				newMulti = new(MultilineConfig)
+				newMulti.LineStartPattern = "Start"
+				cfg.Multiline = newMulti
+				return cfg
+			}(),
+		},
+		{
+			"multiline_line_start_special",
+			false,
+			func() *InputConfig {
+				cfg := defaultCfg()
+				var newMulti *MultilineConfig
+				newMulti = new(MultilineConfig)
+				newMulti.LineStartPattern = "%"
+				cfg.Multiline = newMulti
+				return cfg
+			}(),
+		},
+		{
+			"multiline_line_end_string",
+			false,
+			func() *InputConfig {
+				cfg := defaultCfg()
+				var newMulti *MultilineConfig
+				newMulti = new(MultilineConfig)
+				newMulti.LineEndPattern = "Start"
+				cfg.Multiline = newMulti
+				return cfg
+			}(),
+		},
+		{
+			"multiline_line_end_special",
+			false,
+			func() *InputConfig {
+				cfg := defaultCfg()
+				var newMulti *MultilineConfig
+				newMulti = new(MultilineConfig)
+				newMulti.LineEndPattern = "%"
+				cfg.Multiline = newMulti
+				return cfg
+			}(),
+		},
+		{
+			"start_at_string",
+			false,
+			func() *InputConfig {
+				cfg := defaultCfg()
+				cfg.StartAt = "beginning"
+				return cfg
+			}(),
+		},
 	}
 
 	for _, tc := range cases {
