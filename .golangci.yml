@@ -1,11 +1,19 @@
 ---
+run:
+  issues-exit-code: 1
+  tests: true
+  skip-dirs:
+  skip-dirs-use-default: false
+  skip-files:
 linters:
+  disable:
+    - errcheck
   enable:
+    - gofmt
+    - goimports
     - bodyclose
     - goconst
     - gocritic
-    - goimports
-    - maligned
     - misspell
     - nakedret
     - prealloc
