@@ -459,7 +459,7 @@ func TestConfig(t *testing.T) {
 			}(),
 		},
 		{
-			"max_logs_mb_upper",
+			"max_logs_mb_lower",
 			false,
 			func() *InputConfig {
 				cfg := defaultCfg()
