@@ -81,6 +81,14 @@ func TestConfig(t *testing.T) {
 			}(),
 		},
 		{
+			"include_invalid",
+			true,
+			func() *InputConfig {
+				cfg := defaultCfg()
+				return cfg
+			}(),
+		},
+		{
 			"exclude_one",
 			false,
 			func() *InputConfig {
@@ -117,6 +125,15 @@ func TestConfig(t *testing.T) {
 				cfg := defaultCfg()
 				cfg.Include = append(cfg.Include, "*.log")
 				cfg.Exclude = append(cfg.Exclude, "a.log", "b.log")
+				return cfg
+			}(),
+		},
+		{
+			"exclude_invalid",
+			true,
+			func() *InputConfig {
+				cfg := defaultCfg()
+				cfg.Include = append(cfg.Include, "*.log")
 				return cfg
 			}(),
 		},
@@ -198,6 +215,15 @@ func TestConfig(t *testing.T) {
 			func() *InputConfig {
 				cfg := defaultCfg()
 				cfg.FingerprintSize = helper.ByteSize(1024)
+				return cfg
+			}(),
+		},
+		{
+			"fingerprint_size_float",
+			false,
+			func() *InputConfig {
+				cfg := defaultCfg()
+				cfg.FingerprintSize = helper.ByteSize(1100)
 				return cfg
 			}(),
 		},
@@ -402,6 +428,50 @@ func TestConfig(t *testing.T) {
 			func() *InputConfig {
 				cfg := defaultCfg()
 				cfg.MaxConcurrentFiles = 0
+				return cfg
+			}(),
+		},
+		{
+			"max_logs_mib_lower",
+			false,
+			func() *InputConfig {
+				cfg := defaultCfg()
+				cfg.MaxLogSize = helper.ByteSize(1048576)
+				return cfg
+			}(),
+		},
+		{
+			"max_logs_mib_upper",
+			false,
+			func() *InputConfig {
+				cfg := defaultCfg()
+				cfg.MaxLogSize = helper.ByteSize(1048576)
+				return cfg
+			}(),
+		},
+		{
+			"max_logs_mb_upper",
+			false,
+			func() *InputConfig {
+				cfg := defaultCfg()
+				cfg.MaxLogSize = helper.ByteSize(1048576)
+				return cfg
+			}(),
+		},
+		{
+			"max_logs_mb_upper",
+			false,
+			func() *InputConfig {
+				cfg := defaultCfg()
+				cfg.MaxLogSize = helper.ByteSize(1048576)
+				return cfg
+			}(),
+		},
+		{
+			"max_logs_invalid_unit",
+			true,
+			func() *InputConfig {
+				cfg := defaultCfg()
 				return cfg
 			}(),
 		},
