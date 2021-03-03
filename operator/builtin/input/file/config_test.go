@@ -19,7 +19,7 @@ func NewTestInputConfig() *InputConfig {
 }
 
 func TestMapStructureDecodeConfigWithHook(t *testing.T) {
-	except := NewTestInputConfig()
+	expect := NewTestInputConfig()
 	input := map[string]interface{}{
 		// InputConfig
 		"id":       "config_test",
@@ -30,12 +30,12 @@ func TestMapStructureDecodeConfigWithHook(t *testing.T) {
 		"resource": map[string]interface{}{
 		},
 
-		"include":       except.Include,
-		"exclude":       except.Exclude,
+		"include":       expect.Include,
+		"exclude":       expect.Exclude,
 		"poll_interval": "0.2",
 		"multiline": map[string]interface{}{
-			"line_start_pattern": except.Multiline.LineStartPattern,
-			"line_end_pattern":   except.Multiline.LineEndPattern,
+			"line_start_pattern": expect.Multiline.LineStartPattern,
+			"line_end_pattern":   expect.Multiline.LineEndPattern,
 		},
 		"include_file_name":    true,
 		"include_file_path":    false,
@@ -52,11 +52,11 @@ func TestMapStructureDecodeConfigWithHook(t *testing.T) {
 	require.NoError(t, err)
 	err = ms.Decode(input)
 	require.NoError(t, err)
-	require.Equal(t, except, &actual)
+	require.Equal(t, expect, &actual)
 }
 
 func TestMapStructureDecodeConfig(t *testing.T) {
-	except := NewTestInputConfig()
+	expect := NewTestInputConfig()
 	input := map[string]interface{}{
 		// InputConfig
 		"id":   "config_test",
@@ -66,14 +66,14 @@ func TestMapStructureDecodeConfig(t *testing.T) {
 		},
 		"resource": map[string]interface{}{
 		},
-		"include": except.Include,
-		"exclude": except.Exclude,
+		"include": expect.Include,
+		"exclude": expect.Exclude,
 		"poll_interval": map[string]interface{}{
 			"Duration": 200 * 1000 * 1000,
 		},
 		"multiline": map[string]interface{}{
-			"line_start_pattern": except.Multiline.LineStartPattern,
-			"line_end_pattern":   except.Multiline.LineEndPattern,
+			"line_start_pattern": expect.Multiline.LineStartPattern,
+			"line_end_pattern":   expect.Multiline.LineEndPattern,
 		},
 		"include_file_name":    true,
 		"include_file_path":    false,
@@ -87,5 +87,5 @@ func TestMapStructureDecodeConfig(t *testing.T) {
 	var actual InputConfig
 	err := mapstructure.Decode(input, &actual)
 	require.NoError(t, err)
-	require.Equal(t, except, &actual)
+	require.Equal(t, expect, &actual)
 }
