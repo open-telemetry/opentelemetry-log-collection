@@ -383,7 +383,7 @@ func TestConfig(t *testing.T) {
 			false,
 			func() *InputConfig {
 				cfg := defaultCfg()
-				cfg.StartAt = "beginning"
+				cfg.StartAt = ""
 				return cfg
 			}(),
 		},
