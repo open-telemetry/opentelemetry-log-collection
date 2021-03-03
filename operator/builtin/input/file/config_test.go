@@ -282,6 +282,35 @@ func TestConfig(t *testing.T) {
 			}(),
 		},
 		{
+			"include_file_path_off",
+			false,
+			func() *InputConfig {
+				cfg := defaultCfg()
+				cfg.Include = append(cfg.Include, "one.log")
+				cfg.IncludeFilePath = false
+				return cfg
+			}(),
+		},
+		{
+			"include_file_path_no",
+			false,
+			func() *InputConfig {
+				cfg := defaultCfg()
+				cfg.Include = append(cfg.Include, "one.log")
+				cfg.IncludeFilePath = false
+				return cfg
+			}(),
+		},
+		{
+			"include_file_path_nonbool",
+			true,
+			func() *InputConfig {
+				cfg := defaultCfg()
+				cfg.Include = append(cfg.Include, "one.log")
+				return cfg
+			}(),
+		},
+		{
 			"multiline_line_start_string",
 			false,
 			func() *InputConfig {
@@ -330,6 +359,17 @@ func TestConfig(t *testing.T) {
 			}(),
 		},
 		{
+			"multiline_random",
+			true,
+			func() *InputConfig {
+				cfg := defaultCfg()
+				var newMulti *MultilineConfig
+				newMulti = new(MultilineConfig)
+				cfg.Multiline = newMulti
+				return cfg
+			}(),
+		},
+		{
 			"start_at_string",
 			false,
 			func() *InputConfig {
@@ -338,14 +378,45 @@ func TestConfig(t *testing.T) {
 				return cfg
 			}(),
 		},
+		{
+			"start_at_empty",
+			false,
+			func() *InputConfig {
+				cfg := defaultCfg()
+				cfg.StartAt = "beginning"
+				return cfg
+			}(),
+		},
+		{
+			"max_concurrent_large",
+			false,
+			func() *InputConfig {
+				cfg := defaultCfg()
+				cfg.MaxConcurrentFiles = 9223372036854775807
+				return cfg
+			}(),
+		},
+		{
+			"max_concurrent_empty",
+			false,
+			func() *InputConfig {
+				cfg := defaultCfg()
+				cfg.MaxConcurrentFiles = 0
+				return cfg
+			}(),
+		},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			cfgFromYaml, err := configFromFileViaYaml(t, path.Join(".", "testdata", fmt.Sprintf("%s.yaml", tc.name)))
-			require.NoError(t, err)
-			require.Equal(t, tc.expect, cfgFromYaml)
 
+			if tc.expectErr {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, tc.expect, cfgFromYaml)
+			}
 			// TODO cfgFromMapstructure, err := configFromFileViaYaml(t, path.Join(".", "testdata", fmt.Sprintf("%s.yaml", tc.name)))
 			// TODO require.NoError(t, err)
 			// TODO require.Equal(t, tc.expect, cfgFromMapstructure)
