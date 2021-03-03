@@ -98,19 +98,19 @@ func NewSyslogInputConfigWithUdp(syslogCfg *syslog.SyslogParserConfig) *SyslogIn
 
 func TestConfigYamlUnmarshal(t *testing.T) {
 	base := `type: syslog_input
-protocol: utc5404
+protocol: rfc5424
 udp:
   listen_address: localhost:1234
 `
 	var cfg SyslogInputConfig
 	err := yaml.Unmarshal([]byte(base), &cfg)
 	require.NoError(t, err)
-	require.Equal(t, "utc5404", cfg.Protocol)
+	require.Equal(t, "rfc5424", cfg.Protocol)
 	require.Equal(t, "localhost:1234", cfg.Udp.ListenAddress)
 
 
 	base = `type: syslog_input
-protocol: utc5404
+protocol: rfc5424
 tcp:
   listen_address: localhost:1234
   tls:
@@ -118,7 +118,7 @@ tcp:
 `
 	err = yaml.Unmarshal([]byte(base), &cfg)
 	require.NoError(t, err)
-	require.Equal(t, "utc5404", cfg.Protocol)
+	require.Equal(t, "rfc5424", cfg.Protocol)
 	require.Equal(t, "localhost:1234", cfg.Tcp.ListenAddress)
 	require.Equal(t, true, cfg.Tcp.TLS.Enable)
 
