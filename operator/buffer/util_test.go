@@ -19,8 +19,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/open-telemetry/opentelemetry-log-collection/entry"
 	"github.com/stretchr/testify/require"
+
+	"github.com/open-telemetry/opentelemetry-log-collection/entry"
 )
 
 func intEntry(i int) *entry.Entry {

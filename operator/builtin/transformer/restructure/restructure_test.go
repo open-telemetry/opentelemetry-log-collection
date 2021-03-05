@@ -23,13 +23,14 @@ import (
 
 	"github.com/antonmedv/expr"
 	"github.com/antonmedv/expr/vm"
+	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
+	yaml "gopkg.in/yaml.v2"
+
 	"github.com/open-telemetry/opentelemetry-log-collection/entry"
 	"github.com/open-telemetry/opentelemetry-log-collection/operator"
 	"github.com/open-telemetry/opentelemetry-log-collection/operator/helper"
 	"github.com/open-telemetry/opentelemetry-log-collection/testutil"
-	"github.com/stretchr/testify/require"
-	"go.uber.org/zap"
-	yaml "gopkg.in/yaml.v2"
 )
 
 func NewFakeRestructureOperator() (*RestructureOperator, *testutil.Operator) {
@@ -360,7 +361,7 @@ ops:
   }]
 }`
 
-	expected := operator.Config(operator.Config{
+	expected := operator.Config{
 		Builder: &RestructureOperatorConfig{
 			TransformerConfig: helper.TransformerConfig{
 				WriterConfig: helper.WriterConfig{
@@ -408,7 +409,7 @@ ops:
 				}},
 			},
 		},
-	})
+	}
 
 	var unmarshalledYAML operator.Config
 	err := yaml.UnmarshalStrict([]byte(configYAML), &unmarshalledYAML)

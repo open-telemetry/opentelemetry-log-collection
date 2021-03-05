@@ -19,12 +19,13 @@ import (
 	"os"
 	"testing"
 
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
+
 	"github.com/open-telemetry/opentelemetry-log-collection/entry"
 	"github.com/open-telemetry/opentelemetry-log-collection/operator"
 	"github.com/open-telemetry/opentelemetry-log-collection/operator/helper"
 	"github.com/open-telemetry/opentelemetry-log-collection/testutil"
-	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
 )
 
 func TestRouterOperator(t *testing.T) {
@@ -205,7 +206,7 @@ func TestRouterOperator(t *testing.T) {
 
 			mock1 := testutil.NewMockOperator("$.output1")
 			mock1.On("Process", mock.Anything, mock.Anything).Return(nil).Run(func(args mock.Arguments) {
-				results["output1"] = results["output1"] + 1
+				results["output1"]++
 				if entry, ok := args[1].(*entry.Entry); ok {
 					labels = entry.Labels
 				}
@@ -213,7 +214,7 @@ func TestRouterOperator(t *testing.T) {
 
 			mock2 := testutil.NewMockOperator("$.output2")
 			mock2.On("Process", mock.Anything, mock.Anything).Return(nil).Run(func(args mock.Arguments) {
-				results["output2"] = results["output2"] + 1
+				results["output2"]++
 				if entry, ok := args[1].(*entry.Entry); ok {
 					labels = entry.Labels
 				}

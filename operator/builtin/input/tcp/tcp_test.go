@@ -15,17 +15,18 @@
 package tcp
 
 import (
-	"os"
+	"crypto/tls"
 	"net"
+	"os"
 	"testing"
 	"time"
-	"crypto/tls"
+
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 
 	"github.com/open-telemetry/opentelemetry-log-collection/entry"
 	"github.com/open-telemetry/opentelemetry-log-collection/operator"
 	"github.com/open-telemetry/opentelemetry-log-collection/testutil"
-	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
 )
 
 const testTLSPrivateKey = `
@@ -129,28 +130,27 @@ func tcpInputTest(input []byte, expected []string) func(t *testing.T) {
 
 func tlsTCPInputTest(input []byte, expected []string) func(t *testing.T) {
 	return func(t *testing.T) {
-
 		f, err := os.Create("test.crt")
-	    require.NoError(t, err)
-	    defer f.Close()
+		require.NoError(t, err)
+		defer f.Close()
 		defer os.Remove("test.crt")
-	    _, err = f.WriteString(testTLSCertificate + "\n")
-	    require.NoError(t, err)
+		_, err = f.WriteString(testTLSCertificate + "\n")
+		require.NoError(t, err)
 		f.Close()
 
 		f, err = os.Create("test.key")
-	    require.NoError(t, err)
-	    defer f.Close()
+		require.NoError(t, err)
+		defer f.Close()
 		defer os.Remove("test.key")
-	    _, err = f.WriteString(testTLSPrivateKey + "\n")
-	    require.NoError(t, err)
+		_, err = f.WriteString(testTLSPrivateKey + "\n")
+		require.NoError(t, err)
 		f.Close()
 
 		cfg := NewTCPInputConfig("test_id")
 		cfg.ListenAddress = ":0"
 		cfg.TLS.Enable = true
 		cfg.TLS.Certificate = "test.crt"
-		cfg.TLS.PrivateKey  = "test.key"
+		cfg.TLS.PrivateKey = "test.key"
 
 		ops, err := cfg.Build(testutil.NewBuildContext(t))
 		require.NoError(t, err)
@@ -196,9 +196,9 @@ func tlsTCPInputTest(input []byte, expected []string) func(t *testing.T) {
 
 func TestBuild(t *testing.T) {
 	cases := []struct {
-		name           string
-		inputRecord    TCPInputConfig
-		expectErr      bool
+		name        string
+		inputRecord TCPInputConfig
+		expectErr   bool
 	}{
 		{
 			"default-auto-address",
@@ -251,9 +251,9 @@ func TestBuild(t *testing.T) {
 				MaxBufferSize: 65536,
 				ListenAddress: "10.0.0.1:9000",
 				TLS: TLSConfig{
-					Enable: false,
+					Enable:      false,
 					Certificate: "/tmp/cert",
-					PrivateKey: "/tmp/key",
+					PrivateKey:  "/tmp/key",
 				},
 			},
 			false,
@@ -264,9 +264,9 @@ func TestBuild(t *testing.T) {
 				MaxBufferSize: 65536,
 				ListenAddress: "10.0.0.1:9000",
 				TLS: TLSConfig{
-					Enable: true,
+					Enable:      true,
 					Certificate: "/tmp/cert/missing",
-					PrivateKey: "/tmp/key/missing",
+					PrivateKey:  "/tmp/key/missing",
 				},
 			},
 			true,

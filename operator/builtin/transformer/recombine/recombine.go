@@ -17,14 +17,16 @@ package recombine
 import (
 	"context"
 	"fmt"
-	"github.com/antonmedv/expr"
-	"github.com/antonmedv/expr/vm"
-	"github.com/open-telemetry/opentelemetry-log-collection/entry"
-	"github.com/open-telemetry/opentelemetry-log-collection/operator"
-	"github.com/open-telemetry/opentelemetry-log-collection/operator/helper"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/antonmedv/expr"
+	"github.com/antonmedv/expr/vm"
+
+	"github.com/open-telemetry/opentelemetry-log-collection/entry"
+	"github.com/open-telemetry/opentelemetry-log-collection/operator"
+	"github.com/open-telemetry/opentelemetry-log-collection/operator/helper"
 )
 
 func init() {
@@ -194,7 +196,7 @@ func (r *RecombineOperator) matchIndicatesLast() bool {
 }
 
 // addToBatch adds the current entry to the current batch of entries that will be combined
-func (r *RecombineOperator) addToBatch(ctx context.Context, e *entry.Entry) {
+func (r *RecombineOperator) addToBatch(_ context.Context, e *entry.Entry) {
 	if len(r.batch) >= r.maxBatchSize {
 		r.Error("Batch size exceeds max batch size. Flushing logs that have not been recombined")
 		r.flushUncombined(context.Background())

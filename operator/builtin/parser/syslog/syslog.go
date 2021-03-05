@@ -22,10 +22,14 @@ import (
 	sl "github.com/observiq/go-syslog/v3"
 	"github.com/observiq/go-syslog/v3/rfc3164"
 	"github.com/observiq/go-syslog/v3/rfc5424"
+
 	"github.com/open-telemetry/opentelemetry-log-collection/entry"
 	"github.com/open-telemetry/opentelemetry-log-collection/operator"
 	"github.com/open-telemetry/opentelemetry-log-collection/operator/helper"
 )
+
+const RFC3164 = "rfc3164"
+const RFC5424 = "rfc5424"
 
 func init() {
 	operator.Register("syslog_parser", func() operator.Builder { return NewSyslogParserConfig("") })
@@ -85,9 +89,9 @@ func (c SyslogParserConfig) Build(context operator.BuildContext) ([]operator.Ope
 
 func buildMachine(protocol string, location *time.Location) (sl.Machine, error) {
 	switch protocol {
-	case "rfc3164":
+	case RFC3164:
 		return rfc3164.NewMachine(rfc3164.WithLocaleTimezone(location)), nil
-	case "rfc5424":
+	case RFC5424:
 		return rfc5424.NewMachine(), nil
 	default:
 		return nil, fmt.Errorf("invalid protocol %s", protocol)

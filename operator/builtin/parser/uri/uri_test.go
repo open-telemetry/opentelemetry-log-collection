@@ -18,9 +18,9 @@ import (
 	"net/url"
 	"testing"
 
-	"github.com/open-telemetry/opentelemetry-log-collection/testutil"
-
 	"github.com/stretchr/testify/require"
+
+	"github.com/open-telemetry/opentelemetry-log-collection/testutil"
 )
 
 func newTestParser(t *testing.T) *URIParser {
@@ -197,7 +197,7 @@ func TestParseURI(t *testing.T) {
 			"path",
 			"/docs",
 			map[string]interface{}{
-				"path":  "/docs",
+				"path": "/docs",
 			},
 			false,
 		},
@@ -205,7 +205,7 @@ func TestParseURI(t *testing.T) {
 			"path-advanced",
 			`/x/y%2Fz`,
 			map[string]interface{}{
-				"path":  `/x/y%2Fz`,
+				"path": `/x/y%2Fz`,
 			},
 			false,
 		},
@@ -213,7 +213,7 @@ func TestParseURI(t *testing.T) {
 			"path-root",
 			"/",
 			map[string]interface{}{
-				"path":  "/",
+				"path": "/",
 			},
 			false,
 		},
@@ -418,9 +418,9 @@ func TestURLToMap(t *testing.T) {
 		{
 			"absolute-uri",
 			url.URL{
-				Scheme: "https",
-				Host:   "google.com:8443",
-				Path:   "/app",
+				Scheme:   "https",
+				Host:     "google.com:8443",
+				Path:     "/app",
 				RawQuery: "stage=prod&stage=dev",
 			},
 			map[string]interface{}{
@@ -450,11 +450,11 @@ func TestURLToMap(t *testing.T) {
 		{
 			"path",
 			url.URL{
-				Path:   "/app",
+				Path:     "/app",
 				RawQuery: "stage=prod&stage=dev",
 			},
 			map[string]interface{}{
-				"path":   "/app",
+				"path": "/app",
 				"query": map[string]interface{}{
 					"stage": []interface{}{
 						"prod",
@@ -466,10 +466,10 @@ func TestURLToMap(t *testing.T) {
 		{
 			"path-simple",
 			url.URL{
-				Path:   "/app",
+				Path: "/app",
 			},
 			map[string]interface{}{
-				"path":   "/app",
+				"path": "/app",
 			},
 		},
 		{

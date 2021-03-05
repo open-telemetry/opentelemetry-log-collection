@@ -20,13 +20,13 @@ import (
 	"math/rand"
 	"strconv"
 	"sync"
+	"testing"
 	"time"
 
-	"testing"
+	"github.com/stretchr/testify/require"
 
 	"github.com/open-telemetry/opentelemetry-log-collection/entry"
 	"github.com/open-telemetry/opentelemetry-log-collection/testutil"
-	"github.com/stretchr/testify/require"
 )
 
 func openBuffer(t testing.TB) *DiskBuffer {

@@ -21,9 +21,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/open-telemetry/opentelemetry-log-collection/operator/helper"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v2"
+
+	"github.com/open-telemetry/opentelemetry-log-collection/operator/helper"
 )
 
 type testCase struct {
@@ -206,7 +207,11 @@ func TestConfig(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			cfgFromYaml, err := configFromFileViaYaml(t, path.Join(".", "testdata", fmt.Sprintf("%s.yaml", tc.name)))
-			require.NoError(t, err)
+			if tc.expectErr {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
 			require.Equal(t, tc.expect, cfgFromYaml)
 
 			// TODO cfgFromMapstructure, err := configFromFileViaYaml(t, path.Join(".", "testdata", fmt.Sprintf("%s.yaml", tc.name)))
@@ -216,7 +221,7 @@ func TestConfig(t *testing.T) {
 	}
 }
 
-func configFromFileViaYaml(t *testing.T, file string) (*InputConfig, error) {
+func configFromFileViaYaml(_ *testing.T, file string) (*InputConfig, error) {
 	bytes, err := ioutil.ReadFile(file)
 	if err != nil {
 		return nil, fmt.Errorf("could not find config file: %s", err)

@@ -25,10 +25,11 @@ import (
 	"sync"
 	"time"
 
+	"golang.org/x/sync/semaphore"
+
 	"github.com/open-telemetry/opentelemetry-log-collection/entry"
 	"github.com/open-telemetry/opentelemetry-log-collection/operator"
 	"github.com/open-telemetry/opentelemetry-log-collection/operator/helper"
-	"golang.org/x/sync/semaphore"
 )
 
 // DiskBufferConfig is a configuration struct for a DiskBuffer

@@ -24,12 +24,13 @@ import (
 	"sync/atomic"
 	"time"
 
+	"go.etcd.io/bbolt"
+	"golang.org/x/sync/semaphore"
+
 	"github.com/open-telemetry/opentelemetry-log-collection/database"
 	"github.com/open-telemetry/opentelemetry-log-collection/entry"
 	"github.com/open-telemetry/opentelemetry-log-collection/operator"
 	"github.com/open-telemetry/opentelemetry-log-collection/operator/helper"
-	"go.etcd.io/bbolt"
-	"golang.org/x/sync/semaphore"
 )
 
 // MemoryBufferConfig holds the configuration for a memory buffer

@@ -19,9 +19,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/open-telemetry/opentelemetry-log-collection/operator/helper"
 	"github.com/stretchr/testify/require"
 	yaml "gopkg.in/yaml.v2"
+
+	"github.com/open-telemetry/opentelemetry-log-collection/operator/helper"
 )
 
 func TestBufferUnmarshalYAML(t *testing.T) {

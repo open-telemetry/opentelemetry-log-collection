@@ -17,12 +17,13 @@ package severity
 import (
 	"testing"
 
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
+
 	"github.com/open-telemetry/opentelemetry-log-collection/entry"
 	"github.com/open-telemetry/opentelemetry-log-collection/operator"
 	"github.com/open-telemetry/opentelemetry-log-collection/operator/helper"
 	"github.com/open-telemetry/opentelemetry-log-collection/testutil"
-	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
 )
 
 type severityTestCase struct {
@@ -36,7 +37,6 @@ type severityTestCase struct {
 }
 
 func TestSeverityParser(t *testing.T) {
-
 	testCases := []severityTestCase{
 		{
 			name:     "unknown",
@@ -311,8 +311,7 @@ func TestSeverityParser(t *testing.T) {
 	}
 }
 
-func runSeverityParseTest(t *testing.T, cfg *SeverityParserConfig, ent *entry.Entry, buildErr bool, parseErr bool, expected entry.Severity) func(*testing.T) {
-
+func runSeverityParseTest(_ *testing.T, cfg *SeverityParserConfig, ent *entry.Entry, buildErr bool, parseErr bool, expected entry.Severity) func(*testing.T) {
 	return func(t *testing.T) {
 		buildContext := testutil.NewBuildContext(t)
 
