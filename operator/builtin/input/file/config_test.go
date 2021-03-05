@@ -43,6 +43,12 @@ func TestConfig(t *testing.T) {
 			defaultCfg(),
 		},
 		{
+
+			"extra_field",
+			false,
+			defaultCfg(),
+		},
+		{
 			"id_custom",
 			false,
 			NewInputConfig("test_id"),
@@ -391,29 +397,11 @@ func TestConfig(t *testing.T) {
 			}(),
 		},
 		{
-			"start_at_empty",
-			false,
-			func() *InputConfig {
-				cfg := defaultCfg()
-				cfg.StartAt = ""
-				return cfg
-			}(),
-		},
-		{
 			"max_concurrent_large",
 			false,
 			func() *InputConfig {
 				cfg := defaultCfg()
 				cfg.MaxConcurrentFiles = 9223372036854775807
-				return cfg
-			}(),
-		},
-		{
-			"max_concurrent_empty",
-			false,
-			func() *InputConfig {
-				cfg := defaultCfg()
-				cfg.MaxConcurrentFiles = 0
 				return cfg
 			}(),
 		},
@@ -480,17 +468,17 @@ func TestConfig(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			cfgFromYaml, err := configFromFileViaYaml(t, path.Join(".", "testdata", fmt.Sprintf("%s.yaml", tc.name)))
-
+			cfgFromYaml, yamlErr := configFromFileViaYaml(t, path.Join(".", "testdata", fmt.Sprintf("%s.yaml", tc.name)))
+			cfgFromMapstructure, mapErr := configFromFileViaMapstructure(path.Join(".", "testdata", fmt.Sprintf("%s.yaml", tc.name)))
 			if tc.expectErr {
-				require.Error(t, err)
+				require.Error(t, yamlErr)
+				require.Error(t, mapErr)
 			} else {
-				require.NoError(t, err)
+				require.NoError(t, yamlErr)
 				require.Equal(t, tc.expect, cfgFromYaml)
+				require.NoError(t, mapErr)
+				require.Equal(t, tc.expect, cfgFromMapstructure)
 			}
-			// TODO cfgFromMapstructure, err := configFromFileViaYaml(t, path.Join(".", "testdata", fmt.Sprintf("%s.yaml", tc.name)))
-			// TODO require.NoError(t, err)
-			// TODO require.Equal(t, tc.expect, cfgFromMapstructure)
 		})
 	}
 }
@@ -501,8 +489,8 @@ func configFromFileViaYaml(t *testing.T, file string) (*InputConfig, error) {
 		return nil, fmt.Errorf("could not find config file: %s", err)
 	}
 
-	config := NewInputConfig("file_input")
-	if err := yaml.UnmarshalStrict(bytes, config); err != nil {
+	config := defaultCfg()
+	if err := yaml.Unmarshal(bytes, config); err != nil {
 		return nil, fmt.Errorf("failed to read config file as yaml: %s", err)
 	}
 
