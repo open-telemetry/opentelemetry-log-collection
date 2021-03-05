@@ -10,7 +10,7 @@ linters:
     - errcheck
   enable:
     - gofmt
-    - goimports
+    - gci
     - bodyclose
     - goconst
     - gocritic
@@ -22,5 +22,13 @@ linters:
     - whitespace
     - ineffassign
 linters-settings:
+  gci:
+    local-prefixes: github.com/open-telemetry/opentelemetry-log-collection
   goconst:
     min-occurrences: 5
+issues:
+  exclude-rules:
+    - path: operator/builtin/input/windows/xml\.go
+      linters:
+        - unused
+        - deadcode
