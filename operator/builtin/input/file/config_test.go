@@ -21,9 +21,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/open-telemetry/opentelemetry-log-collection/operator/helper"
+	"github.com/mitchellh/mapstructure"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v2"
+
+	"github.com/open-telemetry/opentelemetry-log-collection/entry"
+	"github.com/open-telemetry/opentelemetry-log-collection/operator/helper"
 )
 
 type testCase struct {
@@ -205,18 +208,17 @@ func TestConfig(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			cfgFromYaml, err := configFromFileViaYaml(t, path.Join(".", "testdata", fmt.Sprintf("%s.yaml", tc.name)))
+			cfgFromYaml, err := configFromFileViaYaml(path.Join(".", "testdata", fmt.Sprintf("%s.yaml", tc.name)))
 			require.NoError(t, err)
 			require.Equal(t, tc.expect, cfgFromYaml)
-
-			// TODO cfgFromMapstructure, err := configFromFileViaYaml(t, path.Join(".", "testdata", fmt.Sprintf("%s.yaml", tc.name)))
-			// TODO require.NoError(t, err)
-			// TODO require.Equal(t, tc.expect, cfgFromMapstructure)
+			cfgFromMapstructure, err := configFromFileViaMapstructure(path.Join(".", "testdata", fmt.Sprintf("%s.yaml", tc.name)))
+			require.NoError(t, err)
+			require.Equal(t, tc.expect, cfgFromMapstructure)
 		})
 	}
 }
 
-func configFromFileViaYaml(t *testing.T, file string) (*InputConfig, error) {
+func configFromFileViaYaml(file string) (*InputConfig, error) {
 	bytes, err := ioutil.ReadFile(file)
 	if err != nil {
 		return nil, fmt.Errorf("could not find config file: %s", err)
@@ -230,12 +232,35 @@ func configFromFileViaYaml(t *testing.T, file string) (*InputConfig, error) {
 	return config, nil
 }
 
-// TODO func configFromFileViaMapstructure(t *testing.T, file string) (*InputConfig, error) {}
+func configFromFileViaMapstructure(file string) (*InputConfig, error) {
+	bytes, err := ioutil.ReadFile(file)
+	if err != nil {
+		return nil, fmt.Errorf("could not find config file: %s", err)
+	}
+
+	raw := map[string]interface{}{}
+
+	if err := yaml.Unmarshal(bytes, raw); err != nil {
+		return nil, fmt.Errorf("failed to read data from yaml: %s", err)
+	}
+
+	cfg := defaultCfg()
+	dc := &mapstructure.DecoderConfig{Result: cfg, DecodeHook: helper.JSONUnmarshalerHook()}
+	ms, err := mapstructure.NewDecoder(dc)
+	if err != nil {
+		return nil, err
+	}
+	err = ms.Decode(raw)
+	if err != nil {
+		return nil, err
+	}
+	return cfg, nil
+
+}
 
 func defaultCfg() *InputConfig {
 	return NewInputConfig("file_input")
 }
-
 
 func NewTestInputConfig() *InputConfig {
 	cfg := NewInputConfig("config_test")
@@ -262,7 +287,7 @@ func TestMapStructureDecodeConfigWithHook(t *testing.T) {
 
 		"include":       expect.Include,
 		"exclude":       expect.Exclude,
-		"poll_interval": "0.2",
+		"poll_interval": 0.2,
 		"multiline": map[string]interface{}{
 			"line_start_pattern": expect.Multiline.LineStartPattern,
 			"line_end_pattern":   expect.Multiline.LineEndPattern,
@@ -277,7 +302,7 @@ func TestMapStructureDecodeConfigWithHook(t *testing.T) {
 	}
 
 	var actual InputConfig
-	dc := &mapstructure.DecoderConfig{Result: &actual, DecodeHook: mapstructure.TextUnmarshallerHookFunc()}
+	dc := &mapstructure.DecoderConfig{Result: &actual, DecodeHook: helper.JSONUnmarshalerHook()}
 	ms, err := mapstructure.NewDecoder(dc)
 	require.NoError(t, err)
 	err = ms.Decode(input)
@@ -289,8 +314,8 @@ func TestMapStructureDecodeConfig(t *testing.T) {
 	expect := NewTestInputConfig()
 	input := map[string]interface{}{
 		// InputConfig
-		"id":   "config_test",
-		"type": "file_input",
+		"id":       "config_test",
+		"type":     "file_input",
 		"write_to": entry.NewRecordField([]string{}...),
 		"labels": map[string]interface{}{
 		},
