@@ -9,11 +9,12 @@ ALL_MODULES := $(shell find . -type f -name "go.mod" -exec dirname {} \; | sort 
 ALL_SRC := $(shell find . -name '*.go' -type f | sort)
 ADDLICENCESE=addlicense
 
+TOOLS_MOD_DIR := ./internal/tools
 .PHONY: install-tools
 install-tools:
-	go install github.com/golangci/golangci-lint/cmd/golangci-lint
-	go install github.com/vektra/mockery/cmd/mockery
-	go install github.com/google/addlicense
+	cd $(TOOLS_MOD_DIR) && go install github.com/golangci/golangci-lint/cmd/golangci-lint
+	cd $(TOOLS_MOD_DIR) && go install github.com/vektra/mockery/cmd/mockery
+	cd $(TOOLS_MOD_DIR) && go install github.com/google/addlicense
 
 .PHONY: test
 test: vet test-only
