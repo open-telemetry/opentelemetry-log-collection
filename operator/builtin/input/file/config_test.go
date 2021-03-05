@@ -481,7 +481,6 @@ func TestConfig(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			cfgFromYaml, err := configFromFileViaYaml(t, path.Join(".", "testdata", fmt.Sprintf("%s.yaml", tc.name)))
-
 			if tc.expectErr {
 				require.Error(t, err)
 			} else {
