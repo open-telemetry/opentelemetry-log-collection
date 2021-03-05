@@ -182,8 +182,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The `Tags` field was removed from Entry ([PR95](https://github.com/observIQ/stanza/pull/95))
 
 ### Changed
-- The `host_metadata` operator now writes to an entry's `Resource` field, instead of Labels
-- The `host_labeler` helper has been renamed `host_identifier`
+- The `host_metadata` operator now writes to an entry's `Resource` field, instead of Attributes
+- The `host_attributer` helper has been renamed `host_identifier`
 - The `metadata` operator embeds the `Identifier` helper and supports writing to `Resource`
 - Input operators embed the `Identifier` helper and support writing to `Resource`
 - The `k8s_event` operator now supports the `write_to`, `labels`, and `resource` configuration options

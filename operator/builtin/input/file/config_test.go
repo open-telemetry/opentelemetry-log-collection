@@ -277,13 +277,11 @@ func TestMapStructureDecodeConfigWithHook(t *testing.T) {
 	expect := NewTestInputConfig()
 	input := map[string]interface{}{
 		// InputConfig
-		"id":       "config_test",
-		"type":     "file_input",
-		"write_to": "$",
-		"labels": map[string]interface{}{
-		},
-		"resource": map[string]interface{}{
-		},
+		"id":         "config_test",
+		"type":       "file_input",
+		"write_to":   "$",
+		"attributes": map[string]interface{}{},
+		"resource":   map[string]interface{}{},
 
 		"include":       expect.Include,
 		"exclude":       expect.Exclude,
@@ -314,15 +312,13 @@ func TestMapStructureDecodeConfig(t *testing.T) {
 	expect := NewTestInputConfig()
 	input := map[string]interface{}{
 		// InputConfig
-		"id":       "config_test",
-		"type":     "file_input",
-		"write_to": entry.NewRecordField([]string{}...),
-		"labels": map[string]interface{}{
-		},
-		"resource": map[string]interface{}{
-		},
-		"include": expect.Include,
-		"exclude": expect.Exclude,
+		"id":         "config_test",
+		"type":       "file_input",
+		"write_to":   entry.NewRecordField([]string{}...),
+		"attributes": map[string]interface{}{},
+		"resource":   map[string]interface{}{},
+		"include":    expect.Include,
+		"exclude":    expect.Exclude,
 		"poll_interval": map[string]interface{}{
 			"Duration": 200 * 1000 * 1000,
 		},
