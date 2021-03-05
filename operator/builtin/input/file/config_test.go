@@ -83,10 +83,7 @@ func TestConfig(t *testing.T) {
 		{
 			"include_invalid",
 			true,
-			func() *InputConfig {
-				cfg := defaultCfg()
-				return cfg
-			}(),
+			nil,
 		},
 		{
 			"exclude_one",
@@ -131,11 +128,7 @@ func TestConfig(t *testing.T) {
 		{
 			"exclude_invalid",
 			true,
-			func() *InputConfig {
-				cfg := defaultCfg()
-				cfg.Include = append(cfg.Include, "*.log")
-				return cfg
-			}(),
+			nil,
 		},
 		{
 			"poll_interval_no_units",
@@ -330,11 +323,7 @@ func TestConfig(t *testing.T) {
 		{
 			"include_file_path_nonbool",
 			true,
-			func() *InputConfig {
-				cfg := defaultCfg()
-				cfg.Include = append(cfg.Include, "one.log")
-				return cfg
-			}(),
+			nil,
 		},
 		{
 			"multiline_line_start_string",
@@ -387,13 +376,7 @@ func TestConfig(t *testing.T) {
 		{
 			"multiline_random",
 			true,
-			func() *InputConfig {
-				cfg := defaultCfg()
-				var newMulti *MultilineConfig
-				newMulti = new(MultilineConfig)
-				cfg.Multiline = newMulti
-				return cfg
-			}(),
+			nil,
 		},
 		{
 			"start_at_string",
@@ -432,7 +415,7 @@ func TestConfig(t *testing.T) {
 			}(),
 		},
 		{
-			"max_logs_mib_lower",
+			"max_log_size_mib_lower",
 			false,
 			func() *InputConfig {
 				cfg := defaultCfg()
@@ -441,7 +424,7 @@ func TestConfig(t *testing.T) {
 			}(),
 		},
 		{
-			"max_logs_mib_upper",
+			"max_log_size_mib_upper",
 			false,
 			func() *InputConfig {
 				cfg := defaultCfg()
@@ -450,7 +433,7 @@ func TestConfig(t *testing.T) {
 			}(),
 		},
 		{
-			"max_logs_mb_upper",
+			"max_log_size_mb_upper",
 			false,
 			func() *InputConfig {
 				cfg := defaultCfg()
@@ -459,7 +442,7 @@ func TestConfig(t *testing.T) {
 			}(),
 		},
 		{
-			"max_logs_mb_lower",
+			"max_log_size_mb_lower",
 			false,
 			func() *InputConfig {
 				cfg := defaultCfg()
@@ -468,10 +451,25 @@ func TestConfig(t *testing.T) {
 			}(),
 		},
 		{
-			"max_logs_invalid_unit",
+			"max_log_size_invalid_unit",
 			true,
+			nil,
+		},
+		{
+			"encoding_lower",
+			false,
 			func() *InputConfig {
 				cfg := defaultCfg()
+				cfg.Encoding = "utf-16le"
+				return cfg
+			}(),
+		},
+		{
+			"encoding_upper",
+			false,
+			func() *InputConfig {
+				cfg := defaultCfg()
+				cfg.Encoding = "UTF-16lE"
 				return cfg
 			}(),
 		},
