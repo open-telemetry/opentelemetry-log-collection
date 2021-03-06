@@ -21,7 +21,6 @@ import (
 	"testing"
 	"time"
 
-
 	"github.com/mitchellh/mapstructure"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v2"
@@ -340,8 +339,7 @@ func TestConfig(t *testing.T) {
 			false,
 			func() *InputConfig {
 				cfg := defaultCfg()
-				var newMulti *MultilineConfig
-				newMulti = new(MultilineConfig)
+				newMulti := new(MultilineConfig)
 				newMulti.LineStartPattern = "Start"
 				cfg.Multiline = newMulti
 				return cfg
@@ -352,8 +350,7 @@ func TestConfig(t *testing.T) {
 			false,
 			func() *InputConfig {
 				cfg := defaultCfg()
-				var newMulti *MultilineConfig
-				newMulti = new(MultilineConfig)
+				newMulti := new(MultilineConfig)
 				newMulti.LineStartPattern = "%"
 				cfg.Multiline = newMulti
 				return cfg
@@ -364,8 +361,7 @@ func TestConfig(t *testing.T) {
 			false,
 			func() *InputConfig {
 				cfg := defaultCfg()
-				var newMulti *MultilineConfig
-				newMulti = new(MultilineConfig)
+				newMulti := new(MultilineConfig)
 				newMulti.LineEndPattern = "Start"
 				cfg.Multiline = newMulti
 				return cfg
@@ -376,8 +372,7 @@ func TestConfig(t *testing.T) {
 			false,
 			func() *InputConfig {
 				cfg := defaultCfg()
-				var newMulti *MultilineConfig
-				newMulti = new(MultilineConfig)
+				newMulti := new(MultilineConfig)
 				newMulti.LineEndPattern = "%"
 				cfg.Multiline = newMulti
 				return cfg
@@ -521,7 +516,6 @@ func configFromFileViaMapstructure(file string) (*InputConfig, error) {
 		return nil, err
 	}
 	return cfg, nil
-
 }
 
 func defaultCfg() *InputConfig {
