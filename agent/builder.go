@@ -77,7 +77,6 @@ func (b *LogAgentBuilder) WithDefaultOutput(defaultOutput operator.Operator) *Lo
 
 // Build will build a new log agent using the values defined on the builder
 func (b *LogAgentBuilder) Build() (*LogAgent, error) {
-
 	if b.databaseFile != "" && b.namespace == "" {
 		return nil, fmt.Errorf("use of database requires namespace")
 	}

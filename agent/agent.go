@@ -24,9 +24,8 @@ import (
 
 // LogAgent is an entity that handles log monitoring.
 type LogAgent struct {
-	instanceName string
-	database     database.Database
-	pipeline     pipeline.Pipeline
+	database database.Database
+	pipeline pipeline.Pipeline
 
 	startOnce sync.Once
 	stopOnce  sync.Once
