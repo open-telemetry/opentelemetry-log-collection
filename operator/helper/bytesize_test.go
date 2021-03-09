@@ -57,8 +57,8 @@ var sharedTestCases = []testCase{
 }
 
 func TestByteSizeUnmarshalJSON(t *testing.T) {
-	for i, tc := range sharedTestCases {
-		t.Run(strconv.Itoa(i), func(t *testing.T) {
+	for _, tc := range sharedTestCases {
+		t.Run("json"+tc.input, func(t *testing.T) {
 			var bs ByteSize
 			err := json.Unmarshal([]byte(tc.input), &bs)
 			if tc.expectError {
@@ -90,6 +90,7 @@ func TestByteSizeUnmarshalYAML(t *testing.T) {
 	}
 
 	cases := append(sharedTestCases, additionalCases...)
+
 	for i, tc := range cases {
 		t.Run(strconv.Itoa(i), func(t *testing.T) {
 			var bs ByteSize
@@ -100,18 +101,31 @@ func TestByteSizeUnmarshalYAML(t *testing.T) {
 			}
 			require.NoError(t, yamlErr)
 			require.Equal(t, tc.expected, bs)
-
+		})
+		t.Run("mapstructure"+tc.input, func(t *testing.T) {
 			// And also same result if using mapstructure
 			var newBs ByteSize
 			var raw string
+			var savedErr error
+			err := yaml.Unmarshal([]byte(tc.input), &raw)
 
-			require.NoError(t, yaml.Unmarshal([]byte(tc.input), &raw))
+			//saving the error so we can check multiple errors and see if there were any errors at any point
+			if err != nil {
+				savedErr = err
+			}
 
 			dc := &mapstructure.DecoderConfig{Result: &newBs, DecodeHook: JSONUnmarshalerHook()}
 			ms, err := mapstructure.NewDecoder(dc)
+
 			if err != nil {
-				require.NoError(t, err)
+				savedErr = err
 			}
+
+			if tc.expectError {
+				require.Error(t, savedErr)
+				return
+			}
+			require.NoError(t, err)
 			require.NoError(t, ms.Decode(raw))
 
 			require.Equal(t, tc.expected, newBs)
