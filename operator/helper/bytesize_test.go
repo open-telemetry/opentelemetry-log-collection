@@ -16,7 +16,6 @@ package helper
 
 import (
 	"encoding/json"
-	"strconv"
 	"testing"
 
 	"github.com/mitchellh/mapstructure"
@@ -58,7 +57,7 @@ var sharedTestCases = []testCase{
 
 func TestByteSizeUnmarshalJSON(t *testing.T) {
 	for _, tc := range sharedTestCases {
-		t.Run("json"+tc.input, func(t *testing.T) {
+		t.Run("json/"+tc.input, func(t *testing.T) {
 			var bs ByteSize
 			err := json.Unmarshal([]byte(tc.input), &bs)
 			if tc.expectError {
@@ -91,8 +90,8 @@ func TestByteSizeUnmarshalYAML(t *testing.T) {
 
 	cases := append(sharedTestCases, additionalCases...)
 
-	for i, tc := range cases {
-		t.Run(strconv.Itoa(i), func(t *testing.T) {
+	for _, tc := range cases {
+		t.Run("yaml/"+tc.input, func(t *testing.T) {
 			var bs ByteSize
 			yamlErr := yaml.Unmarshal([]byte(tc.input), &bs)
 			if tc.expectError {
@@ -102,33 +101,23 @@ func TestByteSizeUnmarshalYAML(t *testing.T) {
 			require.NoError(t, yamlErr)
 			require.Equal(t, tc.expected, bs)
 		})
-		t.Run("mapstructure"+tc.input, func(t *testing.T) {
-			// And also same result if using mapstructure
-			var newBs ByteSize
+		t.Run("mapstructure/"+tc.input, func(t *testing.T) {
+			var bs ByteSize
 			var raw string
-			var savedErr error
-			err := yaml.Unmarshal([]byte(tc.input), &raw)
+			_ = yaml.Unmarshal([]byte(tc.input), &raw)
 
-			//saving the error so we can check multiple errors and see if there were any errors at any point
-			if err != nil {
-				savedErr = err
-			}
-
-			dc := &mapstructure.DecoderConfig{Result: &newBs, DecodeHook: JSONUnmarshalerHook()}
+			dc := &mapstructure.DecoderConfig{Result: &bs, DecodeHook: JSONUnmarshalerHook()}
 			ms, err := mapstructure.NewDecoder(dc)
+			require.NoError(t, err)
 
-			if err != nil {
-				savedErr = err
-			}
-
+			err = ms.Decode(raw)
 			if tc.expectError {
-				require.Error(t, savedErr)
+				require.Error(t, err)
 				return
 			}
 			require.NoError(t, err)
-			require.NoError(t, ms.Decode(raw))
 
-			require.Equal(t, tc.expected, newBs)
+			require.Equal(t, tc.expected, bs)
 		})
 	}
 }
