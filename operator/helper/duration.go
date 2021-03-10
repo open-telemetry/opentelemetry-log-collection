@@ -82,10 +82,10 @@ func durationFromInterface(val interface{}) (time.Duration, error) {
 	case string:
 
 		if _, err := strconv.Atoi(value); err == nil {
-			value += "s" //int value with no unit
+			value += "s" // int value with no unit
 		}
 		if _, err := strconv.ParseFloat(value, 64); err == nil {
-			value += "s" //float value with no unit
+			value += "s" // float value with no unit
 		}
 		d, err := time.ParseDuration(value)
 		return d, err
