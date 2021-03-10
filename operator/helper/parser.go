@@ -34,7 +34,7 @@ func NewParserConfig(operatorID, operatorType string) ParserConfig {
 
 // ParserConfig provides the basic implementation of a parser config.
 type ParserConfig struct {
-	TransformerConfig                          `mapstructure:",squash" yaml:",inline"`
+	TransformerConfig `mapstructure:",squash" yaml:",inline"`
 
 	ParseFrom            entry.Field           `mapstructure:"parse_from"          json:"parse_from"          yaml:"parse_from"`
 	ParseTo              entry.Field           `mapstructure:"parse_to"            json:"parse_to"            yaml:"parse_to"`

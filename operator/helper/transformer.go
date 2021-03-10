@@ -20,10 +20,11 @@ import (
 
 	"github.com/antonmedv/expr"
 	"github.com/antonmedv/expr/vm"
+	"go.uber.org/zap"
+
 	"github.com/open-telemetry/opentelemetry-log-collection/entry"
 	"github.com/open-telemetry/opentelemetry-log-collection/errors"
 	"github.com/open-telemetry/opentelemetry-log-collection/operator"
-	"go.uber.org/zap"
 )
 
 // NewTransformerConfig creates a new transformer config with default values
@@ -36,7 +37,7 @@ func NewTransformerConfig(operatorID, operatorType string) TransformerConfig {
 
 // TransformerConfig provides a basic implementation of a transformer config.
 type TransformerConfig struct {
-	WriterConfig        `mapstructure:",squash"  yaml:",inline"`
+	WriterConfig `mapstructure:",squash"  yaml:",inline"`
 	OnError      string `mapstructure:"on_error" json:"on_error" yaml:"on_error"`
 	IfExpr       string `mapstructure:"if"       json:"if"       yaml:"if"`
 }
