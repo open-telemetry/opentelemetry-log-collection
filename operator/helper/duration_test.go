@@ -34,42 +34,42 @@ type durationTestCase struct {
 
 func TestParseDuration(t *testing.T) {
 	cases := []durationTestCase{
-		// {
-		// 	"simple nanosecond",
-		// 	`"10ns"`,
-		// 	Duration{10 * time.Nanosecond},
-		// 	false,
-		// },
-		// {
-		// 	"simple microsecond",
-		// 	`"10us"`,
-		// 	Duration{10 * time.Microsecond},
-		// 	false,
-		// },
-		// {
-		// 	"simple alternate microsecond",
-		// 	`"10µs"`,
-		// 	Duration{10 * time.Microsecond},
-		// 	false,
-		// },
-		// {
-		// 	"simple millisecond",
-		// 	`"10ms"`,
-		// 	Duration{10 * time.Millisecond},
-		// 	false,
-		// },
-		// {
-		// 	"simple second",
-		// 	`"1s"`,
-		// 	Duration{time.Second},
-		// 	false,
-		// },
-		// {
-		// 	"simple minute",
-		// 	`"10m"`,
-		// 	Duration{10 * time.Minute},
-		// 	false,
-		// },
+		{
+			"simple nanosecond",
+			`"10ns"`,
+			Duration{10 * time.Nanosecond},
+			false,
+		},
+		{
+			"simple microsecond",
+			`"10us"`,
+			Duration{10 * time.Microsecond},
+			false,
+		},
+		{
+			"simple alternate microsecond",
+			`"10µs"`,
+			Duration{10 * time.Microsecond},
+			false,
+		},
+		{
+			"simple millisecond",
+			`"10ms"`,
+			Duration{10 * time.Millisecond},
+			false,
+		},
+		{
+			"simple second",
+			`"1s"`,
+			Duration{time.Second},
+			false,
+		},
+		{
+			"simple minute",
+			`"10m"`,
+			Duration{10 * time.Minute},
+			false,
+		},
 		{
 			"simple hour",
 			`"10h"`,
@@ -127,17 +127,6 @@ func TestParseDuration(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		t.Run("yaml/"+tc.name, func(t *testing.T) {
-			var dur Duration
-			err := yaml.UnmarshalStrict([]byte(tc.input), &dur)
-			if tc.expectError {
-				require.Error(t, err)
-				return
-			}
-			require.NoError(t, err)
-			require.Equal(t, tc.expected, dur)
-		})
-
 		t.Run("json/"+tc.name, func(t *testing.T) {
 			var dur Duration
 			err := json.Unmarshal([]byte(tc.input), &dur)
@@ -148,29 +137,42 @@ func TestParseDuration(t *testing.T) {
 			require.NoError(t, err)
 			require.Equal(t, tc.expected, dur)
 		})
+	}
 
-		additionalCases := []durationTestCase{
-			{
-				"simple minute unquoted",
-				`10m`,
-				Duration{10 * time.Minute},
-				false,
-			},
-			{
-				"simple second unquoted",
-				`10s`,
-				Duration{10 * time.Second},
-				false,
-			},
-			{
-				"simple multi unquoted",
-				`10h10m10s`,
-				Duration{(10 * time.Second) + (10 * time.Minute) + (10 * time.Hour)},
-				false,
-			},
-		}
+	additionalCases := []durationTestCase{
+		{
+			"simple minute unquoted",
+			`10m`,
+			Duration{10 * time.Minute},
+			false,
+		},
+		{
+			"simple second unquoted",
+			`10s`,
+			Duration{10 * time.Second},
+			false,
+		},
+		{
+			"simple multi unquoted",
+			`10h10m10s`,
+			Duration{(10 * time.Second) + (10 * time.Minute) + (10 * time.Hour)},
+			false,
+		},
+	}
 
-		cases = append(cases, additionalCases...)
+	cases = append(cases, additionalCases...)
+
+	for _, tc := range cases {
+		t.Run("yaml/"+tc.name, func(t *testing.T) {
+			var dur Duration
+			err := yaml.UnmarshalStrict([]byte(tc.input), &dur)
+			if tc.expectError {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+			require.Equal(t, tc.expected, dur)
+		})
 
 		t.Run("mapstructure/"+tc.name, func(t *testing.T) {
 			var dur Duration
