@@ -1,16 +1,32 @@
+// Copyright The OpenTelemetry Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package syslog
 
 import (
 	"fmt"
+	"net"
+	"testing"
+	"time"
+
 	"github.com/open-telemetry/opentelemetry-log-collection/operator/builtin/input/tcp"
 	"github.com/open-telemetry/opentelemetry-log-collection/operator/builtin/input/udp"
 	"github.com/open-telemetry/opentelemetry-log-collection/operator/builtin/parser/syslog"
 	"github.com/open-telemetry/opentelemetry-log-collection/pipeline"
 	"github.com/open-telemetry/opentelemetry-log-collection/testutil"
 	"github.com/stretchr/testify/require"
-	"net"
-	"testing"
-	"time"
+	"gopkg.in/yaml.v2"
 )
 
 func TestSyslogInput(t *testing.T) {
@@ -54,7 +70,6 @@ func SyslogInputTest(t *testing.T, cfg *SyslogInputConfig, tc syslog.Case) {
 		require.NoError(t, err)
 	}
 
-
 	switch tc.InputRecord.(type) {
 	case string:
 		_, err = conn.Write([]byte(tc.InputRecord.(string)))
@@ -65,34 +80,60 @@ func SyslogInputTest(t *testing.T, cfg *SyslogInputConfig, tc syslog.Case) {
 	conn.Close()
 	require.NoError(t, err)
 
+	defer p.Stop()
 	select {
 	case e := <-fake.Received:
 		// close pipeline to avoid data race
-		p.Stop()
 		require.Equal(t, tc.ExpectedRecord, e.Record)
 		require.Equal(t, tc.ExpectedTimestamp, e.Timestamp)
 		require.Equal(t, tc.ExpectedSeverity, e.Severity)
 		require.Equal(t, tc.ExpectedSeverityText, e.SeverityText)
 	case <-time.After(time.Second):
-		p.Stop()
 		require.FailNow(t, "Timed out waiting for entry to be processed")
 	}
 }
 
 func NewSyslogInputConfigWithTcp(syslogCfg *syslog.SyslogParserConfig) *SyslogInputConfig {
 	cfg := NewSyslogInputConfig("test_syslog")
+	cfg.SyslogParserConfig = *syslogCfg
 	cfg.Tcp = tcp.NewTCPInputConfig("test_syslog_tcp")
 	cfg.Tcp.ListenAddress = ":14201"
 	cfg.OutputIDs = []string{"fake"}
-	cfg.Syslog = syslogCfg
 	return cfg
 }
 
 func NewSyslogInputConfigWithUdp(syslogCfg *syslog.SyslogParserConfig) *SyslogInputConfig {
 	cfg := NewSyslogInputConfig("test_syslog")
+	cfg.SyslogParserConfig = *syslogCfg
 	cfg.Udp = udp.NewUDPInputConfig("test_syslog_udp")
 	cfg.Udp.ListenAddress = ":12032"
 	cfg.OutputIDs = []string{"fake"}
-	cfg.Syslog = syslogCfg
 	return cfg
+}
+
+func TestConfigYamlUnmarshal(t *testing.T) {
+	base := `type: syslog_input
+protocol: rfc5424
+udp:
+  listen_address: localhost:1234
+`
+	var cfg SyslogInputConfig
+	err := yaml.Unmarshal([]byte(base), &cfg)
+	require.NoError(t, err)
+	require.Equal(t, "rfc5424", cfg.Protocol)
+	require.Equal(t, "localhost:1234", cfg.Udp.ListenAddress)
+
+	base = `type: syslog_input
+protocol: rfc5424
+tcp:
+  listen_address: localhost:1234
+  tls:
+    enable: true
+`
+	err = yaml.Unmarshal([]byte(base), &cfg)
+	require.NoError(t, err)
+	require.Equal(t, "rfc5424", cfg.Protocol)
+	require.Equal(t, "localhost:1234", cfg.Tcp.ListenAddress)
+	require.Equal(t, true, cfg.Tcp.TLS.Enable)
+
 }
