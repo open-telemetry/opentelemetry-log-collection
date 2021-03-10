@@ -15,6 +15,7 @@
 package agent
 
 import (
+	"fmt"
 	"time"
 
 	"go.uber.org/zap"
@@ -32,6 +33,7 @@ type LogAgentBuilder struct {
 	config        *Config
 	logger        *zap.SugaredLogger
 	pluginDir     string
+	namespace     string
 	databaseFile  string
 	defaultOutput operator.Operator
 }
@@ -62,8 +64,9 @@ func (b *LogAgentBuilder) WithConfig(cfg *Config) *LogAgentBuilder {
 }
 
 // WithDatabaseFile adds the specified database file when building a log agent
-func (b *LogAgentBuilder) WithDatabaseFile(databaseFile string) *LogAgentBuilder {
+func (b *LogAgentBuilder) WithDatabaseFile(databaseFile, namespace string) *LogAgentBuilder {
 	b.databaseFile = databaseFile
+	b.namespace = namespace
 	return b
 }
 
@@ -75,6 +78,10 @@ func (b *LogAgentBuilder) WithDefaultOutput(defaultOutput operator.Operator) *Lo
 
 // Build will build a new log agent using the values defined on the builder
 func (b *LogAgentBuilder) Build() (*LogAgent, error) {
+	if b.databaseFile != "" && b.namespace == "" {
+		return nil, fmt.Errorf("use of database requires namespace")
+	}
+
 	db, err := database.OpenDatabase(b.databaseFile)
 	if err != nil {
 		return nil, errors.Wrap(err, "open database")
@@ -106,6 +113,10 @@ func (b *LogAgentBuilder) Build() (*LogAgent, error) {
 	).Sugar()
 
 	buildContext := operator.NewBuildContext(db, sampledLogger)
+	if b.namespace != "" {
+		buildContext = buildContext.WithSubNamespace(b.namespace)
+	}
+
 	pipeline, err := b.config.Pipeline.BuildPipeline(buildContext, b.defaultOutput)
 	if err != nil {
 		return nil, err
