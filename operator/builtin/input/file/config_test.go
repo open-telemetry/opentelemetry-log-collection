@@ -539,7 +539,6 @@ func NewTestInputConfig() *InputConfig {
 }
 
 func TestMapStructureDecodeConfigWithHook(t *testing.T) {
-
 	expect := NewTestInputConfig()
 	input := map[string]interface{}{
 		// InputConfig
