@@ -23,6 +23,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
+	"gopkg.in/yaml.v2"
 
 	"github.com/open-telemetry/opentelemetry-log-collection/entry"
 	"github.com/open-telemetry/opentelemetry-log-collection/operator"
@@ -230,4 +231,36 @@ func TestJSONParserWithEmbeddedTimeParser(t *testing.T) {
 			require.NoError(t, err)
 		})
 	}
+}
+
+func TestJsonParserConfig(t *testing.T) {
+	expect := NewJSONParserConfig("test")
+	expect.ParseFrom = entry.NewRecordField("from")
+	expect.ParseTo = entry.NewRecordField("to")
+
+	t.Run("mapstructure", func(t *testing.T) {
+		input := map[string]interface{}{
+			"id":         "test",
+			"type":       "json_parser",
+			"parse_from": "$.from",
+			"parse_to":   "$.to",
+			"on_error":   "send",
+		}
+		var actual JSONParserConfig
+		err := helper.UnmarshalMapstructure(input, &actual)
+		require.NoError(t, err)
+		require.Equal(t, expect, &actual)
+	})
+
+	t.Run("yaml", func(t *testing.T) {
+		input := `type: json_parser
+id: test
+on_error: "send"
+parse_from: $.from
+parse_to: $.to`
+		var actual JSONParserConfig
+		err := yaml.Unmarshal([]byte(input), &actual)
+		require.NoError(t, err)
+		require.Equal(t, expect, &actual)
+	})
 }
