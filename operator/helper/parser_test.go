@@ -426,7 +426,7 @@ func TestMapStructureDecodeParserConfigWithHook(t *testing.T) {
 	}
 
 	var actual ParserConfig
-	dc := &mapstructure.DecoderConfig{Result: &actual, DecodeHook: mapstructure.TextUnmarshallerHookFunc()}
+	dc := &mapstructure.DecoderConfig{Result: &actual, DecodeHook: JSONUnmarshalerHook()}
 	ms, err := mapstructure.NewDecoder(dc)
 	require.NoError(t, err)
 	err = ms.Decode(input)
