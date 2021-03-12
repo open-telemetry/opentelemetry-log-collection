@@ -60,7 +60,6 @@ func TestConfig(t *testing.T) {
 			if tc.expectErr {
 				require.Error(t, yamlErr)
 			} else {
-				t.Log(cfgFromYaml)
 				require.NoError(t, yamlErr)
 				require.Equal(t, tc.expect, cfgFromYaml)
 			}
