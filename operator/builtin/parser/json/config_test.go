@@ -56,15 +56,15 @@ func TestConfig(t *testing.T) {
 				require.Equal(t, tc.expect, cfgFromYaml)
 			}
 		})
-		// t.Run("mapstructure/"+tc.name, func(t *testing.T) {
-		// 	cfgFromMapstructure, mapErr := configFromFileViaMapstructure(path.Join(".", "testdata", fmt.Sprintf("%s.yaml", tc.name)))
-		// 	if tc.expectErr {
-		// 		require.Error(t, mapErr)
-		// 	} else {
-		// 		require.NoError(t, mapErr)
-		// 		require.Equal(t, tc.expect, cfgFromMapstructure)
-		// 	}
-		// })
+		t.Run("mapstructure/"+tc.name, func(t *testing.T) {
+			cfgFromMapstructure, mapErr := configFromFileViaMapstructure(path.Join(".", "testdata", fmt.Sprintf("%s.yaml", tc.name)))
+			if tc.expectErr {
+				require.Error(t, mapErr)
+			} else {
+				require.NoError(t, mapErr)
+				require.Equal(t, tc.expect, cfgFromMapstructure)
+			}
+		})
 	}
 }
 
