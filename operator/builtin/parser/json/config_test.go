@@ -7,7 +7,6 @@ import (
 	"testing"
 
 	"github.com/mitchellh/mapstructure"
-	"github.com/open-telemetry/opentelemetry-log-collection/entry"
 	"github.com/open-telemetry/opentelemetry-log-collection/operator/helper"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v2"
@@ -21,26 +20,35 @@ type testCase struct {
 
 func TestConfig(t *testing.T) {
 	cases := []testCase{
+		// {
+		// 	"default",
+		// 	false,
+		// 	defaultCfg(),
+		// },
+		// {
+		// 	"parse_from_simple",
+		// 	false,
+		// 	func() *JSONParserConfig {
+		// 		cfg := defaultCfg()
+		// 		cfg.ParseFrom = entry.NewRecordField("log")
+		// 		return cfg
+		// 	}(),
+		// },
+		// {
+		// 	"parse_to_simple",
+		// 	false,
+		// 	func() *JSONParserConfig {
+		// 		cfg := defaultCfg()
+		// 		cfg.ParseTo = entry.NewRecordField("log")
+		// 		return cfg
+		// 	}(),
+		// },
 		{
-			"default",
-			false,
-			defaultCfg(),
-		},
-		{
-			"parse from simple",
+			"on_error_drop",
 			false,
 			func() *JSONParserConfig {
 				cfg := defaultCfg()
-				cfg.ParseFrom = entry.NewRecordField("log")
-				return cfg
-			}(),
-		},
-		{
-			"parse to simple",
-			false,
-			func() *JSONParserConfig {
-				cfg := defaultCfg()
-				cfg.ParseTo = entry.NewRecordField("log")
+				cfg.OnError = "drop"
 				return cfg
 			}(),
 		},
@@ -52,6 +60,7 @@ func TestConfig(t *testing.T) {
 			if tc.expectErr {
 				require.Error(t, yamlErr)
 			} else {
+				t.Log(cfgFromYaml)
 				require.NoError(t, yamlErr)
 				require.Equal(t, tc.expect, cfgFromYaml)
 			}
@@ -74,7 +83,7 @@ func configFromFileViaYaml(t *testing.T, file string) (*JSONParserConfig, error)
 		return nil, fmt.Errorf("could not find config file: %s", err)
 	}
 
-	config := NewJSONParserConfig("json_parser")
+	config := defaultCfg()
 	if err := yaml.Unmarshal(bytes, config); err != nil {
 		return nil, fmt.Errorf("failed to read config file as yaml: %s", err)
 	}

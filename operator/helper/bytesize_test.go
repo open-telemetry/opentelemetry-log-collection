@@ -98,7 +98,6 @@ func TestByteSizeUnmarshalYAML(t *testing.T) {
 				require.Error(t, err)
 				return
 			}
-
 			require.NoError(t, err)
 			require.Equal(t, tc.expected, bs)
 		})
