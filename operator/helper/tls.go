@@ -9,6 +9,12 @@ type TLSServerConfig struct {
 	*configtls.TLSServerSetting
 }
 
+func NewTLSServerConfig(setting *configtls.TLSServerSetting) *TLSServerConfig {
+	return &TLSServerConfig{
+		TLSServerSetting: setting,
+	}
+}
+
 func (t *TLSServerConfig) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	var tlsConfig map[string]interface{}
 	err := unmarshal(&tlsConfig)

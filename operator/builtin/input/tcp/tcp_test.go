@@ -27,6 +27,7 @@ import (
 
 	"github.com/open-telemetry/opentelemetry-log-collection/entry"
 	"github.com/open-telemetry/opentelemetry-log-collection/operator"
+	"github.com/open-telemetry/opentelemetry-log-collection/operator/helper"
 	"github.com/open-telemetry/opentelemetry-log-collection/testutil"
 )
 
@@ -150,12 +151,12 @@ func tlsTCPInputTest(input []byte, expected []string) func(t *testing.T) {
 
 		cfg := NewTCPInputConfig("test_id")
 		cfg.ListenAddress = ":0"
-		cfg.TLS = &configtls.TLSServerSetting{
+		cfg.TLS = helper.NewTLSServerConfig(&configtls.TLSServerSetting{
 			TLSSetting: configtls.TLSSetting{
-				CertFile:  "test.crt",
-				KeyFile: "test.key",
+				CertFile: "test.crt",
+				KeyFile:  "test.key",
 			},
-		}
+		})
 
 		ops, err := cfg.Build(testutil.NewBuildContext(t))
 		require.NoError(t, err)
@@ -255,7 +256,7 @@ func TestBuild(t *testing.T) {
 			TCPInputConfig{
 				MaxBufferSize: 65536,
 				ListenAddress: "10.0.0.1:9000",
-				TLS: createTlsConfig("/tmp/cert/missing", "/tmp/key/missing"),
+				TLS:           createTlsConfig("/tmp/cert/missing", "/tmp/key/missing"),
 			},
 			true,
 		},
@@ -327,12 +328,12 @@ func BenchmarkTcpInput(b *testing.B) {
 	defer close(done)
 }
 
-func createTlsConfig(cert string, key string) *configtls.TLSServerSetting {
-	return &configtls.TLSServerSetting{
+func createTlsConfig(cert string, key string) *helper.TLSServerConfig {
+	return helper.NewTLSServerConfig(&configtls.TLSServerSetting{
 		TLSSetting: configtls.TLSSetting{
-			CertFile:  cert,
-			KeyFile: key,
+			CertFile: cert,
+			KeyFile:  key,
 		},
-	}
+	})
 
 }
