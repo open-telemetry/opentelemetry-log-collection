@@ -24,7 +24,6 @@ import (
 	"sync"
 	"time"
 
-	"go.opentelemetry.io/collector/config/configtls"
 	"go.uber.org/zap"
 
 	"github.com/open-telemetry/opentelemetry-log-collection/operator"
@@ -56,9 +55,9 @@ func NewTCPInputConfig(operatorID string) *TCPInputConfig {
 type TCPInputConfig struct {
 	helper.InputConfig `yaml:",inline"`
 
-	MaxBufferSize helper.ByteSize             `json:"max_buffer_size,omitempty" yaml:"max_buffer_size,omitempty"`
-	ListenAddress string                      `json:"listen_address,omitempty" yaml:"listen_address,omitempty"`
-	TLS           *configtls.TLSServerSetting `json:"tls,omitempty" yaml:"tls,omitempty"`
+	MaxBufferSize helper.ByteSize         `json:"max_buffer_size,omitempty" yaml:"max_buffer_size,omitempty"`
+	ListenAddress string                  `json:"listen_address,omitempty" yaml:"listen_address,omitempty"`
+	TLS           *helper.TLSServerConfig `json:"tls,omitempty" yaml:"tls,omitempty"`
 }
 
 // Build will build a tcp input operator.
