@@ -18,7 +18,7 @@ type testCase struct {
 	expect    *JSONParserConfig
 }
 
-func TestConfig(t *testing.T) {
+func TestJSONParserConfig(t *testing.T) {
 	cases := []testCase{
 		{
 			"default",
@@ -49,6 +49,50 @@ func TestConfig(t *testing.T) {
 			func() *JSONParserConfig {
 				cfg := defaultCfg()
 				cfg.OnError = "drop"
+				return cfg
+			}(),
+		},
+		{
+			"timestamp",
+			false,
+			func() *JSONParserConfig {
+				cfg := defaultCfg()
+				parseField := entry.NewRecordField("timestamp_field")
+				newTime := helper.TimeParser{
+					LayoutType: "strptime",
+					Layout:     "%Y-%m-%d",
+					ParseFrom:  &parseField,
+				}
+				cfg.TimeParser = &newTime
+				return cfg
+			}(),
+		},
+		{
+			"severity",
+			false,
+			func() *JSONParserConfig {
+				cfg := defaultCfg()
+				parseField := entry.NewRecordField("severity_field")
+				severityField := helper.NewSeverityParserConfig()
+				severityField.ParseFrom = &parseField
+				mapping := map[interface{}]interface{}{
+					"critical": "5xx",
+					"error":    "4xx",
+					"info":     "3xx",
+					"debug":    "2xx",
+				}
+				severityField.Mapping = mapping
+				cfg.SeverityParserConfig = &severityField
+				return cfg
+			}(),
+		},
+		{
+			"preserve_to",
+			false,
+			func() *JSONParserConfig {
+				cfg := defaultCfg()
+				preserve := entry.NewRecordField("aField")
+				cfg.PreserveTo = &preserve
 				return cfg
 			}(),
 		},
