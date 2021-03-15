@@ -20,10 +20,11 @@ import (
 
 	"github.com/antonmedv/expr"
 	"github.com/antonmedv/expr/vm"
+	"go.uber.org/zap"
+
 	"github.com/open-telemetry/opentelemetry-log-collection/entry"
 	"github.com/open-telemetry/opentelemetry-log-collection/errors"
 	"github.com/open-telemetry/opentelemetry-log-collection/operator"
-	"go.uber.org/zap"
 )
 
 // NewTransformerConfig creates a new transformer config with default values
