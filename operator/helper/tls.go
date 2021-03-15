@@ -20,7 +20,7 @@ import (
 )
 
 type TLSServerConfig struct {
-	*configtls.TLSServerSetting
+	*configtls.TLSServerSetting  `mapstructure:",squash" json:",inline" yaml:",inline"`
 }
 
 func NewTLSServerConfig(setting *configtls.TLSServerSetting) *TLSServerConfig {
