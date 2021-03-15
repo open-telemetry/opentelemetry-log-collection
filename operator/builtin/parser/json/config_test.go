@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/mitchellh/mapstructure"
+	"github.com/open-telemetry/opentelemetry-log-collection/entry"
 	"github.com/open-telemetry/opentelemetry-log-collection/operator/helper"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v2"
@@ -25,15 +26,15 @@ func TestConfig(t *testing.T) {
 		// 	false,
 		// 	defaultCfg(),
 		// },
-		// {
-		// 	"parse_from_simple",
-		// 	false,
-		// 	func() *JSONParserConfig {
-		// 		cfg := defaultCfg()
-		// 		cfg.ParseFrom = entry.NewRecordField("log")
-		// 		return cfg
-		// 	}(),
-		// },
+		{
+			"parse_from_simple",
+			false,
+			func() *JSONParserConfig {
+				cfg := defaultCfg()
+				cfg.ParseFrom = entry.NewRecordField("from")
+				return cfg
+			}(),
+		},
 		// {
 		// 	"parse_to_simple",
 		// 	false,
@@ -43,15 +44,15 @@ func TestConfig(t *testing.T) {
 		// 		return cfg
 		// 	}(),
 		// },
-		{
-			"on_error_drop",
-			false,
-			func() *JSONParserConfig {
-				cfg := defaultCfg()
-				cfg.OnError = "drop"
-				return cfg
-			}(),
-		},
+		// {
+		// 	"on_error_drop",
+		// 	false,
+		// 	func() *JSONParserConfig {
+		// 		cfg := defaultCfg()
+		// 		cfg.OnError = "drop"
+		// 		return cfg
+		// 	}(),
+		// },
 	}
 
 	for _, tc := range cases {

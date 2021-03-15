@@ -1,2 +1,2 @@
 type: json_parser
-parse_from: "log"
+parse_from: "$.from"
