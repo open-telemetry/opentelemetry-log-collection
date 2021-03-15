@@ -128,11 +128,13 @@ func TestParseDuration(t *testing.T) {
 	for _, tc := range cases {
 		t.Run("json/"+tc.name, func(t *testing.T) {
 			var dur Duration
+
 			err := json.Unmarshal([]byte(tc.input), &dur)
 			if tc.expectError {
 				require.Error(t, err)
 				return
 			}
+
 			require.NoError(t, err)
 			require.Equal(t, tc.expected, dur)
 		})
