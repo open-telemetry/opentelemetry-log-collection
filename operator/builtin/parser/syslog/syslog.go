@@ -40,7 +40,7 @@ func NewSyslogParserConfig(operatorID string) *SyslogParserConfig {
 
 // SyslogParserConfig is the configuration of a syslog parser operator.
 type SyslogParserConfig struct {
-	helper.ParserConfig `yaml:",inline"`
+	helper.ParserConfig `mapstructure:",squash" yaml:",inline"`
 
 	Protocol string `mapstructure:"protocol,omitempty" json:"protocol,omitempty" yaml:"protocol,omitempty"`
 	Location string `mapstructure:"location,omitempty" json:"location,omitempty" yaml:"location,omitempty"`
