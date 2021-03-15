@@ -6,7 +6,6 @@ import (
 	"path"
 	"testing"
 
-	"github.com/mitchellh/mapstructure"
 	"github.com/open-telemetry/opentelemetry-log-collection/entry"
 	"github.com/open-telemetry/opentelemetry-log-collection/operator/helper"
 	"github.com/stretchr/testify/require"
@@ -21,11 +20,11 @@ type testCase struct {
 
 func TestConfig(t *testing.T) {
 	cases := []testCase{
-		// {
-		// 	"default",
-		// 	false,
-		// 	defaultCfg(),
-		// },
+		{
+			"default",
+			false,
+			defaultCfg(),
+		},
 		{
 			"parse_from_simple",
 			false,
@@ -35,24 +34,24 @@ func TestConfig(t *testing.T) {
 				return cfg
 			}(),
 		},
-		// {
-		// 	"parse_to_simple",
-		// 	false,
-		// 	func() *JSONParserConfig {
-		// 		cfg := defaultCfg()
-		// 		cfg.ParseTo = entry.NewRecordField("log")
-		// 		return cfg
-		// 	}(),
-		// },
-		// {
-		// 	"on_error_drop",
-		// 	false,
-		// 	func() *JSONParserConfig {
-		// 		cfg := defaultCfg()
-		// 		cfg.OnError = "drop"
-		// 		return cfg
-		// 	}(),
-		// },
+		{
+			"parse_to_simple",
+			false,
+			func() *JSONParserConfig {
+				cfg := defaultCfg()
+				cfg.ParseTo = entry.NewRecordField("log")
+				return cfg
+			}(),
+		},
+		{
+			"on_error_drop",
+			false,
+			func() *JSONParserConfig {
+				cfg := defaultCfg()
+				cfg.OnError = "drop"
+				return cfg
+			}(),
+		},
 	}
 
 	for _, tc := range cases {
@@ -66,7 +65,11 @@ func TestConfig(t *testing.T) {
 			}
 		})
 		t.Run("mapstructure/"+tc.name, func(t *testing.T) {
-			cfgFromMapstructure, mapErr := configFromFileViaMapstructure(path.Join(".", "testdata", fmt.Sprintf("%s.yaml", tc.name)))
+			cfgFromMapstructure := defaultCfg()
+			mapErr := configFromFileViaMapstructure(
+				path.Join(".", "testdata", fmt.Sprintf("%s.yaml", tc.name)),
+				cfgFromMapstructure,
+			)
 			if tc.expectErr {
 				require.Error(t, mapErr)
 			} else {
@@ -91,29 +94,20 @@ func configFromFileViaYaml(t *testing.T, file string) (*JSONParserConfig, error)
 	return config, nil
 }
 
-func configFromFileViaMapstructure(file string) (*JSONParserConfig, error) {
+func configFromFileViaMapstructure(file string, result *JSONParserConfig) error {
 	bytes, err := ioutil.ReadFile(file)
 	if err != nil {
-		return nil, fmt.Errorf("could not find config file: %s", err)
+		return fmt.Errorf("could not find config file: %s", err)
 	}
 
 	raw := map[string]interface{}{}
 
 	if err := yaml.Unmarshal(bytes, raw); err != nil {
-		return nil, fmt.Errorf("failed to read data from yaml: %s", err)
+		return fmt.Errorf("failed to read data from yaml: %s", err)
 	}
 
-	cfg := defaultCfg()
-	dc := &mapstructure.DecoderConfig{Result: cfg, DecodeHook: helper.JSONUnmarshalerHook()}
-	ms, err := mapstructure.NewDecoder(dc)
-	if err != nil {
-		return nil, err
-	}
-	err = ms.Decode(raw)
-	if err != nil {
-		return nil, err
-	}
-	return cfg, nil
+	err = helper.UnmarshalMapstructure(raw, result)
+	return nil
 }
 
 func defaultCfg() *JSONParserConfig {
