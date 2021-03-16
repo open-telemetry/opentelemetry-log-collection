@@ -109,6 +109,15 @@ func TestRegexParserGoldenConfig(t *testing.T) {
 				return cfg
 			}(),
 		},
+		{
+			"regex",
+			false,
+			func() *RegexParserConfig {
+				cfg := defaultCfg()
+				cfg.Regex = "^Host=(?P<host>[^,]+), Type=(?P<type>.*)$"
+				return cfg
+			}(),
+		},
 	}
 
 	for _, tc := range cases {
