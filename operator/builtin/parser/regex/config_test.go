@@ -173,7 +173,7 @@ func configFromFileViaMapstructure(file string, result *RegexParserConfig) error
 	}
 
 	err = helper.UnmarshalMapstructure(raw, result)
-	return nil
+	return err
 }
 
 func defaultCfg() *RegexParserConfig {
