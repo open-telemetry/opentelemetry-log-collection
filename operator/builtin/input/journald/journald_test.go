@@ -125,6 +125,8 @@ func TestJournaldInputConfig(t *testing.T) {
 		"type":     "journald_input",
 		"start_at": "end",
 		"write_to": "$record.to",
+		"attributes":    map[string]interface{}{},
+		"resource":      map[string]interface{}{},
 	}
 
 	var actual JournaldInputConfig
