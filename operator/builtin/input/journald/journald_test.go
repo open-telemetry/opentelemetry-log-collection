@@ -121,12 +121,12 @@ func TestJournaldInputConfig(t *testing.T) {
 	expect.WriteTo = entry.NewRecordField("to")
 
 	input := map[string]interface{}{
-		"id":       "my_journald_input",
-		"type":     "journald_input",
-		"start_at": "end",
-		"write_to": "$record.to",
-		"attributes":    map[string]interface{}{},
-		"resource":      map[string]interface{}{},
+		"id":         "my_journald_input",
+		"type":       "journald_input",
+		"start_at":   "end",
+		"write_to":   "$record.to",
+		"attributes": map[string]interface{}{},
+		"resource":   map[string]interface{}{},
 	}
 
 	var actual JournaldInputConfig
