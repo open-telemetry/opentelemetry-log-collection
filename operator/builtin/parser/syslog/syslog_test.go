@@ -92,7 +92,7 @@ func TestSyslogParserConfig(t *testing.T) {
 type: syslog_parser
 id: test
 on_error: "send"
-protocol: RFC3164
+protocol: rfc3164
 parse_from: $.from
 parse_to: $.to`
 		var actual SyslogParserConfig
