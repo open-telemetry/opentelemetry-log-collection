@@ -133,5 +133,4 @@ func TestJournaldInputConfig(t *testing.T) {
 	err := helper.UnmarshalMapstructure(input, &actual)
 	require.NoError(t, err)
 	require.Equal(t, expect, &actual)
-
 }
