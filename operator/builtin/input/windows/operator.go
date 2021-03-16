@@ -32,11 +32,11 @@ func init() {
 
 // EventLogConfig is the configuration of a windows event log operator.
 type EventLogConfig struct {
-	helper.InputConfig `yaml:",inline"`
-	Channel            string          `json:"channel" yaml:"channel"`
-	MaxReads           int             `json:"max_reads,omitempty" yaml:"max_reads,omitempty"`
-	StartAt            string          `json:"start_at,omitempty" yaml:"start_at,omitempty"`
-	PollInterval       helper.Duration `json:"poll_interval,omitempty" yaml:"poll_interval,omitempty"`
+	helper.InputConfig `mapstructure:",squash" yaml:",inline"`
+	Channel            string          `mapstructure:"channel" json:"channel" yaml:"channel"`
+	MaxReads           int             `mapstructure:"max_reads,omitempty" json:"max_reads,omitempty" yaml:"max_reads,omitempty"`
+	StartAt            string          `mapstructure:"start_at,omitempty" json:"start_at,omitempty" yaml:"start_at,omitempty"`
+	PollInterval       helper.Duration `mapstructure:"poll_interval,omitempty" json:"poll_interval,omitempty" yaml:"poll_interval,omitempty"`
 }
 
 // Build will build a windows event log operator.
