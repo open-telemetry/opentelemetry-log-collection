@@ -27,7 +27,7 @@ import (
 )
 
 func init() {
-	operator.Register("windows_eventlog_input", NewDefaultConfig)
+	operator.Register("windows_eventlog_input", func() operator.Builder { return NewDefaultConfig() })
 }
 
 // EventLogConfig is the configuration of a windows event log operator.
@@ -73,7 +73,7 @@ func (c *EventLogConfig) Build(context operator.BuildContext) ([]operator.Operat
 }
 
 // NewDefaultConfig will return an event log config with default values.
-func NewDefaultConfig() operator.Builder {
+func NewDefaultConfig() *EventLogConfig {
 	return &EventLogConfig{
 		InputConfig: helper.NewInputConfig("", "windows_eventlog_input"),
 		MaxReads:    100,
