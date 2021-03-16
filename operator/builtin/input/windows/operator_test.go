@@ -26,12 +26,12 @@ import (
 )
 
 func TestEventLogConfig(t *testing.T) {
-	except := NewDefaultConfig()
+	expect := NewDefaultConfig()
 
 	input := map[string]interface{}{
 		"id":            "",
 		"type":          "windows_eventlog_input",
-		"max_reads":     "100",
+		"max_reads":     100,
 		"start_at":      "end",
 		"poll_interval": "1s",
 		"write_to":      entry.NewRecordField(),
@@ -40,5 +40,5 @@ func TestEventLogConfig(t *testing.T) {
 	var actual EventLogConfig
 	err := helper.UnmarshalMapstructure(input, &actual)
 	require.NoError(t, err)
-	require.Equal(t, except, actual)
+	require.Equal(t, expect, actual)
 }
