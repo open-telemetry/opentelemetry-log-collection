@@ -254,10 +254,10 @@ func TestJsonParserConfig(t *testing.T) {
 
 	t.Run("yaml", func(t *testing.T) {
 		input := `type: json_parser
-				id: test
-				on_error: "send"
-				parse_from: $.from
-				parse_to: $.to`
+git id: test
+on_error: "send"
+parse_from: $.from
+parse_to: $.to`
 		var actual JSONParserConfig
 		err := yaml.Unmarshal([]byte(input), &actual)
 		require.NoError(t, err)
