@@ -20,13 +20,14 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/require"
+	"gopkg.in/yaml.v2"
+
 	"github.com/open-telemetry/opentelemetry-log-collection/operator/builtin/input/tcp"
 	"github.com/open-telemetry/opentelemetry-log-collection/operator/builtin/input/udp"
 	"github.com/open-telemetry/opentelemetry-log-collection/operator/builtin/parser/syslog"
 	"github.com/open-telemetry/opentelemetry-log-collection/pipeline"
 	"github.com/open-telemetry/opentelemetry-log-collection/testutil"
-	"github.com/stretchr/testify/require"
-	"gopkg.in/yaml.v2"
 )
 
 func TestSyslogInput(t *testing.T) {
@@ -70,10 +71,9 @@ func SyslogInputTest(t *testing.T, cfg *SyslogInputConfig, tc syslog.Case) {
 		require.NoError(t, err)
 	}
 
-	switch tc.InputRecord.(type) {
-	case string:
-		_, err = conn.Write([]byte(tc.InputRecord.(string)))
-	case []byte:
+	if v, ok := tc.InputRecord.(string); ok {
+		_, err = conn.Write([]byte(v))
+	} else {
 		_, err = conn.Write(tc.InputRecord.([]byte))
 	}
 
@@ -120,7 +120,7 @@ udp:
 	var cfg SyslogInputConfig
 	err := yaml.Unmarshal([]byte(base), &cfg)
 	require.NoError(t, err)
-	require.Equal(t, "rfc5424", cfg.Protocol)
+	require.Equal(t, syslog.RFC5424, cfg.Protocol)
 	require.Equal(t, "localhost:1234", cfg.Udp.ListenAddress)
 
 	base = `type: syslog_input
@@ -128,12 +128,11 @@ protocol: rfc5424
 tcp:
   listen_address: localhost:1234
   tls:
-    enable: true
+    ca_file: /tmp/test.ca 
 `
 	err = yaml.Unmarshal([]byte(base), &cfg)
 	require.NoError(t, err)
-	require.Equal(t, "rfc5424", cfg.Protocol)
+	require.Equal(t, syslog.RFC5424, cfg.Protocol)
 	require.Equal(t, "localhost:1234", cfg.Tcp.ListenAddress)
-	require.Equal(t, true, cfg.Tcp.TLS.Enable)
-
+	require.Equal(t, "/tmp/test.ca", cfg.Tcp.TLS.CAFile)
 }
