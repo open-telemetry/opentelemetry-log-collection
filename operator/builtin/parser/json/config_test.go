@@ -164,7 +164,7 @@ func configFromFileViaMapstructure(file string, result *JSONParserConfig) error 
 	}
 
 	err = helper.UnmarshalMapstructure(raw, result)
-	return nil
+	return err
 }
 
 func defaultCfg() *JSONParserConfig {
