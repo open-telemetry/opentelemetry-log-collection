@@ -113,7 +113,7 @@ func TestJSONParserConfig(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run("yaml/"+tc.name, func(t *testing.T) {
-			cfgFromYaml, yamlErr := configFromFileViaYaml(t, path.Join(".", "testdata", fmt.Sprintf("%s.yaml", tc.name)))
+			cfgFromYaml, yamlErr := configFromFileViaYaml(path.Join(".", "testdata", fmt.Sprintf("%s.yaml", tc.name)))
 			if tc.expectErr {
 				require.Error(t, yamlErr)
 			} else {
@@ -137,7 +137,7 @@ func TestJSONParserConfig(t *testing.T) {
 	}
 }
 
-func configFromFileViaYaml(t *testing.T, file string) (*JSONParserConfig, error) {
+func configFromFileViaYaml(file string) (*JSONParserConfig, error) {
 	bytes, err := ioutil.ReadFile(file)
 	if err != nil {
 		return nil, fmt.Errorf("could not find config file: %s", err)
