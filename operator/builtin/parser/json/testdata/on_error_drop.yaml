@@ -1,2 +1,2 @@
 type: json_parser
-on_error: "drop"
+on_error: drop
