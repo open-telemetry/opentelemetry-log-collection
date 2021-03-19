@@ -50,6 +50,64 @@ func TestRouterGoldenConfig(t *testing.T) {
 				return cfg
 			}(),
 		},
+		{
+			"routes_multi",
+			false,
+			func() *RouterOperatorConfig {
+				cfg := defaultCfg()
+				newRoute := []*RouterOperatorRouteConfig{
+					{
+						Expression: `$.format == "json"`,
+						OutputIDs:  []string{"my_json_parser"},
+					},
+					{
+						Expression: `$.format == "json"2`,
+						OutputIDs:  []string{"my_json_parser2"},
+					},
+					{
+						Expression: `$.format == "json"3`,
+						OutputIDs:  []string{"my_json_parser3"},
+					},
+				}
+				cfg.Routes = newRoute
+				return cfg
+			}(),
+		},
+		{
+			"routes_attributes",
+			false,
+			func() *RouterOperatorConfig {
+				cfg := defaultCfg()
+
+				attVal := helper.NewAttributerConfig()
+				attVal.Attributes = map[string]helper.ExprStringConfig{
+					"key1": "val1",
+				}
+
+				cfg.Routes = []*RouterOperatorRouteConfig{
+					{
+						Expression:       `$.format == "json"`,
+						OutputIDs:        []string{"my_json_parser"},
+						AttributerConfig: attVal,
+					},
+				}
+				return cfg
+			}(),
+		},
+		{
+			"routes_default",
+			false,
+			func() *RouterOperatorConfig {
+				cfg := defaultCfg()
+				newRoute := &RouterOperatorRouteConfig{
+					Expression: `$.format == "json"`,
+					OutputIDs:  []string{"my_json_parser"},
+				}
+				cfg.Routes = append(cfg.Routes, newRoute)
+				cfg.Default = append(cfg.Default, "catchall")
+				return cfg
+			}(),
+		},
 	}
 
 	for _, tc := range cases {
