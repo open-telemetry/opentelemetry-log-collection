@@ -37,15 +37,19 @@ func TestRouterGoldenConfig(t *testing.T) {
 			false,
 			defaultCfg(),
 		},
-		// {
-		// 	"parse_from_simple",
-		// 	false,
-		// 	func() *RouterOperatorConfig {
-		// 		cfg := defaultCfg()
-		// 		cfg.ParseFrom = entry.NewRecordField("from")
-		// 		return cfg
-		// 	}(),
-		// },
+		{
+			"routes_one",
+			false,
+			func() *RouterOperatorConfig {
+				cfg := defaultCfg()
+				newRoute := &RouterOperatorRouteConfig{
+					Expression: `$.format == "json"`,
+					OutputIDs:  []string{"my_json_parser"},
+				}
+				cfg.Routes = append(cfg.Routes, newRoute)
+				return cfg
+			}(),
+		},
 	}
 
 	for _, tc := range cases {
@@ -105,5 +109,5 @@ func configFromFileViaMapstructure(file string, result *RouterOperatorConfig) er
 }
 
 func defaultCfg() *RouterOperatorConfig {
-	return NewRouterOperatorConfig("regex_parser")
+	return NewRouterOperatorConfig("router")
 }
