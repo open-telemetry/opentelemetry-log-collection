@@ -396,13 +396,6 @@ func (tc severityTestCase) run(parseFrom entry.Field) func(*testing.T) {
 	}
 }
 
-type severityGoldenTestCase struct {
-	name      string
-	expectErr bool
-	input     string
-	expect    *SeverityParserConfig
-}
-
 type severityConfigTestCase struct {
 	name      string
 	expectErr bool
