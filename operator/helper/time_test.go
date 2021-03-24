@@ -618,14 +618,14 @@ func makeTestEntry(field entry.Field, value interface{}) *entry.Entry {
 	return e
 }
 
-type severityConfigTestCase struct {
+type timeConfigTestCase struct {
 	name      string
 	expectErr bool
 	expect    *TimeParser
 }
 
-func TestGoldenSeverityParserConfig(t *testing.T) {
-	cases := []severityConfigTestCase{
+func TestGoldenTimeParserConfig(t *testing.T) {
+	cases := []timeConfigTestCase{
 		{
 			"parse_from",
 			false,
@@ -677,7 +677,7 @@ func TestGoldenSeverityParserConfig(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run("yaml/"+tc.name, func(t *testing.T) {
-			cfgFromYaml, yamlErr := configFromFileViaYaml(path.Join(".", "timetestdata", fmt.Sprintf("%s.yaml", tc.name)))
+			cfgFromYaml, yamlErr := timeConfigFromFileViaYaml(path.Join(".", "timetestdata", fmt.Sprintf("%s.yaml", tc.name)))
 			if tc.expectErr {
 				require.Error(t, yamlErr)
 			} else {
@@ -687,7 +687,7 @@ func TestGoldenSeverityParserConfig(t *testing.T) {
 		})
 		t.Run("mapstructure/"+tc.name, func(t *testing.T) {
 			cfgFromMapstructure := defaultTimeCfg()
-			mapErr := configFromFileViaMapstructure(
+			mapErr := timeConfigFromFileViaMapstructure(
 				path.Join(".", "timetestdata", fmt.Sprintf("%s.yaml", tc.name)),
 				cfgFromMapstructure,
 			)
@@ -701,7 +701,7 @@ func TestGoldenSeverityParserConfig(t *testing.T) {
 	}
 }
 
-func configFromFileViaYaml(file string) (*TimeParser, error) {
+func timeConfigFromFileViaYaml(file string) (*TimeParser, error) {
 	bytes, err := ioutil.ReadFile(file)
 	if err != nil {
 		return nil, fmt.Errorf("could not find config file: %s", err)
@@ -715,7 +715,7 @@ func configFromFileViaYaml(file string) (*TimeParser, error) {
 	return config, nil
 }
 
-func configFromFileViaMapstructure(file string, result *TimeParser) error {
+func timeConfigFromFileViaMapstructure(file string, result *TimeParser) error {
 	bytes, err := ioutil.ReadFile(file)
 	if err != nil {
 		return fmt.Errorf("could not find config file: %s", err)
