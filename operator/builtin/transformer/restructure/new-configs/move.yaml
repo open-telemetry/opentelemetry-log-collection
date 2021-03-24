@@ -1,0 +1,7 @@
+- type: move
+  id: coolname
+  output: coolotheroutput
+  from: "key1"
+  to: "key2"
+  on_error: send
+  if: 'EXPR(!dontdothething)'

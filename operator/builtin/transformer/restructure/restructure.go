@@ -34,6 +34,7 @@ func init() {
 // NewRestructureOperatorConfig creates a new restructure operator config with default values
 func NewRestructureOperatorConfig(operatorID string) *RestructureOperatorConfig {
 	return &RestructureOperatorConfig{
+
 		TransformerConfig: helper.NewTransformerConfig(operatorID, "restructure"),
 	}
 }

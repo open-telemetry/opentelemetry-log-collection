@@ -1,0 +1,6 @@
+- type: flatten
+  id: coolname
+  output: coolotheroutput
+  field: "key1"
+  on_error: send
+  if: 'EXPR(!dontdothething)'
