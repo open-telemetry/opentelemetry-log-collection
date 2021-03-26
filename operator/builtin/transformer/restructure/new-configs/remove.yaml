@@ -1,8 +1,0 @@
-- type: remove
-  field: 
-    - "key1"
-    - "key2"
-
-- type: add
-  key: "key1"
-  value: "val1" 

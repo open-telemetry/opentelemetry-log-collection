@@ -1,7 +1,0 @@
-- type: add #has
-  id: coolname #has
-  output: coolotheroutput #has
-  ky: "key1"
-  value: "val1" 
-  on_error: send #has
-  if: 'EXPR(!dontdothething)' #has

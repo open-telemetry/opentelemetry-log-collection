@@ -3,7 +3,6 @@ package add
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"github.com/antonmedv/expr/vm"
 	"github.com/open-telemetry/opentelemetry-log-collection/entry"
@@ -26,7 +25,7 @@ func NewAddOperatorConfig(operatorID string) *AddOperatorConfig {
 type AddOperatorConfig struct {
 	helper.TransformerConfig `mapstructure:",squash" yaml:",inline"`
 	Field                    entry.Field `json:"field" yaml:"field"`
-	Value                    *string     `json:"value,omitempty" yaml:"value,omitempty"`
+	Value                    interface{} `json:"value,omitempty" yaml:"value,omitempty"`
 	program                  *vm.Program
 }
 
@@ -35,17 +34,12 @@ func (c AddOperatorConfig) Build(context operator.BuildContext) ([]operator.Oper
 	if err != nil {
 		return nil, err
 	}
+
 	addOperator := &AddOperator{
 		TransformerOperator: transformerOperator,
 		Field:               c.Field,
 		program:             c.program,
-	}
-	if strings.Contains(*c.Value, "EXPR(") {
-		newExpr := strings.Replace(*c.Value, "EXPR(", "", 1)
-		newExpr = strings.Replace(newExpr, ")", "", 1)
-		addOperator.ValueExpr = &newExpr
-	} else {
-		addOperator.Value = c.Value
+		Value:               c.Value,
 	}
 
 	return []operator.Operator{addOperator}, nil
@@ -54,10 +48,9 @@ func (c AddOperatorConfig) Build(context operator.BuildContext) ([]operator.Oper
 type AddOperator struct {
 	helper.TransformerOperator `mapstructure:",squash" yaml:",inline"`
 
-	Field     entry.Field `json:"field" yaml:"field"`
-	Value     interface{} `json:"value,omitempty" yaml:"value,omitempty"`
-	program   *vm.Program
-	ValueExpr *string `json:"value_expr,omitempty" yaml:"value_expr,omitempty"`
+	Field   entry.Field `json:"field" yaml:"field"`
+	Value   interface{} `json:"value,omitempty" yaml:"value,omitempty"`
+	program *vm.Program
 }
 
 // Process will process an entry with a restructure transformation.
@@ -72,7 +65,7 @@ func (p *AddOperator) Transform(entry *entry.Entry) error {
 		if err != nil {
 			return err
 		}
-	} else if p.ValueExpr != nil {
+	} else if p.program != nil {
 		env := helper.GetExprEnv(entry)
 		defer helper.PutExprEnv(env)
 

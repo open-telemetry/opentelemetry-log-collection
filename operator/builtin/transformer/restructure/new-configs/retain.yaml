@@ -1,9 +1,0 @@
-- type: retain
-  id: coolname
-  output: coolotheroutput
-  fields: 
-    - "key1"
-    - "key2"
-    - "key3"
-  on_error: send
-  if: 'EXPR(!dontdothething)'

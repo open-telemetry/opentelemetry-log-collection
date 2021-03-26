@@ -6,15 +6,17 @@ import (
 	"testing"
 	"time"
 
+	"github.com/antonmedv/expr"
+	"github.com/antonmedv/expr/vm"
 	"github.com/open-telemetry/opentelemetry-log-collection/entry"
 	"github.com/open-telemetry/opentelemetry-log-collection/operator"
 	"github.com/open-telemetry/opentelemetry-log-collection/testutil"
 	"github.com/stretchr/testify/require"
 )
 
-func TestRestructureOperator(t *testing.T) {
-	os.Setenv("TEST_REMOVE_PLUGIN_ENV", "foo")
-	defer os.Unsetenv("TEST_REMOVE_PLUGIN_ENV")
+func TestAddOperator(t *testing.T) {
+	os.Setenv("TEST_ADD_PLUGIN_ENV", "foo")
+	defer os.Unsetenv("TEST_ADD_PLUGIN_ENV")
 
 	newTestEntry := func() *entry.Entry {
 		e := entry.New()
@@ -29,25 +31,57 @@ func TestRestructureOperator(t *testing.T) {
 	}
 
 	cases := []struct {
-		name        string
-		removeItems []entry.Field
-		input       *entry.Entry
-		output      *entry.Entry
-		expectErr   bool
+		name      string
+		addOp     AddOperator
+		input     *entry.Entry
+		output    *entry.Entry
+		expectErr bool
 	}{
 		{
-			name: "Remove_one",
-			removeItems: func() []entry.Field {
-				var fields []entry.Field
-				fields = append(fields, entry.NewRecordField("nested"))
-				return fields
-			}(),
+			name: "AddValue",
+			addOp: AddOperator{
+				Field: entry.NewRecordField("new"),
+				Value: "randomMessage",
+			},
 			input: newTestEntry(),
 			output: func() *entry.Entry {
 				e := newTestEntry()
-				e.Record = map[string]interface{}{
-					"key": "val",
-				}
+				e.Record.(map[string]interface{})["new"] = "randomMessage"
+				return e
+			}(),
+		},
+		{
+			name: "add_expr",
+			addOp: AddOperator{
+				Field: entry.NewRecordField("new"),
+				program: func() *vm.Program {
+					vm, err := expr.Compile(`$.key + "_suffix"`)
+					require.NoError(t, err)
+					return vm
+				}(),
+			},
+			input: newTestEntry(),
+			output: func() *entry.Entry {
+				e := newTestEntry()
+				e.Record.(map[string]interface{})["new"] = "val_suffix"
+				return e
+			}(),
+			expectErr: false,
+		},
+		{
+			name: "add_expr",
+			addOp: AddOperator{
+				Field: entry.NewRecordField("new"),
+				program: func() *vm.Program {
+					vm, err := expr.Compile(`env("TEST_ADD_PLUGIN_ENV")`)
+					require.NoError(t, err)
+					return vm
+				}(),
+			},
+			input: newTestEntry(),
+			output: func() *entry.Entry {
+				e := newTestEntry()
+				e.Record.(map[string]interface{})["new"] = "foo"
 				return e
 			}(),
 			expectErr: false,
@@ -57,21 +91,19 @@ func TestRestructureOperator(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			cfg := NewAddOperatorConfig("test")
+			cfg.Field = tc.addOp.Field
+			cfg.Value = tc.addOp.Value
+			cfg.program = tc.addOp.program
 			cfg.OutputIDs = []string{"fake"}
-
 			ops, err := cfg.Build(testutil.NewBuildContext(t))
 			require.NoError(t, err)
 			op := ops[0]
 
-			remove := op.(*AddOperator)
-			remove.Field = tc.removeItem
+			add := op.(*AddOperator)
 			fake := testutil.NewFakeOutput(t)
-			remove.SetOutputs([]operator.Operator{fake})
+			add.SetOutputs([]operator.Operator{fake})
 
-			err = remove.Process(context.Background(), tc.input)
-			if tc.expectErr {
-				require.Error(t, err)
-			}
+			err = add.Process(context.Background(), tc.input)
 			require.NoError(t, err)
 
 			fake.ExpectEntry(t, tc.output)
