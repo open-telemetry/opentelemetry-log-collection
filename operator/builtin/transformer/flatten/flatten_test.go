@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestMoveOperator(t *testing.T) {
+func TestFlattenOperator(t *testing.T) {
 	os.Setenv("TEST_MOVE_PLUGIN_ENV", "foo")
 	defer os.Unsetenv("TEST_MOVE_PLUGIN_ENV")
 
@@ -30,41 +30,52 @@ func TestMoveOperator(t *testing.T) {
 
 	cases := []struct {
 		name      string
-		addOp     MoveOperator
+		flattenOp FlattenOperator
 		input     *entry.Entry
 		output    *entry.Entry
 		expectErr bool
 	}{
 		{
-			name: "MoveValue",
-			addOp: MoveOperator{
-				From: entry.NewRecordField("key"),
-				To:   entry.NewRecordField("new"),
+			name: "flatten_single_layer",
+			flattenOp: FlattenOperator{
+				Field: entry.RecordField{
+					Keys: []string{"nested"},
+				},
 			},
 			input: newTestEntry(),
 			output: func() *entry.Entry {
 				e := newTestEntry()
 				e.Record = map[string]interface{}{
-					"new": "val",
-					"nested": map[string]interface{}{
-						"nestedkey": "nestedval",
-					},
+					"key":       "val",
+					"nestedkey": "nestedval",
 				}
 				return e
 			}(),
 		},
 		{
-			name: "MoveNest",
-			addOp: MoveOperator{
-				From: entry.NewRecordField("nested"),
-				To:   entry.NewRecordField("NewNested"),
+			name: "flatten_double_layer",
+			flattenOp: FlattenOperator{
+				Field: entry.RecordField{
+					Keys: []string{"nest1"},
+				},
 			},
-			input: newTestEntry(),
+			input: func() *entry.Entry {
+				e := newTestEntry()
+				e.Record = map[string]interface{}{
+					"key": "val",
+					"nest1": map[string]interface{}{
+						"nest2": map[string]interface{}{
+							"nestedkey": "nestedval",
+						},
+					},
+				}
+				return e
+			}(),
 			output: func() *entry.Entry {
 				e := newTestEntry()
 				e.Record = map[string]interface{}{
 					"key": "val",
-					"NewNested": map[string]interface{}{
+					"nest2": map[string]interface{}{
 						"nestedkey": "nestedval",
 					},
 				}
@@ -75,15 +86,14 @@ func TestMoveOperator(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			cfg := NewMoveOperatorConfig("test")
-			cfg.To = tc.addOp.To
-			cfg.From = tc.addOp.From
+			cfg := NewFlattenOperatorConfig("test")
+			cfg.Field = tc.flattenOp.Field
 			cfg.OutputIDs = []string{"fake"}
 			ops, err := cfg.Build(testutil.NewBuildContext(t))
 			require.NoError(t, err)
 			op := ops[0]
 
-			add := op.(*MoveOperator)
+			add := op.(*FlattenOperator)
 			fake := testutil.NewFakeOutput(t)
 			add.SetOutputs([]operator.Operator{fake})
 

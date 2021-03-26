@@ -5,60 +5,76 @@ import (
 	"fmt"
 
 	"github.com/open-telemetry/opentelemetry-log-collection/entry"
+	"github.com/open-telemetry/opentelemetry-log-collection/errors"
 	"github.com/open-telemetry/opentelemetry-log-collection/operator"
 	"github.com/open-telemetry/opentelemetry-log-collection/operator/helper"
 )
 
 func init() {
-	operator.Register("move", func() operator.Builder { return NewMoveOperatorConfig("") })
+	operator.Register("flatten", func() operator.Builder { return NewFlattenOperatorConfig("") })
 }
 
-// NewMoveOperatorConfig creates a new restructure operator config with default values
-func NewMoveOperatorConfig(operatorID string) *MoveOperatorConfig {
-	return &MoveOperatorConfig{
+// NewFlattenOperatorConfig creates a new restructure operator config with default values
+func NewFlattenOperatorConfig(operatorID string) *FlattenOperatorConfig {
+	return &FlattenOperatorConfig{
 		TransformerConfig: helper.NewTransformerConfig(operatorID, "move"),
 	}
 }
 
-// MoveOperatorConfig is the configuration of a restructure operator
-type MoveOperatorConfig struct {
+// FlattenOperatorConfig is the configuration of a restructure operator
+type FlattenOperatorConfig struct {
 	helper.TransformerConfig `mapstructure:",squash" yaml:",inline"`
-	From                     entry.Field `json:"from" yaml:"from,flow"`
-	To                       entry.Field `json:"to" yaml:"to,flow"`
+	Field                    entry.RecordField `json:"field" yaml:"from,field"`
 }
 
-func (c MoveOperatorConfig) Build(context operator.BuildContext) ([]operator.Operator, error) {
+func (c FlattenOperatorConfig) Build(context operator.BuildContext) ([]operator.Operator, error) {
 	transformerOperator, err := c.TransformerConfig.Build(context)
 	if err != nil {
 		return nil, err
 	}
 
-	addOperator := &MoveOperator{
+	addOperator := &FlattenOperator{
 		TransformerOperator: transformerOperator,
-		From:                c.From,
-		To:                  c.To,
+		Field:               c.Field,
 	}
 
 	return []operator.Operator{addOperator}, nil
 }
 
-type MoveOperator struct {
+type FlattenOperator struct {
 	helper.TransformerOperator `mapstructure:",squash" yaml:",inline"`
-	From                       entry.Field `json:"from" yaml:"from,flow"`
-	To                         entry.Field `json:"to" yaml:"to,flow"`
+	Field                      entry.RecordField
 }
 
 // Process will process an entry with a restructure transformation.
-func (p *MoveOperator) Process(ctx context.Context, entry *entry.Entry) error {
+func (p *FlattenOperator) Process(ctx context.Context, entry *entry.Entry) error {
 	return p.ProcessWith(ctx, entry, p.Transform)
 }
 
 // Transform will apply the restructure operations to an entry
-func (p *MoveOperator) Transform(entry *entry.Entry) error {
-	val, ok := entry.Delete(p.From)
+func (p *FlattenOperator) Transform(entry *entry.Entry) error {
+	parent := p.Field.Parent()
+	val, ok := entry.Delete(p.Field)
 	if !ok {
-		return fmt.Errorf("apply move: field %s does not exist on record", p.From)
+		// The field doesn't exist, so ignore it
+		return fmt.Errorf("apply flatten: field %s does not exist on record", p.Field)
 	}
 
-	return entry.Set(p.To, val)
+	valMap, ok := val.(map[string]interface{})
+	if !ok {
+		// The field we were asked to flatten was not a map, so put it back
+		err := entry.Set(p.Field, val)
+		if err != nil {
+			return errors.Wrap(err, "reset non-map field")
+		}
+		return fmt.Errorf("apply flatten: field %s is not a map", p.Field)
+	}
+
+	for k, v := range valMap {
+		err := entry.Set(parent.Child(k), v)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
