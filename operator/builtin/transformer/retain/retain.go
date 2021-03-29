@@ -22,7 +22,7 @@ func NewRetainOperatorConfig(operatorID string) *RetainOperatorConfig {
 // RetainOperatorConfig is the configuration of a restructure operator
 type RetainOperatorConfig struct {
 	helper.TransformerConfig `mapstructure:",squash" yaml:",inline"`
-	Fields                   []entry.Field `json:"field" yaml:"from,field"`
+	Fields                   []entry.Field `json:"fields" yaml:"fields"`
 }
 
 func (c RetainOperatorConfig) Build(context operator.BuildContext) ([]operator.Operator, error) {
