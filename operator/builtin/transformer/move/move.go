@@ -16,7 +16,6 @@ package move
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/open-telemetry/opentelemetry-log-collection/entry"
 	"github.com/open-telemetry/opentelemetry-log-collection/operator"
@@ -37,8 +36,8 @@ func NewMoveOperatorConfig(operatorID string) *MoveOperatorConfig {
 // MoveOperatorConfig is the configuration of a restructure operator
 type MoveOperatorConfig struct {
 	helper.TransformerConfig `mapstructure:",squash" yaml:",inline"`
-	From                     entry.Field `json:"from" yaml:"from,flow"`
-	To                       entry.Field `json:"to" yaml:"to,flow"`
+	From                     entry.Field
+	To                       entry.Field
 }
 
 func (c MoveOperatorConfig) Build(context operator.BuildContext) ([]operator.Operator, error) {
@@ -58,8 +57,8 @@ func (c MoveOperatorConfig) Build(context operator.BuildContext) ([]operator.Ope
 
 type MoveOperator struct {
 	helper.TransformerOperator `mapstructure:",squash" yaml:",inline"`
-	From                       entry.Field `json:"from" yaml:"from,flow"`
-	To                         entry.Field `json:"to" yaml:"to,flow"`
+	From                       entry.Field
+	To                         entry.Field
 }
 
 // Process will process an entry with a restructure transformation.
@@ -68,11 +67,8 @@ func (p *MoveOperator) Process(ctx context.Context, entry *entry.Entry) error {
 }
 
 // Transform will apply the restructure operations to an entry
-func (p *MoveOperator) Transform(entry *entry.Entry) error {
-	val, ok := entry.Delete(p.From)
-	if !ok {
-		return fmt.Errorf("apply move: field %s does not exist on record", p.From)
-	}
-
-	return entry.Set(p.To, val)
+func (p *MoveOperator) Transform(e *entry.Entry) error {
+	val, _ := p.From.Delete(e)
+	p.To.Set(e, val)
+	return nil
 }

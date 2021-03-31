@@ -40,14 +40,14 @@ func TestMoveOperator(t *testing.T) {
 
 	cases := []struct {
 		name      string
-		addOp     MoveOperator
+		moveOp    MoveOperator
 		input     *entry.Entry
 		output    *entry.Entry
 		expectErr bool
 	}{
 		{
-			name: "MoveValue",
-			addOp: MoveOperator{
+			name: "MoveRecordToRecord",
+			moveOp: MoveOperator{
 				From: entry.NewRecordField("key"),
 				To:   entry.NewRecordField("new"),
 			},
@@ -64,8 +64,68 @@ func TestMoveOperator(t *testing.T) {
 			}(),
 		},
 		{
+			name: "MoveRecordToAttribute",
+			moveOp: MoveOperator{
+				From: entry.NewRecordField("key"),
+				To:   entry.NewAttributeField("new"),
+			},
+			input: newTestEntry(),
+			output: func() *entry.Entry {
+				e := newTestEntry()
+				e.Record = map[string]interface{}{
+					"nested": map[string]interface{}{
+						"nestedkey": "nestedval",
+					},
+				}
+				e.Attributes = map[string]string{"new": "val"}
+				return e
+			}(),
+		},
+		{
+			name: "MoveAttributeToRecord",
+			moveOp: MoveOperator{
+				From: entry.NewAttributeField("new"),
+				To:   entry.NewRecordField("new"),
+			},
+			input: func() *entry.Entry {
+				e := newTestEntry()
+				e.Attributes = map[string]string{"new": "val"}
+				return e
+			}(),
+			output: func() *entry.Entry {
+				e := newTestEntry()
+				e.Record = map[string]interface{}{
+					"key": "val",
+					"new": "val",
+					"nested": map[string]interface{}{
+						"nestedkey": "nestedval",
+					},
+				}
+				e.Attributes = map[string]string{}
+				return e
+			}(),
+		},
+		{
+			name: "MoveAttributeToResource",
+			moveOp: MoveOperator{
+				From: entry.NewAttributeField("new"),
+				To:   entry.NewResourceField("new"),
+			},
+			input: func() *entry.Entry {
+				e := newTestEntry()
+				e.Attributes = map[string]string{"new": "val"}
+				return e
+			}(),
+			output: func() *entry.Entry {
+				e := newTestEntry()
+				e.Resource = map[string]string{"new": "val"}
+				e.Attributes = map[string]string{}
+				return e
+			}(),
+		},
+		{
 			name: "MoveNest",
-			addOp: MoveOperator{
+			moveOp: MoveOperator{
 				From: entry.NewRecordField("nested"),
 				To:   entry.NewRecordField("NewNested"),
 			},
@@ -86,8 +146,8 @@ func TestMoveOperator(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			cfg := NewMoveOperatorConfig("test")
-			cfg.To = tc.addOp.To
-			cfg.From = tc.addOp.From
+			cfg.To = tc.moveOp.To
+			cfg.From = tc.moveOp.From
 			cfg.OutputIDs = []string{"fake"}
 			ops, err := cfg.Build(testutil.NewBuildContext(t))
 			require.NoError(t, err)
