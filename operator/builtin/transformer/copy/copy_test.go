@@ -25,7 +25,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestRemoveOperator(t *testing.T) {
+func TestCopyOperator(t *testing.T) {
 	newTestEntry := func() *entry.Entry {
 		e := entry.New()
 		e.Timestamp = time.Unix(1586632809, 0)
@@ -39,52 +39,18 @@ func TestRemoveOperator(t *testing.T) {
 	}
 
 	cases := []struct {
-		name        string
-		removeItems []entry.Field
-		input       *entry.Entry
-		output      *entry.Entry
-		expectErr   bool
+		name      string
+		copyOp    *CopyOperator
+		input     *entry.Entry
+		output    *entry.Entry
+		expectErr bool
 	}{
 		{
-			name: "Remove_one",
-			removeItems: func() []entry.Field {
-				var fields []entry.Field
-				fields = append(fields, entry.NewRecordField("nested"))
-				return fields
-			}(),
-			input: newTestEntry(),
-			output: func() *entry.Entry {
-				e := newTestEntry()
-				e.Record = map[string]interface{}{
-					"key": "val",
-				}
-				return e
-			}(),
-			expectErr: false,
-		},
-		{
-			name: "Remove_multi",
-			removeItems: func() []entry.Field {
-				var fields []entry.Field
-				fields = append(fields, entry.NewRecordField("nested"))
-				fields = append(fields, entry.NewRecordField("key"))
-				return fields
-			}(),
-			input: newTestEntry(),
-			output: func() *entry.Entry {
-				e := newTestEntry()
-				e.Record = map[string]interface{}{}
-				return e
-			}(),
-			expectErr: false,
-		},
-		{
-			name: "Remove_empty_value",
-			removeItems: func() []entry.Field {
-				var fields []entry.Field
-				fields = append(fields, entry.NewRecordField(""))
-				return fields
-			}(),
+			name: "Copy_Record",
+			copyOp: &CopyOperator{
+				From: entry.NewRecordField("key"),
+				To:   entry.NewRecordField("key2"),
+			},
 			input: newTestEntry(),
 			output: func() *entry.Entry {
 				e := newTestEntry()
@@ -93,163 +59,72 @@ func TestRemoveOperator(t *testing.T) {
 					"nested": map[string]interface{}{
 						"nestedkey": "nestedval",
 					},
-				}
-				return e
-			}(),
-			expectErr: false,
-		},
-		{
-			name:        "Remove_nil_value",
-			removeItems: nil,
-			input:       newTestEntry(),
-			output: func() *entry.Entry {
-				e := newTestEntry()
-				e.Record = map[string]interface{}{
-					"key": "val",
-					"nested": map[string]interface{}{
-						"nestedkey": "nestedval",
-					},
-				}
-				return e
-			}(),
-			expectErr: false,
-		},
-		{
-			name: "Remove_incorrect_key",
-			removeItems: func() []entry.Field {
-				var fields []entry.Field
-				fields = append(fields, entry.NewRecordField("asdasd"))
-				return fields
-			}(),
-			input: newTestEntry(),
-			output: func() *entry.Entry {
-				e := newTestEntry()
-				e.Record = map[string]interface{}{
-					"key": "val",
-					"nested": map[string]interface{}{
-						"nestedkey": "nestedval",
-					},
-				}
-				return e
-			}(),
-			expectErr: false,
-		},
-		{
-			name: "Remove_special",
-			removeItems: func() []entry.Field {
-				var fields []entry.Field
-				fields = append(fields, entry.NewRecordField("%$#"))
-				return fields
-			}(),
-			input: func() *entry.Entry {
-				e := newTestEntry()
-				e.Record = map[string]interface{}{
-					"key": "val",
-					"nested": map[string]interface{}{
-						"nestedkey": "nestedval",
-					},
-					"%$#": "val",
-				}
-				return e
-			}(),
-			output: func() *entry.Entry {
-				e := newTestEntry()
-				e.Record = map[string]interface{}{
-					"key": "val",
-					"nested": map[string]interface{}{
-						"nestedkey": "nestedval",
-					},
-				}
-				return e
-			}(),
-			expectErr: false,
-		},
-		{
-			name: "Remove_single_Attribute",
-			removeItems: func() []entry.Field {
-				var fields []entry.Field
-				fields = append(fields, entry.NewAttributeField("key"))
-				return fields
-			}(),
-			input: func() *entry.Entry {
-				e := newTestEntry()
-				e.Attributes = map[string]string{
-					"key": "val",
-				}
-				return e
-			}(),
-			output: func() *entry.Entry {
-				e := newTestEntry()
-				e.Attributes = map[string]string{}
-				return e
-			}(),
-			expectErr: false,
-		},
-		{
-			name: "Remove_nulti_Attribute",
-			removeItems: func() []entry.Field {
-				var fields []entry.Field
-				fields = append(fields, entry.NewAttributeField("key1"))
-				fields = append(fields, entry.NewAttributeField("key2"))
-
-				return fields
-			}(),
-			input: func() *entry.Entry {
-				e := newTestEntry()
-				e.Attributes = map[string]string{
-					"key1": "val",
 					"key2": "val",
 				}
 				return e
 			}(),
-			output: func() *entry.Entry {
-				e := newTestEntry()
-				e.Attributes = map[string]string{}
-				return e
-			}(),
 			expectErr: false,
 		},
 		{
-			name: "Remove_single_Resource",
-			removeItems: func() []entry.Field {
-				var fields []entry.Field
-				fields = append(fields, entry.NewResourceField("key"))
-				return fields
-			}(),
-			input: func() *entry.Entry {
+			name: "Copy_record_to_attribute",
+			copyOp: &CopyOperator{
+				From: entry.NewRecordField("key"),
+				To:   entry.NewAttributeField("key2"),
+			},
+			input: newTestEntry(),
+			output: func() *entry.Entry {
 				e := newTestEntry()
-				e.Resource = map[string]string{
+				e.Record = map[string]interface{}{
 					"key": "val",
+					"nested": map[string]interface{}{
+						"nestedkey": "nestedval",
+					},
 				}
-				return e
-			}(),
-			output: func() *entry.Entry {
-				e := newTestEntry()
-				e.Resource = map[string]string{}
+				e.Attributes = map[string]string{"key2": "val"}
 				return e
 			}(),
 			expectErr: false,
 		},
 		{
-			name: "Remove_nulti_Resource",
-			removeItems: func() []entry.Field {
-				var fields []entry.Field
-				fields = append(fields, entry.NewResourceField("key1"))
-				fields = append(fields, entry.NewResourceField("key2"))
-
-				return fields
-			}(),
+			name: "Copy_attribute_to_record",
+			copyOp: &CopyOperator{
+				From: entry.NewAttributeField("key2"),
+				To:   entry.NewRecordField("key3"),
+			},
 			input: func() *entry.Entry {
 				e := newTestEntry()
-				e.Resource = map[string]string{
-					"key1": "val",
-					"key2": "val",
-				}
+				e.Attributes = map[string]string{"key2": "val"}
 				return e
 			}(),
 			output: func() *entry.Entry {
 				e := newTestEntry()
-				e.Resource = map[string]string{}
+				e.Record = map[string]interface{}{
+					"key": "val",
+					"nested": map[string]interface{}{
+						"nestedkey": "nestedval",
+					},
+					"key3": "val",
+				}
+				e.Attributes = map[string]string{"key2": "val"}
+				return e
+			}(),
+			expectErr: false,
+		},
+		{
+			name: "Copy_attribute_to_resource",
+			copyOp: &CopyOperator{
+				From: entry.NewAttributeField("key2"),
+				To:   entry.NewResourceField("key3"),
+			},
+			input: func() *entry.Entry {
+				e := newTestEntry()
+				e.Attributes = map[string]string{"key2": "val"}
+				return e
+			}(),
+			output: func() *entry.Entry {
+				e := newTestEntry()
+				e.Attributes = map[string]string{"key2": "val"}
+				e.Resource = map[string]string{"key3": "val"}
 				return e
 			}(),
 			expectErr: false,
@@ -258,15 +133,16 @@ func TestRemoveOperator(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			cfg := NewRemoveOperatorConfig("test")
+			cfg := NewCopyOperatorConfig("test")
 			cfg.OutputIDs = []string{"fake"}
 
 			ops, err := cfg.Build(testutil.NewBuildContext(t))
 			require.NoError(t, err)
 			op := ops[0]
 
-			remove := op.(*RemoveOperator)
-			remove.Fields = tc.removeItems
+			remove := op.(*CopyOperator)
+			remove.From = tc.copyOp.From
+			remove.To = tc.copyOp.To
 			fake := testutil.NewFakeOutput(t)
 			remove.SetOutputs([]operator.Operator{fake})
 

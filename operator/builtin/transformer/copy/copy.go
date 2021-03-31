@@ -16,7 +16,6 @@ package copy
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/open-telemetry/opentelemetry-log-collection/entry"
 	"github.com/open-telemetry/opentelemetry-log-collection/operator"
@@ -24,55 +23,52 @@ import (
 )
 
 func init() {
-	operator.Register("copy", func() operator.Builder { return NewRemoveOperatorConfig("") })
+	operator.Register("copy", func() operator.Builder { return NewCopyOperatorConfig("") })
 }
 
-// NewRemoveOperatorConfig creates a new restructure operator config with default values
-func NewRemoveOperatorConfig(operatorID string) *RemoveOperatorConfig {
-	return &RemoveOperatorConfig{
+// NewCopyOperatorConfig creates a new restructure operator config with default values
+func NewCopyOperatorConfig(operatorID string) *CopyOperatorConfig {
+	return &CopyOperatorConfig{
 		TransformerConfig: helper.NewTransformerConfig(operatorID, "copy"),
 	}
 }
 
-// RemoveOperatorConfig is the configuration of a restructure operator
-type RemoveOperatorConfig struct {
+// CopyOperatorConfig is the configuration of a restructure operator
+type CopyOperatorConfig struct {
 	helper.TransformerConfig `mapstructure:",squash" yaml:",inline"`
-	From                     entry.Field `mapstructure:"from"  json:"from" yaml:"from"`
+	From                     entry.Field
 	To                       entry.Field
 }
 
-func (c RemoveOperatorConfig) Build(context operator.BuildContext) ([]operator.Operator, error) {
+func (c CopyOperatorConfig) Build(context operator.BuildContext) ([]operator.Operator, error) {
 	transformerOperator, err := c.TransformerConfig.Build(context)
 	if err != nil {
 		return nil, err
 	}
 
-	copyOperator := &RemoveOperator{
+	addOperator := &CopyOperator{
 		TransformerOperator: transformerOperator,
-		Fields:              c.Fields,
+		From:                c.From,
+		To:                  c.To,
 	}
 
-	return []operator.Operator{copyOperator}, nil
+	return []operator.Operator{addOperator}, nil
 }
 
-type RemoveOperator struct {
+type CopyOperator struct {
 	helper.TransformerOperator
-	Fields []entry.Field
+	From entry.Field
+	To   entry.Field
 }
 
 // Process will process an entry with a restructure transformation.
-func (p *RemoveOperator) Process(ctx context.Context, entry *entry.Entry) error {
+func (p *CopyOperator) Process(ctx context.Context, entry *entry.Entry) error {
 	return p.ProcessWith(ctx, entry, p.Transform)
 }
 
 // Transform will apply the restructure operations to an entry
-func (p *RemoveOperator) Transform(entry *entry.Entry) error {
-	if p.Fields != nil {
-		for _, field := range p.Fields {
-			entry.Delete(field)
-		}
-	} else {
-		return fmt.Errorf("copy: missing required field 'fields'")
-	}
+func (p *CopyOperator) Transform(e *entry.Entry) error {
+	val, _ := p.From.Get(e)
+	p.To.Set(e, val)
 	return nil
 }
