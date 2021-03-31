@@ -36,8 +36,8 @@ func NewCopyOperatorConfig(operatorID string) *CopyOperatorConfig {
 // CopyOperatorConfig is the configuration of a restructure operator
 type CopyOperatorConfig struct {
 	helper.TransformerConfig `mapstructure:",squash" yaml:",inline"`
-	From                     entry.Field
-	To                       entry.Field
+	From                     entry.Field `mapstructure:"from" json:"from" yaml:"from"`
+	To                       entry.Field `mapstructure:"to" json:"to" yaml:"to"`
 }
 
 func (c CopyOperatorConfig) Build(context operator.BuildContext) ([]operator.Operator, error) {
