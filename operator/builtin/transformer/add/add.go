@@ -17,7 +17,10 @@ package add
 import (
 	"context"
 	"fmt"
+	"reflect"
+	"strings"
 
+	"github.com/antonmedv/expr"
 	"github.com/antonmedv/expr/vm"
 	"github.com/open-telemetry/opentelemetry-log-collection/entry"
 	"github.com/open-telemetry/opentelemetry-log-collection/operator"
@@ -40,7 +43,6 @@ type AddOperatorConfig struct {
 	helper.TransformerConfig `mapstructure:",squash" yaml:",inline"`
 	Field                    entry.Field `json:"field" yaml:"field"`
 	Value                    interface{} `json:"value,omitempty" yaml:"value,omitempty"`
-	program                  *vm.Program
 }
 
 func (c AddOperatorConfig) Build(context operator.BuildContext) ([]operator.Operator, error) {
@@ -52,8 +54,20 @@ func (c AddOperatorConfig) Build(context operator.BuildContext) ([]operator.Oper
 	addOperator := &AddOperator{
 		TransformerOperator: transformerOperator,
 		Field:               c.Field,
-		program:             c.program,
-		Value:               c.Value,
+	}
+
+	if reflect.TypeOf(c.Value) == reflect.TypeOf(" ") && strings.Contains(c.Value.(string), "EXPR(") {
+		exprStr := strings.Replace(c.Value.(string), "EXPR(", ``, 1)
+		if last := len(exprStr) - 1; last >= 0 && exprStr[last] == ')' {
+			exprStr = exprStr[:last]
+		}
+		compiled, err := expr.Compile(exprStr, expr.AllowUndefinedVariables())
+		if err != nil {
+			return []operator.Operator{addOperator}, fmt.Errorf("failed to compile expression '%s': %w", c.IfExpr, err)
+		}
+		addOperator.program = compiled
+	} else {
+		addOperator.Value = c.Value
 	}
 
 	return []operator.Operator{addOperator}, nil

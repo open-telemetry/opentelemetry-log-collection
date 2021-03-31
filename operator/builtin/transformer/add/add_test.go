@@ -20,8 +20,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/antonmedv/expr"
-	"github.com/antonmedv/expr/vm"
 	"github.com/open-telemetry/opentelemetry-log-collection/entry"
 	"github.com/open-telemetry/opentelemetry-log-collection/operator"
 	"github.com/open-telemetry/opentelemetry-log-collection/testutil"
@@ -68,11 +66,7 @@ func TestAddOperator(t *testing.T) {
 			name: "add_expr",
 			addOp: AddOperator{
 				Field: entry.NewRecordField("new"),
-				program: func() *vm.Program {
-					vm, err := expr.Compile(`$.key + "_suffix"`)
-					require.NoError(t, err)
-					return vm
-				}(),
+				Value: `EXPR($.key + "_suffix")`,
 			},
 			input: newTestEntry(),
 			output: func() *entry.Entry {
@@ -86,11 +80,7 @@ func TestAddOperator(t *testing.T) {
 			name: "add_expr",
 			addOp: AddOperator{
 				Field: entry.NewRecordField("new"),
-				program: func() *vm.Program {
-					vm, err := expr.Compile(`env("TEST_ADD_PLUGIN_ENV")`)
-					require.NoError(t, err)
-					return vm
-				}(),
+				Value: `EXPR(env("TEST_ADD_PLUGIN_ENV"))`,
 			},
 			input: newTestEntry(),
 			output: func() *entry.Entry {
@@ -107,7 +97,6 @@ func TestAddOperator(t *testing.T) {
 			cfg := NewAddOperatorConfig("test")
 			cfg.Field = tc.addOp.Field
 			cfg.Value = tc.addOp.Value
-			cfg.program = tc.addOp.program
 			cfg.OutputIDs = []string{"fake"}
 			ops, err := cfg.Build(testutil.NewBuildContext(t))
 			require.NoError(t, err)
