@@ -23,7 +23,7 @@ import (
 )
 
 func init() {
-	operator.Register("flatten", func() operator.Builder { return NewRetainOperatorConfig("") })
+	operator.Register("retain", func() operator.Builder { return NewRetainOperatorConfig("") })
 }
 
 // NewRetainOperatorConfig creates a new restructure operator config with default values

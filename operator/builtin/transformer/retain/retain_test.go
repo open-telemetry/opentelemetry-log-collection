@@ -16,7 +16,6 @@ package retain
 
 import (
 	"context"
-	"os"
 	"testing"
 	"time"
 
@@ -27,9 +26,6 @@ import (
 )
 
 func TestOperator(t *testing.T) {
-	os.Setenv("TEST_MOVE_PLUGIN_ENV", "foo")
-	defer os.Unsetenv("TEST_MOVE_PLUGIN_ENV")
-
 	newTestEntry := func() *entry.Entry {
 		e := entry.New()
 		e.Timestamp = time.Unix(1586632809, 0)
@@ -50,13 +46,180 @@ func TestOperator(t *testing.T) {
 		expectErr bool
 	}{
 		{
-			name: "flatten_single_layer",
+			name: "retain_single",
 			retainOp: RetainOperator{
 				Fields: []entry.Field{entry.NewRecordField("key")},
 			},
 			input: newTestEntry(),
 			output: func() *entry.Entry {
 				e := newTestEntry()
+				e.Record = map[string]interface{}{
+					"key": "val",
+				}
+				return e
+			}(),
+		},
+		{
+			name: "retain_multi",
+			retainOp: RetainOperator{
+				Fields: []entry.Field{
+					entry.NewRecordField("key"),
+					entry.NewRecordField("nested2"),
+				},
+			},
+			input: func() *entry.Entry {
+				e := newTestEntry()
+				e.Record = map[string]interface{}{
+					"key": "val",
+					"nested": map[string]interface{}{
+						"nestedkey": "nestedval",
+					},
+					"nested2": map[string]interface{}{
+						"nestedkey": "nestedval",
+					},
+				}
+				return e
+			}(),
+			output: func() *entry.Entry {
+				e := newTestEntry()
+				e.Record = map[string]interface{}{
+					"key": "val",
+					"nested2": map[string]interface{}{
+						"nestedkey": "nestedval",
+					},
+				}
+				return e
+			}(),
+		},
+		{
+			name: "retain_single_attribute",
+			retainOp: RetainOperator{
+				Fields: []entry.Field{
+					entry.NewAttributeField("key"),
+				},
+			},
+			input: func() *entry.Entry {
+				e := newTestEntry()
+				e.Attributes = map[string]string{
+					"key": "val",
+				}
+				return e
+			}(),
+			output: func() *entry.Entry {
+				e := newTestEntry()
+				e.Attributes = map[string]string{
+					"key": "val",
+				}
+				e.Record = nil
+				return e
+			}(),
+		},
+		{
+			name: "retain_multi_attribute",
+			retainOp: RetainOperator{
+				Fields: []entry.Field{
+					entry.NewAttributeField("key1"),
+					entry.NewAttributeField("key2"),
+				},
+			},
+			input: func() *entry.Entry {
+				e := newTestEntry()
+				e.Attributes = map[string]string{
+					"key1": "val",
+					"key2": "val",
+					"key3": "val",
+				}
+				return e
+			}(),
+			output: func() *entry.Entry {
+				e := newTestEntry()
+				e.Attributes = map[string]string{
+					"key1": "val",
+					"key2": "val",
+				}
+				e.Record = nil
+				return e
+			}(),
+		},
+		{
+			name: "retain_single_resource",
+			retainOp: RetainOperator{
+				Fields: []entry.Field{
+					entry.NewResourceField("key"),
+				},
+			},
+			input: func() *entry.Entry {
+				e := newTestEntry()
+				e.Resource = map[string]string{
+					"key": "val",
+				}
+				return e
+			}(),
+			output: func() *entry.Entry {
+				e := newTestEntry()
+				e.Resource = map[string]string{
+					"key": "val",
+				}
+				e.Record = nil
+				return e
+			}(),
+		},
+		{
+			name: "retain_multi_resource",
+			retainOp: RetainOperator{
+				Fields: []entry.Field{
+					entry.NewResourceField("key1"),
+					entry.NewResourceField("key2"),
+				},
+			},
+			input: func() *entry.Entry {
+				e := newTestEntry()
+				e.Resource = map[string]string{
+					"key1": "val",
+					"key2": "val",
+					"key3": "val",
+				}
+				return e
+			}(),
+			output: func() *entry.Entry {
+				e := newTestEntry()
+				e.Resource = map[string]string{
+					"key1": "val",
+					"key2": "val",
+				}
+				e.Record = nil
+				return e
+			}(),
+		},
+		{
+			name: "retain_one_of_each",
+			retainOp: RetainOperator{
+				Fields: []entry.Field{
+					entry.NewRecordField("key"),
+					entry.NewResourceField("key1"),
+					entry.NewAttributeField("key3"),
+				},
+			},
+			input: func() *entry.Entry {
+				e := newTestEntry()
+				e.Resource = map[string]string{
+					"key1": "val",
+					"key2": "val",
+				}
+				e.Attributes = map[string]string{
+					"key3": "val",
+					"key4": "val",
+				}
+				return e
+			}(),
+			output: func() *entry.Entry {
+				e := newTestEntry()
+				e.Resource = map[string]string{
+					"key1": "val",
+				}
+				e.Attributes = map[string]string{
+					"key3": "val",
+				}
 				e.Record = map[string]interface{}{
 					"key": "val",
 				}
