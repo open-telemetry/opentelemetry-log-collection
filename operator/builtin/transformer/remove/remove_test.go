@@ -164,6 +164,96 @@ func TestRemoveOperator(t *testing.T) {
 			}(),
 			expectErr: false,
 		},
+		{
+			name: "Remove_single_Attribute",
+			removeItems: func() []entry.Field {
+				var fields []entry.Field
+				fields = append(fields, entry.NewAttributeField("key"))
+				return fields
+			}(),
+			input: func() *entry.Entry {
+				e := newTestEntry()
+				e.Attributes = map[string]string{
+					"key": "val",
+				}
+				return e
+			}(),
+			output: func() *entry.Entry {
+				e := newTestEntry()
+				e.Attributes = map[string]string{}
+				return e
+			}(),
+			expectErr: false,
+		},
+		{
+			name: "Remove_nulti_Attribute",
+			removeItems: func() []entry.Field {
+				var fields []entry.Field
+				fields = append(fields, entry.NewAttributeField("key1"))
+				fields = append(fields, entry.NewAttributeField("key2"))
+
+				return fields
+			}(),
+			input: func() *entry.Entry {
+				e := newTestEntry()
+				e.Attributes = map[string]string{
+					"key1": "val",
+					"key2": "val",
+				}
+				return e
+			}(),
+			output: func() *entry.Entry {
+				e := newTestEntry()
+				e.Attributes = map[string]string{}
+				return e
+			}(),
+			expectErr: false,
+		},
+		{
+			name: "Remove_single_Resource",
+			removeItems: func() []entry.Field {
+				var fields []entry.Field
+				fields = append(fields, entry.NewResourceField("key"))
+				return fields
+			}(),
+			input: func() *entry.Entry {
+				e := newTestEntry()
+				e.Resource = map[string]string{
+					"key": "val",
+				}
+				return e
+			}(),
+			output: func() *entry.Entry {
+				e := newTestEntry()
+				e.Resource = map[string]string{}
+				return e
+			}(),
+			expectErr: false,
+		},
+		{
+			name: "Remove_nulti_Resource",
+			removeItems: func() []entry.Field {
+				var fields []entry.Field
+				fields = append(fields, entry.NewResourceField("key1"))
+				fields = append(fields, entry.NewResourceField("key2"))
+
+				return fields
+			}(),
+			input: func() *entry.Entry {
+				e := newTestEntry()
+				e.Resource = map[string]string{
+					"key1": "val",
+					"key2": "val",
+				}
+				return e
+			}(),
+			output: func() *entry.Entry {
+				e := newTestEntry()
+				e.Resource = map[string]string{}
+				return e
+			}(),
+			expectErr: false,
+		},
 	}
 
 	for _, tc := range cases {
