@@ -84,18 +84,18 @@ func (p *AddOperator) Process(ctx context.Context, entry *entry.Entry) error {
 }
 
 // Transform will apply the restructure operations to an entry
-func (p *AddOperator) Transform(entry *entry.Entry) error {
+func (p *AddOperator) Transform(e *entry.Entry) error {
 	if p.Value != nil {
-		return entry.Set(p.Field, p.Value)
+		return e.Set(p.Field, p.Value)
 	} else if p.program != nil {
-		env := helper.GetExprEnv(entry)
+		env := helper.GetExprEnv(e)
 		defer helper.PutExprEnv(env)
 
 		result, err := vm.Run(p.program, env)
 		if err != nil {
 			return fmt.Errorf("evaluate value_expr: %s", err)
 		}
-		return entry.Set(p.Field, result)
+		return e.Set(p.Field, result)
 	}
 	return fmt.Errorf("add: missing required field 'Value'")
 }
