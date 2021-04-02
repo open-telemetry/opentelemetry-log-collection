@@ -1,12 +1,12 @@
 ## `add` operator
 
-The `add` operator adds a field to a record. It must have a `field` key and exactly one of `value` or `value_expr`.
+The `add` operator adds a field to a record. It must have a `field` key and exactly one of `value`.
 
-`field` is a [field](/docs/types/field.md) that will be set to `value` or the result of `value_expr`
+`field` is a [field](/docs/types/field.md) that will be set to `value` or the evaluated expression.
 
-`value` is a static string that will be added to each entry at the field defined by `field`
+`value` is a static string that will be added to each entry at the field defined by `field`. 
+ Expressions can be used in this field through surrounding it with `EXPR()`
 
-`value_expr` is an [expression](/docs/types/expression.md) with access to the `record` object
 
 
 ### Configuration Fields
