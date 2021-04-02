@@ -17,7 +17,6 @@ package add
 import (
 	"context"
 	"fmt"
-	"reflect"
 	"strings"
 
 	"github.com/antonmedv/expr"
@@ -41,8 +40,8 @@ func NewAddOperatorConfig(operatorID string) *AddOperatorConfig {
 // AddOperatorConfig is the configuration of a restructure operator
 type AddOperatorConfig struct {
 	helper.TransformerConfig `mapstructure:",squash" yaml:",inline"`
-	Field                    entry.Field `json:"field" yaml:"field"`
-	Value                    interface{} `json:"value,omitempty" yaml:"value,omitempty"`
+	Field                    entry.Field `mapstructure:"field" json:"field" yaml:"field"`
+	Value                    interface{} `mapstructure:"value,omitempty" json:"value,omitempty" yaml:"value,omitempty"`
 }
 
 func (c AddOperatorConfig) Build(context operator.BuildContext) ([]operator.Operator, error) {
@@ -55,15 +54,13 @@ func (c AddOperatorConfig) Build(context operator.BuildContext) ([]operator.Oper
 		TransformerOperator: transformerOperator,
 		Field:               c.Field,
 	}
-
-	if reflect.TypeOf(c.Value) == reflect.TypeOf(" ") && strings.Contains(c.Value.(string), "EXPR(") {
-		exprStr := strings.Replace(c.Value.(string), "EXPR(", ``, 1)
-		if last := len(exprStr) - 1; last >= 0 && exprStr[last] == ')' {
-			exprStr = exprStr[:last]
-		}
+	_, ok := c.Value.(string)
+	if ok && strings.Contains(c.Value.(string), "EXPR(") {
+		exprStr := strings.TrimPrefix(c.Value.(string), "EXPR(")
+		exprStr = strings.TrimSuffix(exprStr, ")")
 		compiled, err := expr.Compile(exprStr, expr.AllowUndefinedVariables())
 		if err != nil {
-			return []operator.Operator{addOperator}, fmt.Errorf("failed to compile expression '%s': %w", c.IfExpr, err)
+			return nil, fmt.Errorf("failed to compile expression '%s': %w", c.IfExpr, err)
 		}
 		addOperator.program = compiled
 	} else {
@@ -74,10 +71,10 @@ func (c AddOperatorConfig) Build(context operator.BuildContext) ([]operator.Oper
 }
 
 type AddOperator struct {
-	helper.TransformerOperator `mapstructure:",squash" yaml:",inline"`
+	helper.TransformerOperator
 
-	Field   entry.Field `json:"field" yaml:"field"`
-	Value   interface{} `json:"value,omitempty" yaml:"value,omitempty"`
+	Field   entry.Field
+	Value   interface{}
 	program *vm.Program
 }
 

@@ -77,7 +77,7 @@ func TestAddOperator(t *testing.T) {
 			expectErr: false,
 		},
 		{
-			name: "add_expr",
+			name: "add_env_expr",
 			addOp: AddOperator{
 				Field: entry.NewRecordField("new"),
 				Value: `EXPR(env("TEST_ADD_PLUGIN_ENV"))`,
