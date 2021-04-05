@@ -49,7 +49,6 @@ func TestStanzaOperator(t *testing.T) {
 	select {
 	case e := <-fake.Received:
 		require.Equal(t, expectedBody, e.Body)
-
 	case <-time.After(time.Second):
 		require.FailNow(t, "timed out")
 	}

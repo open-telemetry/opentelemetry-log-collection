@@ -192,6 +192,7 @@ func TestBodyFieldDelete(t *testing.T) {
 
 			entry.Delete(tc.field)
 			assert.Equal(t, tc.expectedBody, entry.Body)
+
 		})
 	}
 }

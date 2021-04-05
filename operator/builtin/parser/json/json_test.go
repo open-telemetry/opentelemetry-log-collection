@@ -137,7 +137,6 @@ func TestJSONParser(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			input := entry.New()
 			input.Body = tc.inputBody
-
 			output := entry.New()
 			output.Body = tc.outputBody
 

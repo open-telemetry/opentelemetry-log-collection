@@ -383,7 +383,6 @@ func TestParserPreserve(t *testing.T) {
 
 			e := entry.New()
 			e.Body = tc.inputBody
-
 			err = parser.ProcessWith(context.Background(), e, parse)
 			require.NoError(t, err)
 
