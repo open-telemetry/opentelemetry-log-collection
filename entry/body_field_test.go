@@ -189,10 +189,8 @@ func TestBodyFieldDelete(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			entry := New()
 			entry.Body = tc.body
-
 			entry.Delete(tc.field)
 			assert.Equal(t, tc.expectedBody, entry.Body)
-
 		})
 	}
 }
