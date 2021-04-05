@@ -8,19 +8,20 @@ import (
 	"testing"
 	"time"
 
+	
 	"github.com/open-telemetry/opentelemetry-log-collection/entry"
 	"github.com/open-telemetry/opentelemetry-log-collection/operator"
 	"github.com/open-telemetry/opentelemetry-log-collection/operator/helper"
 	"github.com/open-telemetry/opentelemetry-log-collection/testutil"
 	"github.com/stretchr/testify/require"
-	"gopkg.in/yaml.v2"
+	yaml "gopkg.in/yaml.v2"
 )
 
 type testCase struct {
 	name      string
 	expectErr bool
-	input     *entry.Entry
-	output    *entry.Entry
+	input     func() *entry.Entry
+	output    func() *entry.Entry
 }
 
 func TestRemoveGoldenConfig(t *testing.T) {
@@ -40,24 +41,24 @@ func TestRemoveGoldenConfig(t *testing.T) {
 		{
 			"remove_one",
 			false,
-			newTestEntry(),
+			newTestEntry,
 			func() *entry.Entry {
 				e := newTestEntry()
 				e.Record = map[string]interface{}{
 					"key": "val",
 				}
 				return e
-			}(),
+			},
 		},
 		{
 			"remove_multi",
 			false,
-			newTestEntry(),
+			newTestEntry,
 			func() *entry.Entry {
 				e := newTestEntry()
 				e.Record = map[string]interface{}{}
 				return e
-			}(),
+			},
 		},
 		{
 			"remove_single_attribute",
@@ -68,12 +69,12 @@ func TestRemoveGoldenConfig(t *testing.T) {
 					"key": "val",
 				}
 				return e
-			}(),
+			},
 			func() *entry.Entry {
 				e := newTestEntry()
 				e.Attributes = map[string]string{}
 				return e
-			}(),
+			},
 		},
 		{
 			"remove_multi_attribute",
@@ -85,12 +86,12 @@ func TestRemoveGoldenConfig(t *testing.T) {
 					"key2": "val",
 				}
 				return e
-			}(),
+			},
 			func() *entry.Entry {
 				e := newTestEntry()
 				e.Attributes = map[string]string{}
 				return e
-			}(),
+			},
 		},
 		{
 			"remove_single_resource",
@@ -101,12 +102,12 @@ func TestRemoveGoldenConfig(t *testing.T) {
 					"key": "val",
 				}
 				return e
-			}(),
+			},
 			func() *entry.Entry {
 				e := newTestEntry()
 				e.Resource = map[string]string{}
 				return e
-			}(),
+			},
 		},
 		{
 			"remove_multi_resource",
@@ -118,12 +119,12 @@ func TestRemoveGoldenConfig(t *testing.T) {
 					"key2": "val",
 				}
 				return e
-			}(),
+			},
 			func() *entry.Entry {
 				e := newTestEntry()
 				e.Resource = map[string]string{}
 				return e
-			}(),
+			},
 		},
 	}
 
@@ -142,13 +143,13 @@ func TestRemoveGoldenConfig(t *testing.T) {
 				fake := testutil.NewFakeOutput(t)
 				remove.SetOutputs([]operator.Operator{fake})
 
-				err = remove.Process(context.Background(), tc.input)
+				err = remove.Process(context.Background(), tc.input())
 				if tc.expectErr {
 					require.Error(t, err)
 				}
 				require.NoError(t, err)
 
-				fake.ExpectEntry(t, tc.output)
+				fake.ExpectEntry(t, tc.output())
 			}
 		})
 		t.Run("mapstructure/"+tc.name, func(t *testing.T) {
@@ -169,13 +170,13 @@ func TestRemoveGoldenConfig(t *testing.T) {
 				fake := testutil.NewFakeOutput(t)
 				remove.SetOutputs([]operator.Operator{fake})
 
-				err = remove.Process(context.Background(), tc.input)
+				err = remove.Process(context.Background(), tc.input())
 				if tc.expectErr {
 					require.Error(t, err)
 				}
 				require.NoError(t, err)
 
-				fake.ExpectEntry(t, tc.output)
+				fake.ExpectEntry(t, tc.output())
 			}
 		})
 	}
