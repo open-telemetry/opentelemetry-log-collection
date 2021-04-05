@@ -29,6 +29,7 @@ import (
 	"golang.org/x/text/encoding"
 
 	"github.com/open-telemetry/opentelemetry-log-collection/entry"
+	"github.com/open-telemetry/opentelemetry-log-collection/operator"
 	"github.com/open-telemetry/opentelemetry-log-collection/operator/helper"
 )
 
@@ -46,7 +47,7 @@ type InputOperator struct {
 	MaxConcurrentFiles int
 	SeenPaths          map[string]struct{}
 
-	persist helper.Persister
+	persister operator.Persister
 
 	knownFiles    []*Reader
 	queuedMatches []string
@@ -63,11 +64,12 @@ type InputOperator struct {
 }
 
 // Start will start the file monitoring process
-func (f *InputOperator) Start() error {
+func (f *InputOperator) Start(persister operator.Persister) error {
 	ctx, cancel := context.WithCancel(context.Background())
 	f.cancel = cancel
 	f.firstCheck = true
 
+	f.persister = persister
 	// Load offsets from disk
 	if err := f.loadLastPollFiles(); err != nil {
 		return fmt.Errorf("read known files from database: %s", err)
@@ -335,20 +337,18 @@ func (f *InputOperator) syncLastPollFiles() {
 		}
 	}
 
-	f.persist.Set(knownFilesKey, buf.Bytes())
-	if err := f.persist.Sync(); err != nil {
+	if err := f.persister.Set(knownFilesKey, buf.Bytes()); err != nil {
 		f.Errorw("Failed to sync to database", zap.Error(err))
 	}
 }
 
 // syncLastPollFiles loads the most recent set of files to the database
 func (f *InputOperator) loadLastPollFiles() error {
-	err := f.persist.Load()
+	encoded, err := f.persister.Get(knownFilesKey)
 	if err != nil {
 		return err
 	}
 
-	encoded := f.persist.Get(knownFilesKey)
 	if encoded == nil {
 		f.knownFiles = make([]*Reader, 0, 10)
 		return nil

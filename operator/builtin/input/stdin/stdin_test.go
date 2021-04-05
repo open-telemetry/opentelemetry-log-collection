@@ -40,7 +40,7 @@ func TestStdin(t *testing.T) {
 	stdin := op[0].(*StdinInput)
 	stdin.stdin = r
 
-	require.NoError(t, stdin.Start())
+	require.NoError(t, stdin.Start(testutil.NewMockPersister()))
 	defer stdin.Stop()
 
 	w.WriteString("test")

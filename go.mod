@@ -4,6 +4,7 @@ go 1.14
 
 require (
 	github.com/antonmedv/expr v1.8.9
+	github.com/golang/gddo v0.0.0-20210115222349-20d68f94ee1f
 	github.com/json-iterator/go v1.1.10
 	github.com/mitchellh/mapstructure v1.4.1
 	github.com/observiq/ctimefmt v1.0.0

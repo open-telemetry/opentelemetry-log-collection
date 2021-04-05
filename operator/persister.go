@@ -12,18 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package pipeline
+package operator
 
-//go:generate mockery --name=^(Pipeline)$ --output=../testutil --outpkg=testutil --case=snake
-
-import (
-	"github.com/open-telemetry/opentelemetry-log-collection/operator"
-)
-
-// Pipeline is a collection of connected operators that exchange entries
-type Pipeline interface {
-	Start(persister operator.Persister) error
-	Stop() error
-	Operators() []operator.Operator
-	Render() ([]byte, error)
+// Persister is an interface used to persist data
+type Persister interface {
+	Get(string) ([]byte, error)
+	Set(string, []byte) error
+	Delete(string) error
 }

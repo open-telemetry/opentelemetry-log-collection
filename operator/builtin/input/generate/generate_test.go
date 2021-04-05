@@ -40,7 +40,7 @@ func TestInputGenerate(t *testing.T) {
 	err = op.SetOutputs([]operator.Operator{fake})
 	require.NoError(t, err)
 
-	require.NoError(t, op.Start())
+	require.NoError(t, op.Start(testutil.NewMockPersister()))
 	defer op.Stop()
 
 	for i := 0; i < 5; i++ {
