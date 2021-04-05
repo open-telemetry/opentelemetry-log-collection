@@ -4,14 +4,12 @@ go 1.14
 
 require (
 	github.com/antonmedv/expr v1.8.9
-	github.com/golang/gddo v0.0.0-20210115222349-20d68f94ee1f
 	github.com/json-iterator/go v1.1.10
 	github.com/mitchellh/mapstructure v1.4.1
 	github.com/observiq/ctimefmt v1.0.0
 	github.com/observiq/go-syslog/v3 v3.0.2
 	github.com/observiq/nanojack v0.0.0-20201106172433-343928847ebc
 	github.com/stretchr/testify v1.7.0
-	go.etcd.io/bbolt v1.3.4
 	go.opentelemetry.io/collector v0.22.0
 	go.uber.org/zap v1.16.0
 	golang.org/x/sys v0.0.0-20210217105451-b926d437f341
