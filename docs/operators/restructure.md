@@ -1,8 +1,8 @@
 ## `restructure` operator
 
-The `restructure` operator facilitates changing the structure of a record by adding, removing, moving, and flattening fields.
+The `restructure` operator facilitates changing the structure of a body by adding, removing, moving, and flattening fields.
 
-The operator is configured with a list of ops, which are small operations that are applied to a record in the order
+The operator is configured with a list of ops, which are small operations that are applied to a body in the order
 they are defined.
 
 ### Configuration Fields
@@ -19,7 +19,7 @@ they are defined.
 
 #### Add
 
-The `add` op adds a field to a record. It must have a `field` key and exactly one of `value` or `value_expr`.
+The `add` op adds a field to a body. It must have a `field` key and exactly one of `value` or `value_expr`.
 
 `field` is a [field](/docs/types/field.md) that will be set to `value` or the result of `value_expr`
 
@@ -36,7 +36,7 @@ Example usage:
         value: "val1"
     - add:
         field: "key2"
-        value_expr: 'record["key1"] + "-suffix"'
+        value_expr: 'body["key1"] + "-suffix"'
 ```
 
 <table>
