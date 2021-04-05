@@ -29,7 +29,7 @@ func TestInputGenerate(t *testing.T) {
 	cfg.OutputIDs = []string{"fake"}
 	cfg.Count = 5
 	cfg.Entry = entry.Entry{
-		Record: "test message",
+		Body: "test message",
 	}
 
 	ops, err := cfg.Build(testutil.NewBuildContext(t))

@@ -136,15 +136,15 @@ func TestJSONParser(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			input := entry.New()
-			input.Record = tc.inputRecord
+			input.Body = tc.inputRecord
 
 			output := entry.New()
-			output.Record = tc.expectedRecord
+			output.Body = tc.expectedRecord
 
 			parser, mockOutput := NewFakeJSONOperator()
 			mockOutput.On("Process", mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
 				e := args[1].(*entry.Entry)
-				require.Equal(t, tc.expectedRecord, e.Record)
+				require.Equal(t, tc.expectedRecord, e.Body)
 			}).Return(nil)
 
 			err := parser.Process(context.Background(), input)
@@ -207,10 +207,10 @@ func TestJSONParserWithEmbeddedTimeParser(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			input := entry.New()
-			input.Record = tc.inputRecord
+			input.Body = tc.inputRecord
 
 			output := entry.New()
-			output.Record = tc.expectedRecord
+			output.Body = tc.expectedRecord
 
 			parser, mockOutput := NewFakeJSONOperator()
 			parseFrom := entry.NewRecordField("testparsed", "timestamp")
@@ -222,7 +222,7 @@ func TestJSONParserWithEmbeddedTimeParser(t *testing.T) {
 			}
 			mockOutput.On("Process", mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
 				e := args[1].(*entry.Entry)
-				require.Equal(t, tc.expectedRecord, e.Record)
+				require.Equal(t, tc.expectedRecord, e.Body)
 				require.Equal(t, testTime, e.Timestamp)
 			}).Return(nil)
 

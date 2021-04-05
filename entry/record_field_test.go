@@ -98,7 +98,7 @@ func TestRecordFieldGet(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			entry := New()
-			entry.Record = tc.record
+			entry.Body = tc.record
 
 			val, ok := entry.Get(tc.field)
 			if !assert.Equal(t, tc.expectedOk, ok) {
@@ -188,10 +188,10 @@ func TestRecordFieldDelete(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			entry := New()
-			entry.Record = tc.record
+			entry.Body = tc.record
 
 			entry.Delete(tc.field)
-			assert.Equal(t, tc.expectedRecord, entry.Record)
+			assert.Equal(t, tc.expectedRecord, entry.Body)
 		})
 	}
 }
@@ -280,9 +280,9 @@ func TestRecordFieldSet(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			entry := New()
-			entry.Record = tc.record
+			entry.Body = tc.record
 			require.NoError(t, entry.Set(tc.field, tc.setTo))
-			assert.Equal(t, tc.expectedVal, entry.Record)
+			assert.Equal(t, tc.expectedVal, entry.Body)
 		})
 	}
 }
@@ -306,12 +306,12 @@ func TestRecordFieldChild(t *testing.T) {
 
 func TestRecordFieldMerge(t *testing.T) {
 	entry := &Entry{}
-	entry.Record = "raw_value"
+	entry.Body = "raw_value"
 	field := RecordField{[]string{"embedded"}}
 	values := map[string]interface{}{"new": "values"}
 	field.Merge(entry, values)
 	expected := map[string]interface{}{"embedded": values}
-	require.Equal(t, expected, entry.Record)
+	require.Equal(t, expected, entry.Body)
 }
 
 func TestRecordFieldMarshalJSON(t *testing.T) {

@@ -24,7 +24,7 @@ import (
 
 func TestRead(t *testing.T) {
 	testEntry := &Entry{
-		Record: map[string]interface{}{
+		Body: map[string]interface{}{
 			"string_field": "string_val",
 			"byte_field":   []byte(`test`),
 			"map_string_interface_field": map[string]interface{}{
@@ -138,7 +138,7 @@ func TestCopy(t *testing.T) {
 	entry.Severity = Severity(0)
 	entry.SeverityText = "ok"
 	entry.Timestamp = time.Time{}
-	entry.Record = "test"
+	entry.Body = "test"
 	entry.Attributes = map[string]string{"label": "value"}
 	entry.Resource = map[string]string{"resource": "value"}
 	copy := entry.Copy()
@@ -146,7 +146,7 @@ func TestCopy(t *testing.T) {
 	entry.Severity = Severity(1)
 	entry.SeverityText = "1"
 	entry.Timestamp = time.Now()
-	entry.Record = "new"
+	entry.Body = "new"
 	entry.Attributes = map[string]string{"label": "new value"}
 	entry.Resource = map[string]string{"resource": "new value"}
 
@@ -155,7 +155,7 @@ func TestCopy(t *testing.T) {
 	require.Equal(t, "ok", copy.SeverityText)
 	require.Equal(t, map[string]string{"label": "value"}, copy.Attributes)
 	require.Equal(t, map[string]string{"resource": "value"}, copy.Resource)
-	require.Equal(t, "test", copy.Record)
+	require.Equal(t, "test", copy.Body)
 }
 
 func TestFieldFromString(t *testing.T) {

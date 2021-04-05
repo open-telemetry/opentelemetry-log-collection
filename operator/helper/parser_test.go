@@ -382,12 +382,12 @@ func TestParserPreserve(t *testing.T) {
 			require.NoError(t, err)
 
 			e := entry.New()
-			e.Record = tc.inputRecord
+			e.Body = tc.inputRecord
 
 			err = parser.ProcessWith(context.Background(), e, parse)
 			require.NoError(t, err)
 
-			require.Equal(t, tc.outputRecord, e.Record)
+			require.Equal(t, tc.outputRecord, e.Body)
 		})
 	}
 }

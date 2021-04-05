@@ -84,7 +84,7 @@ func SyslogInputTest(t *testing.T, cfg *SyslogInputConfig, tc syslog.Case) {
 	select {
 	case e := <-fake.Received:
 		// close pipeline to avoid data race
-		require.Equal(t, tc.ExpectedRecord, e.Record)
+		require.Equal(t, tc.ExpectedRecord, e.Body)
 		require.Equal(t, tc.ExpectedTimestamp, e.Timestamp)
 		require.Equal(t, tc.ExpectedSeverity, e.Severity)
 		require.Equal(t, tc.ExpectedSeverityText, e.SeverityText)

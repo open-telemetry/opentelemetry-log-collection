@@ -61,7 +61,7 @@ func udpInputTest(input []byte, expected []string) func(t *testing.T) {
 		for _, expectedRecord := range expected {
 			select {
 			case entry := <-entryChan:
-				require.Equal(t, expectedRecord, entry.Record)
+				require.Equal(t, expectedRecord, entry.Body)
 			case <-time.After(time.Second):
 				require.FailNow(t, "Timed out waiting for message to be written")
 			}

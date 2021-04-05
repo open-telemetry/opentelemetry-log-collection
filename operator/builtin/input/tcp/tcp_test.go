@@ -115,7 +115,7 @@ func tcpInputTest(input []byte, expected []string) func(t *testing.T) {
 		for _, expectedMessage := range expected {
 			select {
 			case entry := <-entryChan:
-				require.Equal(t, expectedMessage, entry.Record)
+				require.Equal(t, expectedMessage, entry.Body)
 			case <-time.After(time.Second):
 				require.FailNow(t, "Timed out waiting for message to be written")
 			}
@@ -184,7 +184,7 @@ func tlsTCPInputTest(input []byte, expected []string) func(t *testing.T) {
 		for _, expectedMessage := range expected {
 			select {
 			case entry := <-entryChan:
-				require.Equal(t, expectedMessage, entry.Record)
+				require.Equal(t, expectedMessage, entry.Body)
 			case <-time.After(time.Second):
 				require.FailNow(t, "Timed out waiting for message to be written")
 			}

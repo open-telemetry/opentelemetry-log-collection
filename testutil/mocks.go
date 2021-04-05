@@ -88,7 +88,7 @@ func (f *FakeOutput) Process(ctx context.Context, entry *entry.Entry) error {
 func (f *FakeOutput) ExpectRecord(t testing.TB, record interface{}) {
 	select {
 	case e := <-f.Received:
-		require.Equal(t, record, e.Record)
+		require.Equal(t, record, e.Body)
 	case <-time.After(time.Second):
 		require.FailNow(t, "Timed out waiting for entry")
 	}

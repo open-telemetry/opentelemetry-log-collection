@@ -39,7 +39,7 @@ func TestRestructureOperator(t *testing.T) {
 	newTestEntry := func() *entry.Entry {
 		e := entry.New()
 		e.Timestamp = time.Unix(1586632809, 0)
-		e.Record = map[string]interface{}{
+		e.Body = map[string]interface{}{
 			"key": "val",
 			"nested": map[string]interface{}{
 				"nestedkey": "nestedval",
@@ -72,7 +72,7 @@ func TestRestructureOperator(t *testing.T) {
 			input: newTestEntry(),
 			output: func() *entry.Entry {
 				e := newTestEntry()
-				e.Record.(map[string]interface{})["new"] = "message"
+				e.Body.(map[string]interface{})["new"] = "message"
 				return e
 			}(),
 		},
@@ -93,7 +93,7 @@ func TestRestructureOperator(t *testing.T) {
 			input: newTestEntry(),
 			output: func() *entry.Entry {
 				e := newTestEntry()
-				e.Record.(map[string]interface{})["new"] = "val_suffix"
+				e.Body.(map[string]interface{})["new"] = "val_suffix"
 				return e
 			}(),
 		},
@@ -114,7 +114,7 @@ func TestRestructureOperator(t *testing.T) {
 			input: newTestEntry(),
 			output: func() *entry.Entry {
 				e := newTestEntry()
-				e.Record.(map[string]interface{})["new"] = "foo"
+				e.Body.(map[string]interface{})["new"] = "foo"
 				return e
 			}(),
 		},
@@ -128,7 +128,7 @@ func TestRestructureOperator(t *testing.T) {
 			input: newTestEntry(),
 			output: func() *entry.Entry {
 				e := newTestEntry()
-				e.Record = map[string]interface{}{
+				e.Body = map[string]interface{}{
 					"key": "val",
 				}
 				return e
@@ -144,7 +144,7 @@ func TestRestructureOperator(t *testing.T) {
 			input: newTestEntry(),
 			output: func() *entry.Entry {
 				e := newTestEntry()
-				e.Record = map[string]interface{}{
+				e.Body = map[string]interface{}{
 					"key": "val",
 				}
 				return e
@@ -163,7 +163,7 @@ func TestRestructureOperator(t *testing.T) {
 			input: newTestEntry(),
 			output: func() *entry.Entry {
 				e := newTestEntry()
-				e.Record = map[string]interface{}{
+				e.Body = map[string]interface{}{
 					"newkey": "val",
 					"nested": map[string]interface{}{
 						"nestedkey": "nestedval",
@@ -186,7 +186,7 @@ func TestRestructureOperator(t *testing.T) {
 			input: newTestEntry(),
 			output: func() *entry.Entry {
 				e := newTestEntry()
-				e.Record = map[string]interface{}{
+				e.Body = map[string]interface{}{
 					"key":       "val",
 					"nestedkey": "nestedval",
 				}

@@ -108,7 +108,7 @@ func TestParserRegex(t *testing.T) {
 			op.SetOutputs([]operator.Operator{fake})
 
 			entry := entry.New()
-			entry.Record = tc.inputRecord
+			entry.Body = tc.inputRecord
 			err = op.Process(context.Background(), entry)
 			require.NoError(t, err)
 

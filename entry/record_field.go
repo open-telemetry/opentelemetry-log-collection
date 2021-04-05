@@ -57,7 +57,7 @@ func (f RecordField) String() string {
 // Get will retrieve a value from an entry's record using the field.
 // It will return the value and whether the field existed.
 func (f RecordField) Get(entry *Entry) (interface{}, bool) {
-	var currentValue interface{} = entry.Record
+	var currentValue interface{} = entry.Body
 
 	for _, key := range f.Keys {
 		currentRecord, ok := currentValue.(map[string]interface{})
@@ -85,14 +85,14 @@ func (f RecordField) Set(entry *Entry, value interface{}) error {
 	}
 
 	if f.isRoot() {
-		entry.Record = value
+		entry.Body = value
 		return nil
 	}
 
-	currentMap, ok := entry.Record.(map[string]interface{})
+	currentMap, ok := entry.Body.(map[string]interface{})
 	if !ok {
 		currentMap = map[string]interface{}{}
-		entry.Record = currentMap
+		entry.Body = currentMap
 	}
 
 	for i, key := range f.Keys {
@@ -108,10 +108,10 @@ func (f RecordField) Set(entry *Entry, value interface{}) error {
 // Merge will attempt to merge the contents of a map into an entry's record.
 // It will overwrite any intermediate values as necessary.
 func (f RecordField) Merge(entry *Entry, mapValues map[string]interface{}) {
-	currentMap, ok := entry.Record.(map[string]interface{})
+	currentMap, ok := entry.Body.(map[string]interface{})
 	if !ok {
 		currentMap = map[string]interface{}{}
-		entry.Record = currentMap
+		entry.Body = currentMap
 	}
 
 	for _, key := range f.Keys {
@@ -127,12 +127,12 @@ func (f RecordField) Merge(entry *Entry, mapValues map[string]interface{}) {
 // It will return the deleted value and whether the field existed.
 func (f RecordField) Delete(entry *Entry) (interface{}, bool) {
 	if f.isRoot() {
-		oldRecord := entry.Record
-		entry.Record = nil
+		oldRecord := entry.Body
+		entry.Body = nil
 		return oldRecord, true
 	}
 
-	currentValue := entry.Record
+	currentValue := entry.Body
 	for i, key := range f.Keys {
 		currentMap, ok := currentValue.(map[string]interface{})
 		if !ok {

@@ -33,7 +33,7 @@ func TestRecombineOperator(t *testing.T) {
 	entryWithRecord := func(ts time.Time, record interface{}) *entry.Entry {
 		e := entry.New()
 		e.Timestamp = ts
-		e.Record = record
+		e.Body = record
 		return e
 	}
 

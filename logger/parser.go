@@ -24,7 +24,7 @@ import (
 func parseEntry(zapEntry zapcore.Entry, fields []zapcore.Field) entry.Entry {
 	return entry.Entry{
 		Timestamp: zapEntry.Time,
-		Record:    parseRecord(zapEntry, fields),
+		Body:      parseRecord(zapEntry, fields),
 		Severity:  parseSeverity(zapEntry),
 	}
 }

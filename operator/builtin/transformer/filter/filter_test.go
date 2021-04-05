@@ -41,7 +41,7 @@ func TestFilterOperator(t *testing.T) {
 		{
 			"RecordMatch",
 			&entry.Entry{
-				Record: map[string]interface{}{
+				Body: map[string]interface{}{
 					"message": "test_message",
 				},
 			},
@@ -51,7 +51,7 @@ func TestFilterOperator(t *testing.T) {
 		{
 			"NoMatchRecord",
 			&entry.Entry{
-				Record: map[string]interface{}{
+				Body: map[string]interface{}{
 					"message": "invalid",
 				},
 			},
@@ -61,7 +61,7 @@ func TestFilterOperator(t *testing.T) {
 		{
 			"MatchAttribute",
 			&entry.Entry{
-				Record: map[string]interface{}{
+				Body: map[string]interface{}{
 					"message": "test_message",
 				},
 				Attributes: map[string]string{
@@ -74,7 +74,7 @@ func TestFilterOperator(t *testing.T) {
 		{
 			"NoMatchAttribute",
 			&entry.Entry{
-				Record: map[string]interface{}{
+				Body: map[string]interface{}{
 					"message": "test_message",
 				},
 			},
@@ -84,7 +84,7 @@ func TestFilterOperator(t *testing.T) {
 		{
 			"MatchEnv",
 			&entry.Entry{
-				Record: map[string]interface{}{
+				Body: map[string]interface{}{
 					"message": "test_message",
 				},
 			},
@@ -94,7 +94,7 @@ func TestFilterOperator(t *testing.T) {
 		{
 			"NoMatchEnv",
 			&entry.Entry{
-				Record: map[string]interface{}{
+				Body: map[string]interface{}{
 					"message": "test_message",
 				},
 			},
@@ -151,7 +151,7 @@ func TestFilterDropRatio(t *testing.T) {
 	require.True(t, ok)
 
 	testEntry := &entry.Entry{
-		Record: map[string]interface{}{
+		Body: map[string]interface{}{
 			"message": "test_message",
 		},
 	}

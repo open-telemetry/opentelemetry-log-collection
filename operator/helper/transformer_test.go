@@ -211,9 +211,9 @@ func TestTransformerIf(t *testing.T) {
 			transformer.OutputOperators = []operator.Operator{fake}
 
 			e := entry.New()
-			e.Record = tc.inputRecord
+			e.Body = tc.inputRecord
 			err = transformer.ProcessWith(context.Background(), e, func(e *entry.Entry) error {
-				e.Record = "parsed"
+				e.Body = "parsed"
 				return nil
 			})
 			require.NoError(t, err)
