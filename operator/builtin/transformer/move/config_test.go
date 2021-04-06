@@ -33,6 +33,7 @@ type configTestCase struct {
 	expect *MoveOperatorConfig
 }
 
+// test unmarshalling of values into config struct
 func TestMoveGoldenConfig(t *testing.T) {
 	cases := []configTestCase{
 		{
@@ -131,6 +132,42 @@ func TestMoveGoldenConfig(t *testing.T) {
 				cfg := defaultCfg()
 				cfg.From = entry.NewBodyField("nested")
 				cfg.To = entry.NewAttributeField("NewNested")
+				return cfg
+			}(),
+		},
+		{
+			"ImplicitBodyFrom",
+			func() *MoveOperatorConfig {
+				cfg := defaultCfg()
+				cfg.From = entry.NewBodyField("implicitkey")
+				cfg.To = entry.NewAttributeField("new")
+				return cfg
+			}(),
+		},
+		{
+			"ImplicitBodyTo",
+			func() *MoveOperatorConfig {
+				cfg := defaultCfg()
+				cfg.From = entry.NewAttributeField("new")
+				cfg.To = entry.NewBodyField("implicitkey")
+				return cfg
+			}(),
+		},
+		{
+			"ImplicitNestedKey",
+			func() *MoveOperatorConfig {
+				cfg := defaultCfg()
+				cfg.From = entry.NewAttributeField("new")
+				cfg.To = entry.NewBodyField("key", "key2")
+				return cfg
+			}(),
+		},
+		{
+			"ReplaceBody",
+			func() *MoveOperatorConfig {
+				cfg := defaultCfg()
+				cfg.From = entry.NewBodyField("nested")
+				cfg.To = entry.NewBodyField()
 				return cfg
 			}(),
 		},

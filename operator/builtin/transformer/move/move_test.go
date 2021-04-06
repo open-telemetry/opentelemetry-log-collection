@@ -294,6 +294,25 @@ func TestMoveProcess(t *testing.T) {
 			newTestEntry,
 			nil,
 		},
+		{
+			"ReplaceBodyString",
+			false,
+			func() *MoveOperatorConfig {
+				cfg := defaultCfg()
+				cfg.From = entry.NewBodyField("nested")
+				cfg.To = entry.NewBodyField()
+				return cfg
+			}(),
+			newTestEntry,
+			func() *entry.Entry {
+				e := newTestEntry()
+				e.Body = map[string]interface{}{
+					"nestedkey": "nestedval",
+					"key":       "val",
+				}
+				return e
+			},
+		},
 	}
 	for _, tc := range cases {
 		t.Run("BuildandProcess/"+tc.name, func(t *testing.T) {
