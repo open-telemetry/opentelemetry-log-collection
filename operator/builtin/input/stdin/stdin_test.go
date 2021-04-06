@@ -18,9 +18,10 @@ import (
 	"os"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/open-telemetry/opentelemetry-log-collection/operator"
 	"github.com/open-telemetry/opentelemetry-log-collection/testutil"
-	"github.com/stretchr/testify/require"
 )
 
 func TestStdin(t *testing.T) {
@@ -44,5 +45,5 @@ func TestStdin(t *testing.T) {
 
 	w.WriteString("test")
 	w.Close()
-	fake.ExpectRecord(t, "test")
+	fake.ExpectBody(t, "test")
 }

@@ -20,10 +20,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/open-telemetry/opentelemetry-log-collection/entry"
-	"github.com/open-telemetry/opentelemetry-log-collection/errors"
-	"github.com/open-telemetry/opentelemetry-log-collection/operator"
-	"github.com/open-telemetry/opentelemetry-log-collection/operator/helper"
 	"go.uber.org/zap"
 	apiv1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -31,6 +27,11 @@ import (
 	watch "k8s.io/apimachinery/pkg/watch"
 	corev1 "k8s.io/client-go/kubernetes/typed/core/v1"
 	"k8s.io/client-go/rest"
+
+	"github.com/open-telemetry/opentelemetry-log-collection/entry"
+	"github.com/open-telemetry/opentelemetry-log-collection/errors"
+	"github.com/open-telemetry/opentelemetry-log-collection/operator"
+	"github.com/open-telemetry/opentelemetry-log-collection/operator/helper"
 )
 
 func init() {
@@ -267,15 +268,15 @@ func (k *K8sEvents) consumeWatchEvents(ctx context.Context, events <-chan watch.
 			}
 
 			typedEvent := event.Object.(*apiv1.Event)
-			record, err := runtime.DefaultUnstructuredConverter.ToUnstructured(event.Object)
+			body, err := runtime.DefaultUnstructuredConverter.ToUnstructured(event.Object)
 			if err != nil {
 				k.Error("Failed to convert event to map", zap.Error(err))
 				continue
 			}
 
-			entry, err := k.NewEntry(record)
+			entry, err := k.NewEntry(body)
 			if err != nil {
-				k.Error("Failed to create new entry from record", zap.Error(err))
+				k.Error("Failed to create new entry from body", zap.Error(err))
 				continue
 			}
 
