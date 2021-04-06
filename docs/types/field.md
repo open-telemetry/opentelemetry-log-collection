@@ -1,4 +1,4 @@
-##  
+## Fields
 
 A _Field_ is a reference to a value in a log [entry](/docs/types/field.md). 
 

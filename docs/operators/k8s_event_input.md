@@ -33,7 +33,7 @@ Output events:
   "attributes": {
     "event_type": "ADDED"
   },
-  "record": {
+  "body": {
     "count": 1,
     "eventTime": null,
     "firstTimestamp": "2020-08-13T16:43:57Z",

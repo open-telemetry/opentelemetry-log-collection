@@ -25,7 +25,7 @@ The `add` op adds a field to a body. It must have a `field` key and exactly one 
 
 `value` is a static string that will be added to each entry at the field defined by `field`
 
-`value_expr` is an [expression](/docs/types/expression.md) with access to the `record` object
+`value_expr` is an [expression](/docs/types/expression.md) with access to the `body` object
 
 Example usage:
 ```yaml
@@ -40,7 +40,7 @@ Example usage:
 ```
 
 <table>
-<tr><td> Input record </td> <td> Output record </td></tr>
+<tr><td> Input body </td> <td> Output body </td></tr>
 <tr>
 <td>
 
@@ -64,7 +64,7 @@ Example usage:
 
 #### Remove
 
-The `remove` op removes a field from a record.
+The `remove` op removes a field from a body.
 
 Example usage:
 ```yaml
@@ -74,7 +74,7 @@ Example usage:
 ```
 
 <table>
-<tr><td> Input record </td> <td> Output record </td></tr>
+<tr><td> Input body </td> <td> Output body </td></tr>
 <tr>
 <td>
 
@@ -112,7 +112,7 @@ Example usage:
 ```
 
 <table>
-<tr><td> Input record </td> <td> Output record </td></tr>
+<tr><td> Input body </td> <td> Output body </td></tr>
 <tr>
 <td>
 
@@ -153,7 +153,7 @@ Example usage:
 ```
 
 <table>
-<tr><td> Input record </td> <td> Output record </td></tr>
+<tr><td> Input body </td> <td> Output body </td></tr>
 <tr>
 <td>
 
@@ -190,7 +190,7 @@ Example usage:
 ```
 
 <table>
-<tr><td> Input record </td> <td> Output record </td></tr>
+<tr><td> Input body </td> <td> Output body </td></tr>
 <tr>
 <td>
 
