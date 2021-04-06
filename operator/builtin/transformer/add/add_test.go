@@ -17,7 +17,6 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
-	"path"
 	"testing"
 	"time"
 
@@ -31,17 +30,17 @@ import (
 )
 
 type testCase struct {
-	name      string
-	expectErr bool
-	input     func() *entry.Entry
-	output    func() *entry.Entry
+	name   string
+	op     *AddOperatorConfig
+	input  func() *entry.Entry
+	output func() *entry.Entry
 }
 
 func TestAddGoldenConfig(t *testing.T) {
 	newTestEntry := func() *entry.Entry {
 		e := entry.New()
 		e.Timestamp = time.Unix(1586632809, 0)
-		e.Record = map[string]interface{}{
+		e.Body = map[string]interface{}{
 			"key": "val",
 			"nested": map[string]interface{}{
 				"nestedkey": "nestedval",
@@ -53,31 +52,50 @@ func TestAddGoldenConfig(t *testing.T) {
 	cases := []testCase{
 		{
 			"add_value",
-			false,
+			func() *AddOperatorConfig {
+				cfg := defaultCfg()
+				cfg.Field = entry.NewBodyField("new")
+				cfg.Value = "randomMessage"
+				return cfg
+			}(),
 			newTestEntry,
 			func() *entry.Entry {
 				e := newTestEntry()
-				e.Record.(map[string]interface{})["new"] = "randomMessage"
+				e.Body.(map[string]interface{})["new"] = "randomMessage"
 				return e
 			},
 		},
 		{
 			"add_expr",
-			false,
+			func() *AddOperatorConfig {
+				cfg := defaultCfg()
+				cfg.Field = entry.NewBodyField("new")
+				cfg.Value = `EXPR($.key + "_suffix")`
+				return cfg
+			}(),
 			newTestEntry,
 			func() *entry.Entry {
 				e := newTestEntry()
-				e.Record.(map[string]interface{})["new"] = "val_suffix"
+				e.Body.(map[string]interface{})["new"] = "val_suffix"
 				return e
 			},
 		},
 		{
 			"add_nest",
-			false,
+			func() *AddOperatorConfig {
+				cfg := defaultCfg()
+				cfg.Field = entry.NewBodyField("new")
+				cfg.Value = map[interface{}]interface{}{
+					"nest": map[interface{}]interface{}{
+						"key": "val",
+					},
+				}
+				return cfg
+			}(),
 			newTestEntry,
 			func() *entry.Entry {
 				e := newTestEntry()
-				e.Record = map[string]interface{}{
+				e.Body = map[string]interface{}{
 					"key": "val",
 					"nested": map[string]interface{}{
 						"nestedkey": "nestedval",
@@ -93,7 +111,12 @@ func TestAddGoldenConfig(t *testing.T) {
 		},
 		{
 			"add_attribute",
-			false,
+			func() *AddOperatorConfig {
+				cfg := defaultCfg()
+				cfg.Field = entry.NewAttributeField("new")
+				cfg.Value = "newVal"
+				return cfg
+			}(),
 			newTestEntry,
 			func() *entry.Entry {
 				e := newTestEntry()
@@ -103,7 +126,12 @@ func TestAddGoldenConfig(t *testing.T) {
 		},
 		{
 			"add_resource",
-			false,
+			func() *AddOperatorConfig {
+				cfg := defaultCfg()
+				cfg.Field = entry.NewResourceField("new")
+				cfg.Value = "newVal"
+				return cfg
+			}(),
 			newTestEntry,
 			func() *entry.Entry {
 				e := newTestEntry()
@@ -113,7 +141,12 @@ func TestAddGoldenConfig(t *testing.T) {
 		},
 		{
 			"add_resource_expr",
-			false,
+			func() *AddOperatorConfig {
+				cfg := defaultCfg()
+				cfg.Field = entry.NewResourceField("new")
+				cfg.Value = `EXPR($.key + "_suffix")`
+				return cfg
+			}(),
 			newTestEntry,
 			func() *entry.Entry {
 				e := newTestEntry()
@@ -123,48 +156,21 @@ func TestAddGoldenConfig(t *testing.T) {
 		},
 	}
 	for _, tc := range cases {
-		t.Run("yaml/"+tc.name, func(t *testing.T) {
-			cfgFromYaml, _ := configFromFileViaYaml(path.Join(".", "testdata", fmt.Sprintf("%s.yaml", tc.name)))
-			cfgFromYaml.OutputIDs = []string{"fake"}
-			cfgFromYaml.OnError = "drop"
-			ops, err := cfgFromYaml.Build(testutil.NewBuildContext(t))
-			require.NoError(t, err)
-			op := ops[0]
-
-			add := op.(*AddOperator)
-			fake := testutil.NewFakeOutput(t)
-			add.SetOutputs([]operator.Operator{fake})
-
-			err = add.Process(context.Background(), tc.input())
-			if tc.expectErr {
-				require.Error(t, err)
-			} else {
-				require.NoError(t, err)
-				fake.ExpectEntry(t, tc.output())
-			}
-		})
-		t.Run("mapstructure/"+tc.name, func(t *testing.T) {
-			cfgFromMapstructure := defaultCfg()
-			configFromFileViaMapstructure(
-				path.Join(".", "testdata", fmt.Sprintf("%s.yaml", tc.name)),
-				cfgFromMapstructure,
-			)
+		t.Run("BuildandProcess/"+tc.name, func(t *testing.T) {
+			cfgFromMapstructure := tc.op
 			cfgFromMapstructure.OutputIDs = []string{"fake"}
 			cfgFromMapstructure.OnError = "drop"
 			ops, err := cfgFromMapstructure.Build(testutil.NewBuildContext(t))
 			require.NoError(t, err)
 			op := ops[0]
 
-			remove := op.(*AddOperator)
+			add := op.(*AddOperator)
 			fake := testutil.NewFakeOutput(t)
-			remove.SetOutputs([]operator.Operator{fake})
-			err = remove.Process(context.Background(), tc.input())
-			if tc.expectErr {
-				require.Error(t, err)
-			} else {
-				require.NoError(t, err)
-				fake.ExpectEntry(t, tc.output())
-			}
+			add.SetOutputs([]operator.Operator{fake})
+			val := tc.input()
+			err = add.Process(context.Background(), val)
+			require.NoError(t, err)
+			fake.ExpectEntry(t, tc.output())
 		})
 	}
 }
