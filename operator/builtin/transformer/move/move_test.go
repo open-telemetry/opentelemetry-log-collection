@@ -49,7 +49,7 @@ func TestMoveProcess(t *testing.T) {
 
 	cases := []processTestCase{
 		{
-			"MoveRecordToRecord",
+			"MoveBodyToBody",
 			false,
 			func() *MoveOperatorConfig {
 				cfg := defaultCfg()
@@ -70,7 +70,7 @@ func TestMoveProcess(t *testing.T) {
 			},
 		},
 		{
-			"MoveRecordToAttribute",
+			"MoveBodyToAttribute",
 			false,
 			func() *MoveOperatorConfig {
 				cfg := defaultCfg()
@@ -91,7 +91,7 @@ func TestMoveProcess(t *testing.T) {
 			},
 		},
 		{
-			"MoveAttributeToRecord",
+			"MoveAttributeToBody",
 			false,
 			func() *MoveOperatorConfig {
 				cfg := defaultCfg()

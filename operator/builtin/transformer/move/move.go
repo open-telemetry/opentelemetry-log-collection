@@ -50,7 +50,6 @@ func (c MoveOperatorConfig) Build(context operator.BuildContext) ([]operator.Ope
 
 	if c.To == entry.NewNilField() || c.From == entry.NewNilField() {
 		return nil, fmt.Errorf("move: missing to or from field")
-
 	}
 
 	moveOperator := &MoveOperator{
