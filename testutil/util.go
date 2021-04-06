@@ -15,6 +15,7 @@
 package testutil
 
 import (
+	context "context"
 	"io/ioutil"
 	"os"
 	"strings"
@@ -55,20 +56,20 @@ type mockPersister struct {
 	dataMux sync.Mutex
 }
 
-func (p *mockPersister) Get(k string) ([]byte, error) {
+func (p *mockPersister) Get(ctx context.Context, k string) ([]byte, error) {
 	p.dataMux.Lock()
 	defer p.dataMux.Unlock()
 	return p.data[k], nil
 }
 
-func (p *mockPersister) Set(k string, v []byte) error {
+func (p *mockPersister) Set(ctx context.Context, k string, v []byte) error {
 	p.dataMux.Lock()
 	defer p.dataMux.Unlock()
 	p.data[k] = v
 	return nil
 }
 
-func (p *mockPersister) Delete(k string) error {
+func (p *mockPersister) Delete(ctx context.Context, k string) error {
 	p.dataMux.Lock()
 	defer p.dataMux.Unlock()
 	delete(p.data, k)

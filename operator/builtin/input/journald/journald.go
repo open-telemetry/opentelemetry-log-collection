@@ -128,7 +128,7 @@ func (operator *JournaldInput) Start(persister operator.Persister) error {
 	operator.cancel = cancel
 
 	// Start from a cursor if there is a saved offset
-	cursor, err := persister.Get(lastReadCursorKey)
+	cursor, err := persister.Get(ctx, lastReadCursorKey)
 	if err != nil {
 		return fmt.Errorf("failed to get journalctl state: %s", err)
 	}
@@ -167,7 +167,7 @@ func (operator *JournaldInput) Start(persister operator.Persister) error {
 				operator.Warnw("Failed to parse journal entry", zap.Error(err))
 				continue
 			}
-			if err := operator.persister.Set(lastReadCursorKey, []byte(cursor)); err != nil {
+			if err := operator.persister.Set(ctx, lastReadCursorKey, []byte(cursor)); err != nil {
 				operator.Warnw("Failed to set offset", zap.Error(err))
 			}
 			operator.Write(ctx, entry)

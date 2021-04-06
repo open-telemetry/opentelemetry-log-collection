@@ -14,9 +14,11 @@
 
 package operator
 
+import "context"
+
 // Persister is an interface used to persist data
 type Persister interface {
-	Get(string) ([]byte, error)
-	Set(string, []byte) error
-	Delete(string) error
+	Get(context.Context, string) ([]byte, error)
+	Set(context.Context, string, []byte) error
+	Delete(context.Context, string) error
 }

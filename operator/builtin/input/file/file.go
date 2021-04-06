@@ -71,7 +71,7 @@ func (f *InputOperator) Start(persister operator.Persister) error {
 
 	f.persister = persister
 	// Load offsets from disk
-	if err := f.loadLastPollFiles(); err != nil {
+	if err := f.loadLastPollFiles(ctx); err != nil {
 		return fmt.Errorf("read known files from database: %s", err)
 	}
 
@@ -176,7 +176,7 @@ func (f *InputOperator) poll(ctx context.Context) {
 	}
 
 	f.saveCurrent(readers)
-	f.syncLastPollFiles()
+	f.syncLastPollFiles(ctx)
 }
 
 // getMatches gets a list of paths given an array of glob patterns to include and exclude
@@ -320,7 +320,7 @@ func (f *InputOperator) findFingerprintMatch(fp *Fingerprint) (*Reader, bool) {
 const knownFilesKey = "knownFiles"
 
 // syncLastPollFiles syncs the most recent set of files to the database
-func (f *InputOperator) syncLastPollFiles() {
+func (f *InputOperator) syncLastPollFiles(ctx context.Context) {
 	var buf bytes.Buffer
 	enc := json.NewEncoder(&buf)
 
@@ -337,14 +337,14 @@ func (f *InputOperator) syncLastPollFiles() {
 		}
 	}
 
-	if err := f.persister.Set(knownFilesKey, buf.Bytes()); err != nil {
+	if err := f.persister.Set(ctx, knownFilesKey, buf.Bytes()); err != nil {
 		f.Errorw("Failed to sync to database", zap.Error(err))
 	}
 }
 
 // syncLastPollFiles loads the most recent set of files to the database
-func (f *InputOperator) loadLastPollFiles() error {
-	encoded, err := f.persister.Get(knownFilesKey)
+func (f *InputOperator) loadLastPollFiles(ctx context.Context) error {
+	encoded, err := f.persister.Get(ctx, knownFilesKey)
 	if err != nil {
 		return err
 	}

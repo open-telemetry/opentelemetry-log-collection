@@ -104,7 +104,7 @@ func (e *EventLogInput) Start(persister operator.Persister) error {
 	e.persister = persister
 
 	e.bookmark = NewBookmark()
-	offsetXML, err := e.getBookmarkOffset()
+	offsetXML, err := e.getBookmarkOffset(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to retrieve bookmark offset: %s", err)
 	}
@@ -183,7 +183,7 @@ func (e *EventLogInput) read(ctx context.Context) int {
 	for i, event := range events {
 		e.processEvent(ctx, event)
 		if len(events) == i+1 {
-			e.updateBookmarkOffset(event)
+			e.updateBookmarkOffset(ctx, event)
 		}
 		event.Close()
 	}
@@ -232,13 +232,13 @@ func (e *EventLogInput) sendEvent(ctx context.Context, eventXML EventXML) {
 }
 
 // getBookmarkXML will get the bookmark xml from the offsets database.
-func (e *EventLogInput) getBookmarkOffset() (string, error) {
-	bytes, err := e.persister.Get(e.channel)
+func (e *EventLogInput) getBookmarkOffset(ctx context.Context) (string, error) {
+	bytes, err := e.persister.Get(ctx, e.channel)
 	return string(bytes), err
 }
 
 // updateBookmark will update the bookmark xml and save it in the offsets database.
-func (e *EventLogInput) updateBookmarkOffset(event Event) {
+func (e *EventLogInput) updateBookmarkOffset(ctx context.Context, event Event) {
 	if err := e.bookmark.Update(event); err != nil {
 		e.Errorf("Failed to update bookmark from event: %s", err)
 		return
@@ -250,7 +250,7 @@ func (e *EventLogInput) updateBookmarkOffset(event Event) {
 		return
 	}
 
-	if err := e.persister.Set(e.channel, []byte(bookmarkXML)); err != nil {
+	if err := e.persister.Set(ctx, e.channel, []byte(bookmarkXML)); err != nil {
 		e.Errorf("failed to set offsets: %s", err)
 		return
 	}
