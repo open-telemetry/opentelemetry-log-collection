@@ -27,7 +27,7 @@ import (
 func TestStartAgentSuccess(t *testing.T) {
 	logger := zap.NewNop().Sugar()
 	pipeline := &testutil.Pipeline{}
-	persister := testutil.NewMockPersister()
+	persister := testutil.NewMockPersister("test")
 	pipeline.On("Start", persister).Return(nil)
 
 	agent := LogAgent{
@@ -42,7 +42,7 @@ func TestStartAgentSuccess(t *testing.T) {
 func TestStartAgentFailure(t *testing.T) {
 	logger := zap.NewNop().Sugar()
 	pipeline := &testutil.Pipeline{}
-	persister := testutil.NewMockPersister()
+	persister := testutil.NewMockPersister("test")
 	failure := fmt.Errorf("failed to start pipeline")
 	pipeline.On("Start", persister).Return(failure)
 

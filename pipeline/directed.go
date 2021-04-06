@@ -37,12 +37,14 @@ type DirectedPipeline struct {
 func (p *DirectedPipeline) Start(persister operator.Persister) error {
 	sortedNodes, _ := topo.Sort(p.Graph)
 	for i := len(sortedNodes) - 1; i >= 0; i-- {
-		operator := sortedNodes[i].(OperatorNode).Operator()
-		operator.Logger().Debug("Starting operator")
-		if err := operator.Start(persister); err != nil {
+		op := sortedNodes[i].(OperatorNode).Operator()
+
+		scopedPersister := operator.NewScopedPersister(op.ID(), persister)
+		op.Logger().Debug("Starting operator")
+		if err := op.Start(scopedPersister); err != nil {
 			return err
 		}
-		operator.Logger().Debug("Started operator")
+		op.Logger().Debug("Started operator")
 	}
 
 	return nil

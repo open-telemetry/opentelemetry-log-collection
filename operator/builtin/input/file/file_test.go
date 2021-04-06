@@ -272,7 +272,7 @@ See this issue for details: https://github.com/census-instrumentation/opencensus
 
 	operator, _, tempDir := newTestFileOperator(t, nil, nil)
 	_ = openTemp(t, tempDir)
-	err := operator.Start(testutil.NewMockPersister())
+	err := operator.Start(testutil.NewMockPersister("test"))
 	require.NoError(t, err)
 	operator.Stop()
 }
@@ -290,7 +290,7 @@ func TestAddFileFields(t *testing.T) {
 	temp := openTemp(t, tempDir)
 	writeString(t, temp, "testlog\n")
 
-	require.NoError(t, operator.Start(testutil.NewMockPersister()))
+	require.NoError(t, operator.Start(testutil.NewMockPersister("test")))
 	defer operator.Stop()
 
 	e := waitForOne(t, logReceived)
@@ -308,7 +308,7 @@ func TestReadExistingLogs(t *testing.T) {
 	temp := openTemp(t, tempDir)
 	writeString(t, temp, "testlog1\ntestlog2\n")
 
-	require.NoError(t, operator.Start(testutil.NewMockPersister()))
+	require.NoError(t, operator.Start(testutil.NewMockPersister("test")))
 	defer operator.Stop()
 
 	waitForMessage(t, logReceived, "testlog1")
@@ -320,7 +320,7 @@ func TestReadExistingLogs(t *testing.T) {
 func TestReadNewLogs(t *testing.T) {
 	t.Parallel()
 	operator, logReceived, tempDir := newTestFileOperator(t, nil, nil)
-	operator.persister = testutil.NewMockPersister()
+	operator.persister = testutil.NewMockPersister("test")
 
 	// Poll once so we know this isn't a new file
 	operator.poll(context.Background())
@@ -343,7 +343,7 @@ func TestReadNewLogs(t *testing.T) {
 func TestReadExistingAndNewLogs(t *testing.T) {
 	t.Parallel()
 	operator, logReceived, tempDir := newTestFileOperator(t, nil, nil)
-	operator.persister = testutil.NewMockPersister()
+	operator.persister = testutil.NewMockPersister("test")
 
 	// Start with a file with an entry in it, and expect that entry
 	// to come through when we poll for the first time
@@ -366,7 +366,7 @@ func TestStartAtEnd(t *testing.T) {
 	operator, logReceived, tempDir := newTestFileOperator(t, func(cfg *InputConfig) {
 		cfg.StartAt = "end"
 	}, nil)
-	operator.persister = testutil.NewMockPersister()
+	operator.persister = testutil.NewMockPersister("test")
 
 	temp := openTemp(t, tempDir)
 	writeString(t, temp, "testlog1\n")
@@ -387,7 +387,7 @@ func TestStartAtEnd(t *testing.T) {
 func TestStartAtEndNewFile(t *testing.T) {
 	t.Parallel()
 	operator, logReceived, tempDir := newTestFileOperator(t, nil, nil)
-	operator.persister = testutil.NewMockPersister()
+	operator.persister = testutil.NewMockPersister("test")
 	operator.startAtBeginning = false
 
 	operator.poll(context.Background())
@@ -410,7 +410,7 @@ func TestNoNewline(t *testing.T) {
 	temp := openTemp(t, tempDir)
 	writeString(t, temp, "testlog1\ntestlog2")
 
-	require.NoError(t, operator.Start(testutil.NewMockPersister()))
+	require.NoError(t, operator.Start(testutil.NewMockPersister("test")))
 	defer operator.Stop()
 
 	waitForMessage(t, logReceived, "testlog1")
@@ -425,7 +425,7 @@ func TestSkipEmpty(t *testing.T) {
 	temp := openTemp(t, tempDir)
 	writeString(t, temp, "testlog1\n\ntestlog2\n")
 
-	require.NoError(t, operator.Start(testutil.NewMockPersister()))
+	require.NoError(t, operator.Start(testutil.NewMockPersister("test")))
 	defer operator.Stop()
 
 	waitForMessage(t, logReceived, "testlog1")
@@ -437,7 +437,7 @@ func TestSkipEmpty(t *testing.T) {
 func TestSplitWrite(t *testing.T) {
 	t.Parallel()
 	operator, logReceived, tempDir := newTestFileOperator(t, nil, nil)
-	operator.persister = testutil.NewMockPersister()
+	operator.persister = testutil.NewMockPersister("test")
 
 	temp := openTemp(t, tempDir)
 	writeString(t, temp, "testlog1")
@@ -454,7 +454,7 @@ func TestDecodeBufferIsResized(t *testing.T) {
 	t.Parallel()
 	operator, logReceived, tempDir := newTestFileOperator(t, nil, nil)
 
-	require.NoError(t, operator.Start(testutil.NewMockPersister()))
+	require.NoError(t, operator.Start(testutil.NewMockPersister("test")))
 	defer operator.Stop()
 
 	temp := openTemp(t, tempDir)
@@ -474,7 +474,7 @@ func TestMultiFileSimple(t *testing.T) {
 	writeString(t, temp1, "testlog1\n")
 	writeString(t, temp2, "testlog2\n")
 
-	require.NoError(t, operator.Start(testutil.NewMockPersister()))
+	require.NoError(t, operator.Start(testutil.NewMockPersister("test")))
 	defer operator.Stop()
 
 	waitForMessages(t, logReceived, []string{"testlog1", "testlog2"})
@@ -509,7 +509,7 @@ func TestMultiFileParallel_PreloadedFiles(t *testing.T) {
 		}(temp, i)
 	}
 
-	require.NoError(t, operator.Start(testutil.NewMockPersister()))
+	require.NoError(t, operator.Start(testutil.NewMockPersister("test")))
 	defer operator.Stop()
 
 	waitForMessages(t, logReceived, expected)
@@ -533,7 +533,7 @@ func TestMultiFileParallel_LiveFiles(t *testing.T) {
 		}
 	}
 
-	require.NoError(t, operator.Start(testutil.NewMockPersister()))
+	require.NoError(t, operator.Start(testutil.NewMockPersister("test")))
 	defer operator.Stop()
 
 	temps := make([]*os.File, 0, numFiles)
@@ -576,7 +576,7 @@ func TestMultiFileRotate(t *testing.T) {
 		}
 	}
 
-	require.NoError(t, operator.Start(testutil.NewMockPersister()))
+	require.NoError(t, operator.Start(testutil.NewMockPersister("test")))
 	defer operator.Stop()
 
 	temps := make([]*os.File, 0, numFiles)
@@ -633,7 +633,7 @@ func TestMultiFileRotateSlow(t *testing.T) {
 		}
 	}
 
-	require.NoError(t, operator.Start(testutil.NewMockPersister()))
+	require.NoError(t, operator.Start(testutil.NewMockPersister("test")))
 	defer operator.Stop()
 
 	var wg sync.WaitGroup
@@ -679,7 +679,7 @@ func TestMultiCopyTruncateSlow(t *testing.T) {
 		}
 	}
 
-	require.NoError(t, operator.Start(testutil.NewMockPersister()))
+	require.NoError(t, operator.Start(testutil.NewMockPersister("test")))
 	defer operator.Stop()
 
 	var wg sync.WaitGroup
@@ -776,7 +776,7 @@ func (rt rotationTest) run(tc rotationTest, copyTruncate, sequential bool) func(
 			expected = append(expected, fmt.Sprintf("%s %3d", baseStr, i))
 		}
 
-		require.NoError(t, operator.Start(testutil.NewMockPersister()))
+		require.NoError(t, operator.Start(testutil.NewMockPersister("test")))
 		defer operator.Stop()
 
 		for _, message := range expected {
@@ -859,7 +859,7 @@ func TestMoveFile(t *testing.T) {
 	}
 	t.Parallel()
 	operator, logReceived, tempDir := newTestFileOperator(t, nil, nil)
-	operator.persister = testutil.NewMockPersister()
+	operator.persister = testutil.NewMockPersister("test")
 
 	temp1 := openTemp(t, tempDir)
 	writeString(t, temp1, "testlog1\n")
@@ -884,7 +884,7 @@ func TestMoveFile(t *testing.T) {
 func TestTruncateThenWrite(t *testing.T) {
 	t.Parallel()
 	operator, logReceived, tempDir := newTestFileOperator(t, nil, nil)
-	operator.persister = testutil.NewMockPersister()
+	operator.persister = testutil.NewMockPersister("test")
 
 	temp1 := openTemp(t, tempDir)
 	writeString(t, temp1, "testlog1\ntestlog2\n")
@@ -911,7 +911,7 @@ func TestTruncateThenWrite(t *testing.T) {
 func TestCopyTruncateWriteBoth(t *testing.T) {
 	t.Parallel()
 	operator, logReceived, tempDir := newTestFileOperator(t, nil, nil)
-	operator.persister = testutil.NewMockPersister()
+	operator.persister = testutil.NewMockPersister("test")
 
 	temp1 := openTemp(t, tempDir)
 	writeString(t, temp1, "testlog1\ntestlog2\n")
@@ -946,7 +946,7 @@ func TestCopyTruncateWriteBoth(t *testing.T) {
 func TestOffsetsAfterRestart(t *testing.T) {
 	t.Parallel()
 	operator, logReceived, tempDir := newTestFileOperator(t, nil, nil)
-	persister := testutil.NewMockPersister()
+	persister := testutil.NewMockPersister("test")
 
 	temp1 := openTemp(t, tempDir)
 	writeString(t, temp1, "testlog1\n")
@@ -969,7 +969,7 @@ func TestOffsetsAfterRestart(t *testing.T) {
 func TestOffsetsAfterRestart_BigFiles(t *testing.T) {
 	t.Parallel()
 	operator, logReceived, tempDir := newTestFileOperator(t, nil, nil)
-	persister := testutil.NewMockPersister()
+	persister := testutil.NewMockPersister("test")
 
 	log1 := stringWithLength(2000)
 	log2 := stringWithLength(2000)
@@ -993,7 +993,7 @@ func TestOffsetsAfterRestart_BigFiles(t *testing.T) {
 func TestOffsetsAfterRestart_BigFilesWrittenWhileOff(t *testing.T) {
 	t.Parallel()
 	operator, logReceived, tempDir := newTestFileOperator(t, nil, nil)
-	persister := testutil.NewMockPersister()
+	persister := testutil.NewMockPersister("test")
 
 	log1 := stringWithLength(2000)
 	log2 := stringWithLength(2000)
@@ -1018,7 +1018,7 @@ func TestOffsetsAfterRestart_BigFilesWrittenWhileOff(t *testing.T) {
 func TestFileMovedWhileOff_BigFiles(t *testing.T) {
 	t.Parallel()
 	operator, logReceived, tempDir := newTestFileOperator(t, nil, nil)
-	persister := testutil.NewMockPersister()
+	persister := testutil.NewMockPersister("test")
 
 	log1 := stringWithLength(1000)
 	log2 := stringWithLength(1000)
@@ -1058,7 +1058,7 @@ func TestManyLogsDelivered(t *testing.T) {
 	}
 
 	// Start the operator
-	require.NoError(t, operator.Start(testutil.NewMockPersister()))
+	require.NoError(t, operator.Start(testutil.NewMockPersister("test")))
 	defer operator.Stop()
 
 	// Write lots of logs
@@ -1095,7 +1095,7 @@ func TestFileBatching(t *testing.T) {
 			out.Received = make(chan *entry.Entry, expectedLinesPerBatch)
 		},
 	)
-	operator.persister = testutil.NewMockPersister()
+	operator.persister = testutil.NewMockPersister("test")
 
 	temps := make([]*os.File, 0, files)
 	for i := 0; i < files; i++ {
@@ -1296,7 +1296,7 @@ func TestEncodings(t *testing.T) {
 			_, err := temp.Write(tc.contents)
 			require.NoError(t, err)
 
-			require.NoError(t, operator.Start(testutil.NewMockPersister()))
+			require.NoError(t, operator.Start(testutil.NewMockPersister("test")))
 			defer operator.Stop()
 
 			for _, expected := range tc.expected {
@@ -1350,7 +1350,7 @@ func BenchmarkFileInput(b *testing.B) {
 			err = op.SetOutputs([]operator.Operator{fakeOutput})
 			require.NoError(b, err)
 
-			err = op.Start(testutil.NewMockPersister())
+			err = op.Start(testutil.NewMockPersister("test"))
 			defer op.Stop()
 			require.NoError(b, err)
 

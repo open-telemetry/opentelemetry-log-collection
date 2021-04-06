@@ -76,10 +76,15 @@ func (p *mockPersister) Delete(ctx context.Context, k string) error {
 	return nil
 }
 
-// NewMockPersister will return a new persister for testing
-func NewMockPersister() operator.Persister {
+// NewUnscopedMockPersister will return a new persister for testing
+func NewUnscopedMockPersister() operator.Persister {
 	data := make(map[string][]byte)
 	return &mockPersister{data: data}
+}
+
+// NewMockPersister will return a new persister for testing
+func NewMockPersister(scope string) operator.Persister {
+	return operator.NewScopedPersister(scope, NewUnscopedMockPersister())
 }
 
 // Trim removes white space from the lines of a string
