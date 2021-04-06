@@ -48,6 +48,11 @@ func (c MoveOperatorConfig) Build(context operator.BuildContext) ([]operator.Ope
 		return nil, err
 	}
 
+	if c.To == entry.NewNilField() || c.From == entry.NewNilField() {
+		return nil, fmt.Errorf("move: missing to or from field")
+
+	}
+
 	moveOperator := &MoveOperator{
 		TransformerOperator: transformerOperator,
 		From:                c.From,
@@ -73,7 +78,7 @@ func (p *MoveOperator) Process(ctx context.Context, entry *entry.Entry) error {
 func (p *MoveOperator) Transform(e *entry.Entry) error {
 	val, exist := p.From.Delete(e)
 	if !exist {
-		return fmt.Errorf("Field does not exist in this entry")
+		return fmt.Errorf("move: field does not exist")
 	}
 	return p.To.Set(e, val)
 }

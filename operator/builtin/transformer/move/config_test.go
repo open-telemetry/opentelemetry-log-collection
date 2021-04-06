@@ -29,16 +29,14 @@ import (
 )
 
 type configTestCase struct {
-	name      string
-	expectErr bool
-	expect    *MoveOperatorConfig
+	name   string
+	expect *MoveOperatorConfig
 }
 
 func TestMoveGoldenConfig(t *testing.T) {
 	cases := []configTestCase{
 		{
-			"MoveRecordToRecord",
-			false,
+			"MoveBodyToBody",
 			func() *MoveOperatorConfig {
 				cfg := defaultCfg()
 				cfg.From = entry.NewBodyField("key")
@@ -47,8 +45,7 @@ func TestMoveGoldenConfig(t *testing.T) {
 			}(),
 		},
 		{
-			"MoveRecordToAttribute",
-			false,
+			"MoveBodyToAttribute",
 			func() *MoveOperatorConfig {
 				cfg := defaultCfg()
 				cfg.From = entry.NewBodyField("key")
@@ -57,8 +54,7 @@ func TestMoveGoldenConfig(t *testing.T) {
 			}(),
 		},
 		{
-			"MoveAttributeToRecord",
-			false,
+			"MoveAttributeToBody",
 			func() *MoveOperatorConfig {
 				cfg := defaultCfg()
 				cfg.From = entry.NewAttributeField("new")
@@ -68,7 +64,6 @@ func TestMoveGoldenConfig(t *testing.T) {
 		},
 		{
 			"MoveAttributeToResource",
-			false,
 			func() *MoveOperatorConfig {
 				cfg := defaultCfg()
 				cfg.From = entry.NewAttributeField("new")
@@ -78,7 +73,6 @@ func TestMoveGoldenConfig(t *testing.T) {
 		},
 		{
 			"MoveResourceToAttribute",
-			false,
 			func() *MoveOperatorConfig {
 				cfg := defaultCfg()
 				cfg.From = entry.NewResourceField("new")
@@ -88,7 +82,6 @@ func TestMoveGoldenConfig(t *testing.T) {
 		},
 		{
 			"MoveNest",
-			false,
 			func() *MoveOperatorConfig {
 				cfg := defaultCfg()
 				cfg.From = entry.NewBodyField("nested")
@@ -98,7 +91,6 @@ func TestMoveGoldenConfig(t *testing.T) {
 		},
 		{
 			"MoveFromNestedObj",
-			false,
 			func() *MoveOperatorConfig {
 				cfg := defaultCfg()
 				cfg.From = entry.NewBodyField("nested", "nestedkey")
@@ -108,7 +100,6 @@ func TestMoveGoldenConfig(t *testing.T) {
 		},
 		{
 			"MoveToNestedObj",
-			false,
 			func() *MoveOperatorConfig {
 				cfg := defaultCfg()
 				cfg.From = entry.NewBodyField("newnestedkey")
@@ -118,7 +109,6 @@ func TestMoveGoldenConfig(t *testing.T) {
 		},
 		{
 			"MoveDoubleNestedObj",
-			false,
 			func() *MoveOperatorConfig {
 				cfg := defaultCfg()
 				cfg.From = entry.NewBodyField("nested", "nested2")
@@ -128,7 +118,6 @@ func TestMoveGoldenConfig(t *testing.T) {
 		},
 		{
 			"MoveNestToResource",
-			false,
 			func() *MoveOperatorConfig {
 				cfg := defaultCfg()
 				cfg.From = entry.NewBodyField("nested")
@@ -138,7 +127,6 @@ func TestMoveGoldenConfig(t *testing.T) {
 		},
 		{
 			"MoveNestToAttribute",
-			false,
 			func() *MoveOperatorConfig {
 				cfg := defaultCfg()
 				cfg.From = entry.NewBodyField("nested")
@@ -151,15 +139,10 @@ func TestMoveGoldenConfig(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			cfgFromYaml, yamlErr := configFromFileViaYaml(path.Join(".", "testdata", fmt.Sprintf("%s.yaml", tc.name)))
 			cfgFromMapstructure, mapErr := configFromFileViaMapstructure(path.Join(".", "testdata", fmt.Sprintf("%s.yaml", tc.name)))
-			if tc.expectErr {
-				require.Error(t, yamlErr)
-				require.Error(t, mapErr)
-			} else {
-				require.NoError(t, yamlErr)
-				require.Equal(t, tc.expect, cfgFromYaml)
-				require.NoError(t, mapErr)
-				require.Equal(t, tc.expect, cfgFromMapstructure)
-			}
+			require.NoError(t, yamlErr)
+			require.Equal(t, tc.expect, cfgFromYaml)
+			require.NoError(t, mapErr)
+			require.Equal(t, tc.expect, cfgFromMapstructure)
 		})
 	}
 }

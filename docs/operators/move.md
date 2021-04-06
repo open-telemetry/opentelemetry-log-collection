@@ -23,7 +23,7 @@ Example usage:
 ```
 
 <table>
-<tr><td> Input record </td> <td> Output record </td></tr>
+<tr><td> Input Body </td> <td> Output Body </td></tr>
 <tr>
 <td>
 
