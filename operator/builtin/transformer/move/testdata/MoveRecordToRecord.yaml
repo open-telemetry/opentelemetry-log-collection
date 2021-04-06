@@ -1,3 +1,3 @@
 type: move
-from: $record.key
-to: $record.new
+from: $body.key
+to: $body.new

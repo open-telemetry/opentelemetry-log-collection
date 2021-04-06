@@ -38,7 +38,7 @@ func TestMoveProcess(t *testing.T) {
 	newTestEntry := func() *entry.Entry {
 		e := entry.New()
 		e.Timestamp = time.Unix(1586632809, 0)
-		e.Record = map[string]interface{}{
+		e.Body = map[string]interface{}{
 			"key": "val",
 			"nested": map[string]interface{}{
 				"nestedkey": "nestedval",
@@ -53,14 +53,14 @@ func TestMoveProcess(t *testing.T) {
 			false,
 			func() *MoveOperatorConfig {
 				cfg := defaultCfg()
-				cfg.From = entry.NewRecordField("key")
-				cfg.To = entry.NewRecordField("new")
+				cfg.From = entry.NewBodyField("key")
+				cfg.To = entry.NewBodyField("new")
 				return cfg
 			}(),
 			newTestEntry,
 			func() *entry.Entry {
 				e := newTestEntry()
-				e.Record = map[string]interface{}{
+				e.Body = map[string]interface{}{
 					"new": "val",
 					"nested": map[string]interface{}{
 						"nestedkey": "nestedval",
@@ -74,14 +74,14 @@ func TestMoveProcess(t *testing.T) {
 			false,
 			func() *MoveOperatorConfig {
 				cfg := defaultCfg()
-				cfg.From = entry.NewRecordField("key")
+				cfg.From = entry.NewBodyField("key")
 				cfg.To = entry.NewAttributeField("new")
 				return cfg
 			}(),
 			newTestEntry,
 			func() *entry.Entry {
 				e := newTestEntry()
-				e.Record = map[string]interface{}{
+				e.Body = map[string]interface{}{
 					"nested": map[string]interface{}{
 						"nestedkey": "nestedval",
 					},
@@ -96,7 +96,7 @@ func TestMoveProcess(t *testing.T) {
 			func() *MoveOperatorConfig {
 				cfg := defaultCfg()
 				cfg.From = entry.NewAttributeField("new")
-				cfg.To = entry.NewRecordField("new")
+				cfg.To = entry.NewBodyField("new")
 				return cfg
 			}(),
 			func() *entry.Entry {
@@ -106,7 +106,7 @@ func TestMoveProcess(t *testing.T) {
 			},
 			func() *entry.Entry {
 				e := newTestEntry()
-				e.Record = map[string]interface{}{
+				e.Body = map[string]interface{}{
 					"key": "val",
 					"new": "val",
 					"nested": map[string]interface{}{
@@ -164,14 +164,14 @@ func TestMoveProcess(t *testing.T) {
 			false,
 			func() *MoveOperatorConfig {
 				cfg := defaultCfg()
-				cfg.From = entry.NewRecordField("nested")
-				cfg.To = entry.NewRecordField("NewNested")
+				cfg.From = entry.NewBodyField("nested")
+				cfg.To = entry.NewBodyField("NewNested")
 				return cfg
 			}(),
 			newTestEntry,
 			func() *entry.Entry {
 				e := newTestEntry()
-				e.Record = map[string]interface{}{
+				e.Body = map[string]interface{}{
 					"key": "val",
 					"NewNested": map[string]interface{}{
 						"nestedkey": "nestedval",
@@ -185,14 +185,14 @@ func TestMoveProcess(t *testing.T) {
 			false,
 			func() *MoveOperatorConfig {
 				cfg := defaultCfg()
-				cfg.From = entry.NewRecordField("nested", "nestedkey")
-				cfg.To = entry.NewRecordField("unnestedkey")
+				cfg.From = entry.NewBodyField("nested", "nestedkey")
+				cfg.To = entry.NewBodyField("unnestedkey")
 				return cfg
 			}(),
 			newTestEntry,
 			func() *entry.Entry {
 				e := newTestEntry()
-				e.Record = map[string]interface{}{
+				e.Body = map[string]interface{}{
 					"key":         "val",
 					"nested":      map[string]interface{}{},
 					"unnestedkey": "nestedval",
@@ -205,14 +205,14 @@ func TestMoveProcess(t *testing.T) {
 			false,
 			func() *MoveOperatorConfig {
 				cfg := defaultCfg()
-				cfg.From = entry.NewRecordField("newnestedkey")
-				cfg.To = entry.NewRecordField("nested", "newnestedkey")
+				cfg.From = entry.NewBodyField("newnestedkey")
+				cfg.To = entry.NewBodyField("nested", "newnestedkey")
 
 				return cfg
 			}(),
 			func() *entry.Entry {
 				e := newTestEntry()
-				e.Record = map[string]interface{}{
+				e.Body = map[string]interface{}{
 					"key": "val",
 					"nested": map[string]interface{}{
 						"nestedkey": "nestedval",
@@ -223,7 +223,7 @@ func TestMoveProcess(t *testing.T) {
 			},
 			func() *entry.Entry {
 				e := newTestEntry()
-				e.Record = map[string]interface{}{
+				e.Body = map[string]interface{}{
 					"key": "val",
 					"nested": map[string]interface{}{
 						"nestedkey":    "nestedval",
@@ -238,13 +238,13 @@ func TestMoveProcess(t *testing.T) {
 			false,
 			func() *MoveOperatorConfig {
 				cfg := defaultCfg()
-				cfg.From = entry.NewRecordField("nested", "nested2")
-				cfg.To = entry.NewRecordField("nested2")
+				cfg.From = entry.NewBodyField("nested", "nested2")
+				cfg.To = entry.NewBodyField("nested2")
 				return cfg
 			}(),
 			func() *entry.Entry {
 				e := newTestEntry()
-				e.Record = map[string]interface{}{
+				e.Body = map[string]interface{}{
 					"key": "val",
 					"nested": map[string]interface{}{
 						"nestedkey": "nestedval",
@@ -257,7 +257,7 @@ func TestMoveProcess(t *testing.T) {
 			},
 			func() *entry.Entry {
 				e := newTestEntry()
-				e.Record = map[string]interface{}{
+				e.Body = map[string]interface{}{
 					"key": "val",
 					"nested": map[string]interface{}{
 						"nestedkey": "nestedval",
@@ -274,7 +274,7 @@ func TestMoveProcess(t *testing.T) {
 			true,
 			func() *MoveOperatorConfig {
 				cfg := defaultCfg()
-				cfg.From = entry.NewRecordField("nested")
+				cfg.From = entry.NewBodyField("nested")
 				cfg.To = entry.NewResourceField("NewNested")
 				return cfg
 			}(),
@@ -286,7 +286,7 @@ func TestMoveProcess(t *testing.T) {
 			true,
 			func() *MoveOperatorConfig {
 				cfg := defaultCfg()
-				cfg.From = entry.NewRecordField("nested")
+				cfg.From = entry.NewBodyField("nested")
 				cfg.To = entry.NewAttributeField("NewNested")
 
 				return cfg

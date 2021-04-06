@@ -41,8 +41,8 @@ func TestMoveGoldenConfig(t *testing.T) {
 			false,
 			func() *MoveOperatorConfig {
 				cfg := defaultCfg()
-				cfg.From = entry.NewRecordField("key")
-				cfg.To = entry.NewRecordField("new")
+				cfg.From = entry.NewBodyField("key")
+				cfg.To = entry.NewBodyField("new")
 				return cfg
 			}(),
 		},
@@ -51,7 +51,7 @@ func TestMoveGoldenConfig(t *testing.T) {
 			false,
 			func() *MoveOperatorConfig {
 				cfg := defaultCfg()
-				cfg.From = entry.NewRecordField("key")
+				cfg.From = entry.NewBodyField("key")
 				cfg.To = entry.NewAttributeField("new")
 				return cfg
 			}(),
@@ -62,7 +62,7 @@ func TestMoveGoldenConfig(t *testing.T) {
 			func() *MoveOperatorConfig {
 				cfg := defaultCfg()
 				cfg.From = entry.NewAttributeField("new")
-				cfg.To = entry.NewRecordField("new")
+				cfg.To = entry.NewBodyField("new")
 				return cfg
 			}(),
 		},
@@ -91,8 +91,8 @@ func TestMoveGoldenConfig(t *testing.T) {
 			false,
 			func() *MoveOperatorConfig {
 				cfg := defaultCfg()
-				cfg.From = entry.NewRecordField("nested")
-				cfg.To = entry.NewRecordField("NewNested")
+				cfg.From = entry.NewBodyField("nested")
+				cfg.To = entry.NewBodyField("NewNested")
 				return cfg
 			}(),
 		},
@@ -101,8 +101,8 @@ func TestMoveGoldenConfig(t *testing.T) {
 			false,
 			func() *MoveOperatorConfig {
 				cfg := defaultCfg()
-				cfg.From = entry.NewRecordField("nested", "nestedkey")
-				cfg.To = entry.NewRecordField("unnestedkey")
+				cfg.From = entry.NewBodyField("nested", "nestedkey")
+				cfg.To = entry.NewBodyField("unnestedkey")
 				return cfg
 			}(),
 		},
@@ -111,8 +111,8 @@ func TestMoveGoldenConfig(t *testing.T) {
 			false,
 			func() *MoveOperatorConfig {
 				cfg := defaultCfg()
-				cfg.From = entry.NewRecordField("newnestedkey")
-				cfg.To = entry.NewRecordField("nested", "newnestedkey")
+				cfg.From = entry.NewBodyField("newnestedkey")
+				cfg.To = entry.NewBodyField("nested", "newnestedkey")
 				return cfg
 			}(),
 		},
@@ -121,8 +121,8 @@ func TestMoveGoldenConfig(t *testing.T) {
 			false,
 			func() *MoveOperatorConfig {
 				cfg := defaultCfg()
-				cfg.From = entry.NewRecordField("nested", "nested2")
-				cfg.To = entry.NewRecordField("nested2")
+				cfg.From = entry.NewBodyField("nested", "nested2")
+				cfg.To = entry.NewBodyField("nested2")
 				return cfg
 			}(),
 		},
@@ -131,7 +131,7 @@ func TestMoveGoldenConfig(t *testing.T) {
 			false,
 			func() *MoveOperatorConfig {
 				cfg := defaultCfg()
-				cfg.From = entry.NewRecordField("nested")
+				cfg.From = entry.NewBodyField("nested")
 				cfg.To = entry.NewResourceField("NewNested")
 				return cfg
 			}(),
@@ -141,7 +141,7 @@ func TestMoveGoldenConfig(t *testing.T) {
 			false,
 			func() *MoveOperatorConfig {
 				cfg := defaultCfg()
-				cfg.From = entry.NewRecordField("nested")
+				cfg.From = entry.NewBodyField("nested")
 				cfg.To = entry.NewAttributeField("NewNested")
 				return cfg
 			}(),
