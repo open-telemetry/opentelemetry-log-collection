@@ -16,29 +16,25 @@ package move
 
 import (
 	"context"
-	"fmt"
-	"io/ioutil"
-	"path"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/require"
-	"gopkg.in/yaml.v2"
 
 	"github.com/open-telemetry/opentelemetry-log-collection/entry"
 	"github.com/open-telemetry/opentelemetry-log-collection/operator"
-	"github.com/open-telemetry/opentelemetry-log-collection/operator/helper"
 	"github.com/open-telemetry/opentelemetry-log-collection/testutil"
 )
 
-type testCase struct {
+type processTestCase struct {
 	name      string
 	expectErr bool
+	op        *MoveOperatorConfig
 	input     func() *entry.Entry
 	output    func() *entry.Entry
 }
 
-func TestMoveGoldenConfig(t *testing.T) {
+func TestMoveProcess(t *testing.T) {
 	newTestEntry := func() *entry.Entry {
 		e := entry.New()
 		e.Timestamp = time.Unix(1586632809, 0)
@@ -51,10 +47,16 @@ func TestMoveGoldenConfig(t *testing.T) {
 		return e
 	}
 
-	cases := []testCase{
+	cases := []processTestCase{
 		{
 			"MoveRecordToRecord",
 			false,
+			func() *MoveOperatorConfig {
+				cfg := defaultCfg()
+				cfg.From = entry.NewRecordField("key")
+				cfg.To = entry.NewRecordField("new")
+				return cfg
+			}(),
 			newTestEntry,
 			func() *entry.Entry {
 				e := newTestEntry()
@@ -70,6 +72,12 @@ func TestMoveGoldenConfig(t *testing.T) {
 		{
 			"MoveRecordToAttribute",
 			false,
+			func() *MoveOperatorConfig {
+				cfg := defaultCfg()
+				cfg.From = entry.NewRecordField("key")
+				cfg.To = entry.NewAttributeField("new")
+				return cfg
+			}(),
 			newTestEntry,
 			func() *entry.Entry {
 				e := newTestEntry()
@@ -85,6 +93,12 @@ func TestMoveGoldenConfig(t *testing.T) {
 		{
 			"MoveAttributeToRecord",
 			false,
+			func() *MoveOperatorConfig {
+				cfg := defaultCfg()
+				cfg.From = entry.NewAttributeField("new")
+				cfg.To = entry.NewRecordField("new")
+				return cfg
+			}(),
 			func() *entry.Entry {
 				e := newTestEntry()
 				e.Attributes = map[string]string{"new": "val"}
@@ -106,6 +120,12 @@ func TestMoveGoldenConfig(t *testing.T) {
 		{
 			"MoveAttributeToResource",
 			false,
+			func() *MoveOperatorConfig {
+				cfg := defaultCfg()
+				cfg.From = entry.NewAttributeField("new")
+				cfg.To = entry.NewResourceField("new")
+				return cfg
+			}(),
 			func() *entry.Entry {
 				e := newTestEntry()
 				e.Attributes = map[string]string{"new": "val"}
@@ -121,6 +141,12 @@ func TestMoveGoldenConfig(t *testing.T) {
 		{
 			"MoveResourceToAttribute",
 			false,
+			func() *MoveOperatorConfig {
+				cfg := defaultCfg()
+				cfg.From = entry.NewResourceField("new")
+				cfg.To = entry.NewAttributeField("new")
+				return cfg
+			}(),
 			func() *entry.Entry {
 				e := newTestEntry()
 				e.Resource = map[string]string{"new": "val"}
@@ -136,6 +162,12 @@ func TestMoveGoldenConfig(t *testing.T) {
 		{
 			"MoveNest",
 			false,
+			func() *MoveOperatorConfig {
+				cfg := defaultCfg()
+				cfg.From = entry.NewRecordField("nested")
+				cfg.To = entry.NewRecordField("NewNested")
+				return cfg
+			}(),
 			newTestEntry,
 			func() *entry.Entry {
 				e := newTestEntry()
@@ -151,6 +183,12 @@ func TestMoveGoldenConfig(t *testing.T) {
 		{
 			"MoveFromNestedObj",
 			false,
+			func() *MoveOperatorConfig {
+				cfg := defaultCfg()
+				cfg.From = entry.NewRecordField("nested", "nestedkey")
+				cfg.To = entry.NewRecordField("unnestedkey")
+				return cfg
+			}(),
 			newTestEntry,
 			func() *entry.Entry {
 				e := newTestEntry()
@@ -165,6 +203,13 @@ func TestMoveGoldenConfig(t *testing.T) {
 		{
 			"MoveToNestedObj",
 			false,
+			func() *MoveOperatorConfig {
+				cfg := defaultCfg()
+				cfg.From = entry.NewRecordField("newnestedkey")
+				cfg.To = entry.NewRecordField("nested", "newnestedkey")
+
+				return cfg
+			}(),
 			func() *entry.Entry {
 				e := newTestEntry()
 				e.Record = map[string]interface{}{
@@ -191,6 +236,12 @@ func TestMoveGoldenConfig(t *testing.T) {
 		{
 			"MoveDoubleNestedObj",
 			false,
+			func() *MoveOperatorConfig {
+				cfg := defaultCfg()
+				cfg.From = entry.NewRecordField("nested", "nested2")
+				cfg.To = entry.NewRecordField("nested2")
+				return cfg
+			}(),
 			func() *entry.Entry {
 				e := newTestEntry()
 				e.Record = map[string]interface{}{
@@ -221,54 +272,43 @@ func TestMoveGoldenConfig(t *testing.T) {
 		{
 			"MoveNestToResource",
 			true,
+			func() *MoveOperatorConfig {
+				cfg := defaultCfg()
+				cfg.From = entry.NewRecordField("nested")
+				cfg.To = entry.NewResourceField("NewNested")
+				return cfg
+			}(),
 			newTestEntry,
 			nil,
 		},
 		{
 			"MoveNestToAttribute",
 			true,
+			func() *MoveOperatorConfig {
+				cfg := defaultCfg()
+				cfg.From = entry.NewRecordField("nested")
+				cfg.To = entry.NewAttributeField("NewNested")
+
+				return cfg
+			}(),
 			newTestEntry,
 			nil,
 		},
 	}
 	for _, tc := range cases {
-		t.Run("yaml/"+tc.name, func(t *testing.T) {
-			cfgFromYaml, _ := configFromFileViaYaml(path.Join(".", "testdata", fmt.Sprintf("%s.yaml", tc.name)))
-			cfgFromYaml.OutputIDs = []string{"fake"}
-			cfgFromYaml.OnError = "drop"
-			ops, err := cfgFromYaml.Build(testutil.NewBuildContext(t))
-			require.NoError(t, err)
-			op := ops[0]
-
-			remove := op.(*MoveOperator)
-			fake := testutil.NewFakeOutput(t)
-			remove.SetOutputs([]operator.Operator{fake})
-
-			err = remove.Process(context.Background(), tc.input())
-			if tc.expectErr {
-				require.Error(t, err)
-			} else {
-				require.NoError(t, err)
-				fake.ExpectEntry(t, tc.output())
-			}
-		})
-		t.Run("mapstructure/"+tc.name, func(t *testing.T) {
-			cfgFromMapstructure := defaultCfg()
-			configFromFileViaMapstructure(
-				path.Join(".", "testdata", fmt.Sprintf("%s.yaml", tc.name)),
-				cfgFromMapstructure,
-			)
+		t.Run("BuildandProcess/"+tc.name, func(t *testing.T) {
+			cfgFromMapstructure := tc.op
 			cfgFromMapstructure.OutputIDs = []string{"fake"}
 			cfgFromMapstructure.OnError = "drop"
 			ops, err := cfgFromMapstructure.Build(testutil.NewBuildContext(t))
 			require.NoError(t, err)
 			op := ops[0]
 
-			remove := op.(*MoveOperator)
+			move := op.(*MoveOperator)
 			fake := testutil.NewFakeOutput(t)
-			remove.SetOutputs([]operator.Operator{fake})
+			move.SetOutputs([]operator.Operator{fake})
 			val := tc.input()
-			err = remove.Process(context.Background(), val)
+			err = move.Process(context.Background(), val)
 			if tc.expectErr {
 				require.Error(t, err)
 			} else {
@@ -277,38 +317,4 @@ func TestMoveGoldenConfig(t *testing.T) {
 			}
 		})
 	}
-}
-
-func configFromFileViaYaml(file string) (*MoveOperatorConfig, error) {
-	bytes, err := ioutil.ReadFile(file)
-	if err != nil {
-		return nil, fmt.Errorf("could not find config file: %s", err)
-	}
-
-	config := defaultCfg()
-	if err := yaml.Unmarshal(bytes, config); err != nil {
-		return nil, fmt.Errorf("failed to read config file as yaml: %s", err)
-	}
-
-	return config, nil
-}
-
-func configFromFileViaMapstructure(file string, result *MoveOperatorConfig) error {
-	bytes, err := ioutil.ReadFile(file)
-	if err != nil {
-		return fmt.Errorf("could not find config file: %s", err)
-	}
-
-	raw := map[string]interface{}{}
-
-	if err := yaml.Unmarshal(bytes, raw); err != nil {
-		return fmt.Errorf("failed to read data from yaml: %s", err)
-	}
-
-	err = helper.UnmarshalMapstructure(raw, result)
-	return err
-}
-
-func defaultCfg() *MoveOperatorConfig {
-	return NewMoveOperatorConfig("remove")
 }
