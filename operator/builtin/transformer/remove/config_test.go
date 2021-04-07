@@ -34,7 +34,7 @@ type configTestCase struct {
 }
 
 // test unmarshalling of values into config struct
-func TestMoveGoldenConfig(t *testing.T) {
+func TestRemoveProcessAndBuild(t *testing.T) {
 	cases := []configTestCase{
 		{
 			"remove_one",

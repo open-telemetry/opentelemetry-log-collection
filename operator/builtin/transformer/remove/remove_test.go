@@ -33,7 +33,7 @@ type testCase struct {
 	expectErr bool
 }
 
-func TestAddGoldenConfig(t *testing.T) {
+func TestRemoveGoldenConfig(t *testing.T) {
 	newTestEntry := func() *entry.Entry {
 		e := entry.New()
 		e.Timestamp = time.Unix(1586632809, 0)
@@ -49,6 +49,25 @@ func TestAddGoldenConfig(t *testing.T) {
 	cases := []testCase{
 		{
 			"remove_one",
+			func() *RemoveOperatorConfig {
+				cfg := defaultCfg()
+				cfg.Fields = append(cfg.Fields, entry.NewBodyField("key"))
+				return cfg
+			}(),
+			newTestEntry,
+			func() *entry.Entry {
+				e := newTestEntry()
+				e.Body = map[string]interface{}{
+					"nested": map[string]interface{}{
+						"nestedkey": "nestedval",
+					},
+				}
+				return e
+			},
+			false,
+		},
+		{
+			"remove_obj",
 			func() *RemoveOperatorConfig {
 				cfg := defaultCfg()
 				cfg.Fields = append(cfg.Fields, entry.NewBodyField("nested"))

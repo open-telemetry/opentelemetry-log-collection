@@ -41,6 +41,7 @@ type RemoveOperatorConfig struct {
 	Fields []entry.Field `mapstructure:"fields"  json:"fields" yaml:"fields"`
 }
 
+// Build will build a Remove operator from the supplied configuration
 func (c RemoveOperatorConfig) Build(context operator.BuildContext) ([]operator.Operator, error) {
 	transformerOperator, err := c.TransformerConfig.Build(context)
 	if err != nil {
@@ -55,6 +56,7 @@ func (c RemoveOperatorConfig) Build(context operator.BuildContext) ([]operator.O
 	return []operator.Operator{removeOperator}, nil
 }
 
+// RemoveOperator is an operator that deletes a field
 type RemoveOperator struct {
 	helper.TransformerOperator
 	Fields []entry.Field
@@ -69,10 +71,12 @@ func (p *RemoveOperator) Process(ctx context.Context, entry *entry.Entry) error 
 func (p *RemoveOperator) Transform(entry *entry.Entry) error {
 	if p.Fields != nil {
 		for _, field := range p.Fields {
-			entry.Delete(field)
+			_, exist := entry.Delete(field)
+			if !exist {
+				return fmt.Errorf("remove: field does not exist")
+			}
 		}
-	} else {
-		return fmt.Errorf("remove: missing required field 'fields'")
+		return nil
 	}
-	return nil
+	return fmt.Errorf("remove: missing required field 'fields'")
 }
