@@ -33,7 +33,7 @@ type testCase struct {
 	expectErr bool
 }
 
-func TestAddGoldenConfig(t *testing.T) {
+func TestProcessAndBuild(t *testing.T) {
 	newTestEntry := func() *entry.Entry {
 		e := entry.New()
 		e.Timestamp = time.Unix(1586632809, 0)
@@ -180,6 +180,49 @@ func TestAddGoldenConfig(t *testing.T) {
 			false,
 		},
 		{
+			"add_array_to_body",
+			func() *AddOperatorConfig {
+				cfg := defaultCfg()
+				cfg.Field = entry.NewBodyField("new")
+				cfg.Value = []int{1, 2, 3, 4}
+				return cfg
+			}(),
+			newTestEntry,
+			func() *entry.Entry {
+				e := newTestEntry()
+				e.Body = map[string]interface{}{
+					"key": "val",
+					"nested": map[string]interface{}{
+						"nestedkey": "nestedval",
+					},
+					"new": []int{1, 2, 3, 4},
+				}
+				return e
+			},
+			false,
+		},
+		{
+			"overwrite",
+			func() *AddOperatorConfig {
+				cfg := defaultCfg()
+				cfg.Field = entry.NewBodyField("key")
+				cfg.Value = []int{1, 2, 3, 4}
+				return cfg
+			}(),
+			newTestEntry,
+			func() *entry.Entry {
+				e := newTestEntry()
+				e.Body = map[string]interface{}{
+					"key": []int{1, 2, 3, 4},
+					"nested": map[string]interface{}{
+						"nestedkey": "nestedval",
+					},
+				}
+				return e
+			},
+			false,
+		},
+		{
 			"add_int_to_resource",
 			func() *AddOperatorConfig {
 				cfg := defaultCfg()
@@ -204,10 +247,10 @@ func TestAddGoldenConfig(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run("BuildandProcess/"+tc.name, func(t *testing.T) {
-			cfgFromMapstructure := tc.op
-			cfgFromMapstructure.OutputIDs = []string{"fake"}
-			cfgFromMapstructure.OnError = "drop"
-			ops, err := cfgFromMapstructure.Build(testutil.NewBuildContext(t))
+			cfg := tc.op
+			cfg.OutputIDs = []string{"fake"}
+			cfg.OnError = "drop"
+			ops, err := cfg.Build(testutil.NewBuildContext(t))
 			require.NoError(t, err)
 			op := ops[0]
 

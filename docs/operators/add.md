@@ -1,6 +1,6 @@
 ## `add` operator
 
-The `add` operator adds a field to a record. It must have a `field` key and exactly one of `value`.
+The `add` operator adds a value to an `entry`'s `body`, `attributes`, or `resource`.
 
 `field` is a [field](/docs/types/field.md) that will be set to `value` or the evaluated expression.
 
@@ -16,7 +16,7 @@ The `add` operator adds a field to a record. It must have a `field` key and exac
 | `id`       | `restructure`    | A unique identifier for the operator                                                                                                                                                                                                     |
 | `output`   | Next in pipeline | The connected operator(s) that will receive all outbound entries                                                                                                                                                                         |
 | `field`      | required       | The [field](/docs/types/field.md) to be added.    
-| `value`      | required       | The value of the [field](/docs/types/field.md) to be added.
+| `value`      | required       | The value of the field to be added. Can be either a value or an [expression](https://github.com/open-telemetry/opentelemetry-log-collection/blob/main/docs/types/expression.md)
 | `on_error` | `send`           | The behavior of the operator if it encounters an error. See [on_error](/docs/types/on_error.md)                                                                                                                                          |
 | `if`       |                  | An [expression](/docs/types/expression.md) that, when set, will be evaluated to determine whether this operator should be used for the given entry. This allows you to do easy conditional parsing without branching logic with routers. |
 
@@ -24,7 +24,7 @@ The `add` operator adds a field to a record. It must have a `field` key and exac
 Example usage:
 
 <hr>
-adding to body
+Add a string to the body
 
 ```yaml
 - type: add
@@ -66,7 +66,7 @@ adding to body
 </table>
 
 <hr>
-adding expression to body
+Add a value to the body using an expression
 
 ```yaml
 - type: add
@@ -108,7 +108,7 @@ adding expression to body
 </table>
 
 <hr>
-adding nest to body
+Add an object to the body
 
 ```yaml
 - type: add
@@ -153,13 +153,12 @@ adding nest to body
 </table>
 
 <hr>
-adding value to attribute
+Add a value to attributes
 
 ```yaml
 - type: add
     field: $attributes.key2
-    value: 
-      nestedkey: val2
+    value: val2
 ```
 
 <table>
@@ -197,13 +196,12 @@ adding value to attribute
 </table>
 
 <hr>
-adding value to resource
+Add a value to resource
 
 ```yaml
 - type: add
     field: $resource.key2
-    value: 
-      nestedkey: val2
+    value: val2
 ```
 
 <table>
@@ -240,7 +238,7 @@ adding value to resource
 </tr>
 </table>
 
-adding expression to resource
+Add a value to resource using an expression
 
 ```yaml
 - type: add

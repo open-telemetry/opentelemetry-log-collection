@@ -57,19 +57,19 @@ func (c AddOperatorConfig) Build(context operator.BuildContext) ([]operator.Oper
 		Field:               c.Field,
 	}
 	strVal, ok := c.Value.(string)
-	if ok && strings.HasPrefix(strVal, "EXPR(") && strings.HasSuffix(strVal, ")") {
-		exprStr := strings.TrimPrefix(strVal, "EXPR(")
-		exprStr = strings.TrimSuffix(exprStr, ")")
-
-		compiled, err := expr.Compile(exprStr, expr.AllowUndefinedVariables())
-		if err != nil {
-			return nil, fmt.Errorf("failed to compile expression '%s': %w", c.IfExpr, err)
-		}
-
-		addOperator.program = compiled
+	if !ok || !isExpr(strVal) {
+		addOperator.Value = c.Value
 		return []operator.Operator{addOperator}, nil
 	}
-	addOperator.Value = c.Value
+	exprStr := strings.TrimPrefix(strVal, "EXPR(")
+	exprStr = strings.TrimSuffix(exprStr, ")")
+
+	compiled, err := expr.Compile(exprStr, expr.AllowUndefinedVariables())
+	if err != nil {
+		return nil, fmt.Errorf("failed to compile expression '%s': %w", c.IfExpr, err)
+	}
+
+	addOperator.program = compiled
 	return []operator.Operator{addOperator}, nil
 }
 
@@ -102,5 +102,9 @@ func (p *AddOperator) Transform(e *entry.Entry) error {
 		}
 		return e.Set(p.Field, result)
 	}
-	return fmt.Errorf("add: missing required field 'Value'")
+	return fmt.Errorf("add: missing required field 'value'")
+}
+
+func isExpr(str string) bool {
+	return strings.HasPrefix(str, "EXPR(") && strings.HasSuffix(str, ")")
 }

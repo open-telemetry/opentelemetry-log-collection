@@ -33,7 +33,7 @@ type configTestCase struct {
 	expect *AddOperatorConfig
 }
 
-func TestMoveGoldenConfig(t *testing.T) {
+func TestGoldenConfig(t *testing.T) {
 	cases := []configTestCase{
 		{
 			"add_value",
@@ -88,6 +88,15 @@ func TestMoveGoldenConfig(t *testing.T) {
 				cfg := defaultCfg()
 				cfg.Field = entry.NewResourceField("new")
 				cfg.Value = `EXPR($.key + "_suffix")`
+				return cfg
+			}(),
+		},
+		{
+			"add_array_to_body",
+			func() *AddOperatorConfig {
+				cfg := defaultCfg()
+				cfg.Field = entry.NewBodyField("new")
+				cfg.Value = []interface{}{1, 2, 3, 4}
 				return cfg
 			}(),
 		},
