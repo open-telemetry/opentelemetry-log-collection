@@ -90,7 +90,6 @@ func (p *AddOperator) Process(ctx context.Context, entry *entry.Entry) error {
 // Transform will apply the add operations to an entry
 func (p *AddOperator) Transform(e *entry.Entry) error {
 	if p.Value != nil {
-
 		return e.Set(p.Field, p.Value)
 	}
 	if p.program != nil {
