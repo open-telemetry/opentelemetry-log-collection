@@ -19,12 +19,13 @@ import (
 	"os"
 	"testing"
 
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
+
 	"github.com/open-telemetry/opentelemetry-log-collection/entry"
 	"github.com/open-telemetry/opentelemetry-log-collection/operator"
 	"github.com/open-telemetry/opentelemetry-log-collection/operator/helper"
 	"github.com/open-telemetry/opentelemetry-log-collection/testutil"
-	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
 )
 
 func TestRouterOperator(t *testing.T) {
@@ -79,7 +80,7 @@ func TestRouterOperator(t *testing.T) {
 		{
 			"SimpleMatch",
 			&entry.Entry{
-				Record: map[string]interface{}{
+				Body: map[string]interface{}{
 					"message": "test_message",
 				},
 			},
@@ -102,7 +103,7 @@ func TestRouterOperator(t *testing.T) {
 		{
 			"MatchWithAttribute",
 			&entry.Entry{
-				Record: map[string]interface{}{
+				Body: map[string]interface{}{
 					"message": "test_message",
 				},
 			},
@@ -131,7 +132,7 @@ func TestRouterOperator(t *testing.T) {
 		{
 			"MatchEnv",
 			&entry.Entry{
-				Record: map[string]interface{}{
+				Body: map[string]interface{}{
 					"message": "test_message",
 				},
 			},
@@ -154,7 +155,7 @@ func TestRouterOperator(t *testing.T) {
 		{
 			"UseDefault",
 			&entry.Entry{
-				Record: map[string]interface{}{
+				Body: map[string]interface{}{
 					"message": "test_message",
 				},
 			},
@@ -172,7 +173,7 @@ func TestRouterOperator(t *testing.T) {
 		{
 			"MatchBeforeDefault",
 			&entry.Entry{
-				Record: map[string]interface{}{
+				Body: map[string]interface{}{
 					"message": "test_message",
 				},
 			},
