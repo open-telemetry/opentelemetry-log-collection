@@ -17,7 +17,7 @@ It's configured by passing 'to' and 'from' fields.
 
 Example usage:
 
-renaming body value
+Rename value
 ```yaml
 - type: move
     from: key1
@@ -59,7 +59,7 @@ renaming body value
 </table>
 <hr>
 
-Move a value called "uuid" from body to resource
+Move a value from the body to resource
 
 ```yaml
 - type: move
@@ -101,7 +101,7 @@ Move a value called "uuid" from body to resource
 
 <hr>
 
-Move a value called "ip" from body to attributes
+Move a value from the body to attributes
 
 ```yaml
 - type: move
@@ -143,46 +143,7 @@ Move a value called "ip" from body to attributes
 
 <hr>
 
-Move a string from 'log' in nested in body to $body
-```yaml
-- type: move
-    from: nested.log
-    to: $body
-```
-
-<table>
-<tr><td> Input Entry</td> <td> Output Entry </td></tr>
-<tr>
-<td>
-
-```json
-{
-  "resource": { },
-  "attributes": { },  
-  "body": {
-    "log": "The log line"
-  }
-}
-```
-
-</td>
-<td>
-
-```json
-{
-  "resource": { },
-  "attributes": { },  
-  "body": "The log line"
-}
-```
-
-</td>
-</tr>
-</table>
-
-<hr>
-
-Move an object from 'log' in body to $body
+Replace the body with an individual value nested within the body
 ```yaml
 - type: move
     from: log
@@ -221,7 +182,7 @@ Move an object from 'log' in body to $body
 
 <hr>
 
-Move an object from somewhere in nested in body to $body
+Remove a layer from the body
 ```yaml
 - type: move
     from: wrapper
