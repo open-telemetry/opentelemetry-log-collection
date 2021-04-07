@@ -26,10 +26,11 @@ import (
 )
 
 type testCase struct {
-	name   string
-	op     *AddOperatorConfig
-	input  func() *entry.Entry
-	output func() *entry.Entry
+	name      string
+	op        *AddOperatorConfig
+	input     func() *entry.Entry
+	output    func() *entry.Entry
+	expectErr bool
 }
 
 func TestAddGoldenConfig(t *testing.T) {
@@ -60,6 +61,7 @@ func TestAddGoldenConfig(t *testing.T) {
 				e.Body.(map[string]interface{})["new"] = "randomMessage"
 				return e
 			},
+			false,
 		},
 		{
 			"add_expr",
@@ -75,6 +77,7 @@ func TestAddGoldenConfig(t *testing.T) {
 				e.Body.(map[string]interface{})["new"] = "val_suffix"
 				return e
 			},
+			false,
 		},
 		{
 			"add_nest",
@@ -104,6 +107,7 @@ func TestAddGoldenConfig(t *testing.T) {
 				}
 				return e
 			},
+			false,
 		},
 		{
 			"add_attribute",
@@ -119,6 +123,7 @@ func TestAddGoldenConfig(t *testing.T) {
 				e.Attributes = map[string]string{"new": "newVal"}
 				return e
 			},
+			false,
 		},
 		{
 			"add_resource",
@@ -134,6 +139,7 @@ func TestAddGoldenConfig(t *testing.T) {
 				e.Resource = map[string]string{"new": "newVal"}
 				return e
 			},
+			false,
 		},
 		{
 			"add_resource_expr",
@@ -149,6 +155,51 @@ func TestAddGoldenConfig(t *testing.T) {
 				e.Resource = map[string]string{"new": "val_suffix"}
 				return e
 			},
+			false,
+		},
+		{
+			"add_int_to_body",
+			func() *AddOperatorConfig {
+				cfg := defaultCfg()
+				cfg.Field = entry.NewBodyField("new")
+				cfg.Value = 1
+				return cfg
+			}(),
+			newTestEntry,
+			func() *entry.Entry {
+				e := newTestEntry()
+				e.Body = map[string]interface{}{
+					"key": "val",
+					"nested": map[string]interface{}{
+						"nestedkey": "nestedval",
+					},
+					"new": 1,
+				}
+				return e
+			},
+			false,
+		},
+		{
+			"add_int_to_resource",
+			func() *AddOperatorConfig {
+				cfg := defaultCfg()
+				cfg.Field = entry.NewResourceField("new")
+				cfg.Value = 1
+				return cfg
+			}(),
+			newTestEntry,
+			func() *entry.Entry {
+				e := newTestEntry()
+				e.Body = map[string]interface{}{
+					"key": "val",
+					"nested": map[string]interface{}{
+						"nestedkey": "nestedval",
+					},
+					"new": 1,
+				}
+				return e
+			},
+			true,
 		},
 	}
 	for _, tc := range cases {
@@ -165,8 +216,12 @@ func TestAddGoldenConfig(t *testing.T) {
 			add.SetOutputs([]operator.Operator{fake})
 			val := tc.input()
 			err = add.Process(context.Background(), val)
-			require.NoError(t, err)
-			fake.ExpectEntry(t, tc.output())
+			if tc.expectErr {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+				fake.ExpectEntry(t, tc.output())
+			}
 		})
 	}
 }

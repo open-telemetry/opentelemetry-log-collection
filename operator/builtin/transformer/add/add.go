@@ -56,22 +56,24 @@ func (c AddOperatorConfig) Build(context operator.BuildContext) ([]operator.Oper
 		TransformerOperator: transformerOperator,
 		Field:               c.Field,
 	}
-	_, ok := c.Value.(string)
-	if ok && strings.HasPrefix(c.Value.(string), "EXPR(") && strings.HasSuffix(c.Value.(string), ")") {
-		exprStr := strings.TrimPrefix(c.Value.(string), "EXPR(")
+	strVal, ok := c.Value.(string)
+	if ok && strings.HasPrefix(strVal, "EXPR(") && strings.HasSuffix(strVal, ")") {
+		exprStr := strings.TrimPrefix(strVal, "EXPR(")
 		exprStr = strings.TrimSuffix(exprStr, ")")
+
 		compiled, err := expr.Compile(exprStr, expr.AllowUndefinedVariables())
 		if err != nil {
 			return nil, fmt.Errorf("failed to compile expression '%s': %w", c.IfExpr, err)
 		}
-		addOperator.program = compiled
-	} else {
-		addOperator.Value = c.Value
-	}
 
+		addOperator.program = compiled
+		return []operator.Operator{addOperator}, nil
+	}
+	addOperator.Value = c.Value
 	return []operator.Operator{addOperator}, nil
 }
 
+// AddOperator is an operator that adds a string value or an expression value
 type AddOperator struct {
 	helper.TransformerOperator
 
@@ -88,6 +90,7 @@ func (p *AddOperator) Process(ctx context.Context, entry *entry.Entry) error {
 // Transform will apply the add operations to an entry
 func (p *AddOperator) Transform(e *entry.Entry) error {
 	if p.Value != nil {
+
 		return e.Set(p.Field, p.Value)
 	}
 	if p.program != nil {
