@@ -50,12 +50,14 @@ func TestAddGoldenConfig(t *testing.T) {
 		{
 			"remove_one",
 			func() *RemoveOperatorConfig {
-				cfg := 
-			},
+				cfg := defaultCfg()
+				cfg.Fields = append(cfg.Fields, entry.NewBodyField("nested"))
+				return cfg
+			}(),
 			newTestEntry,
 			func() *entry.Entry {
 				e := newTestEntry()
-				e.Record = map[string]interface{}{
+				e.Body = map[string]interface{}{
 					"key": "val",
 				}
 				return e
@@ -64,17 +66,27 @@ func TestAddGoldenConfig(t *testing.T) {
 		},
 		{
 			"remove_multi",
-			false,
+			func() *RemoveOperatorConfig {
+				cfg := defaultCfg()
+				cfg.Fields = append(cfg.Fields, entry.NewBodyField("nested"))
+				cfg.Fields = append(cfg.Fields, entry.NewBodyField("key"))
+				return cfg
+			}(),
 			newTestEntry,
 			func() *entry.Entry {
 				e := newTestEntry()
-				e.Record = map[string]interface{}{}
+				e.Body = map[string]interface{}{}
 				return e
 			},
+			false,
 		},
 		{
 			"remove_single_attribute",
-			false,
+			func() *RemoveOperatorConfig {
+				cfg := defaultCfg()
+				cfg.Fields = append(cfg.Fields, entry.NewAttributeField("key"))
+				return cfg
+			}(),
 			func() *entry.Entry {
 				e := newTestEntry()
 				e.Attributes = map[string]string{
@@ -87,10 +99,16 @@ func TestAddGoldenConfig(t *testing.T) {
 				e.Attributes = map[string]string{}
 				return e
 			},
+			false,
 		},
 		{
 			"remove_multi_attribute",
-			false,
+			func() *RemoveOperatorConfig {
+				cfg := defaultCfg()
+				cfg.Fields = append(cfg.Fields, entry.NewAttributeField("key1"))
+				cfg.Fields = append(cfg.Fields, entry.NewAttributeField("key2"))
+				return cfg
+			}(),
 			func() *entry.Entry {
 				e := newTestEntry()
 				e.Attributes = map[string]string{
@@ -104,10 +122,15 @@ func TestAddGoldenConfig(t *testing.T) {
 				e.Attributes = map[string]string{}
 				return e
 			},
+			false,
 		},
 		{
 			"remove_single_resource",
-			false,
+			func() *RemoveOperatorConfig {
+				cfg := defaultCfg()
+				cfg.Fields = append(cfg.Fields, entry.NewResourceField("key"))
+				return cfg
+			}(),
 			func() *entry.Entry {
 				e := newTestEntry()
 				e.Resource = map[string]string{
@@ -120,10 +143,16 @@ func TestAddGoldenConfig(t *testing.T) {
 				e.Resource = map[string]string{}
 				return e
 			},
+			false,
 		},
 		{
 			"remove_multi_resource",
-			false,
+			func() *RemoveOperatorConfig {
+				cfg := defaultCfg()
+				cfg.Fields = append(cfg.Fields, entry.NewResourceField("key1"))
+				cfg.Fields = append(cfg.Fields, entry.NewResourceField("key2"))
+				return cfg
+			}(),
 			func() *entry.Entry {
 				e := newTestEntry()
 				e.Resource = map[string]string{
@@ -137,6 +166,7 @@ func TestAddGoldenConfig(t *testing.T) {
 				e.Resource = map[string]string{}
 				return e
 			},
+			false,
 		},
 	}
 	for _, tc := range cases {
@@ -148,11 +178,11 @@ func TestAddGoldenConfig(t *testing.T) {
 			require.NoError(t, err)
 			op := ops[0]
 
-			add := op.(*AddOperator)
+			remove := op.(*RemoveOperator)
 			fake := testutil.NewFakeOutput(t)
-			add.SetOutputs([]operator.Operator{fake})
+			remove.SetOutputs([]operator.Operator{fake})
 			val := tc.input()
-			err = add.Process(context.Background(), val)
+			err = remove.Process(context.Background(), val)
 			if tc.expectErr {
 				require.Error(t, err)
 			} else {

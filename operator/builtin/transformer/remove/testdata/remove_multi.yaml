@@ -1,4 +1,4 @@
 type: remove
 fields:
-  - $record.nested
-  - $record.key
+  - $body.nested
+  - $body.key

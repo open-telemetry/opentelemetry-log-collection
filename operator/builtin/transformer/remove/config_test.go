@@ -24,6 +24,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v2"
 
+	"github.com/open-telemetry/opentelemetry-log-collection/entry"
 	"github.com/open-telemetry/opentelemetry-log-collection/operator/helper"
 )
 
@@ -37,21 +38,54 @@ func TestMoveGoldenConfig(t *testing.T) {
 	cases := []configTestCase{
 		{
 			"remove_one",
+			func() *RemoveOperatorConfig {
+				cfg := defaultCfg()
+				cfg.Fields = append(cfg.Fields, entry.NewBodyField("nested"))
+				return cfg
+			}(),
 		},
 		{
 			"remove_multi",
+			func() *RemoveOperatorConfig {
+				cfg := defaultCfg()
+				cfg.Fields = append(cfg.Fields, entry.NewBodyField("nested"))
+				cfg.Fields = append(cfg.Fields, entry.NewBodyField("key"))
+				return cfg
+			}(),
 		},
 		{
 			"remove_single_attribute",
+			func() *RemoveOperatorConfig {
+				cfg := defaultCfg()
+				cfg.Fields = append(cfg.Fields, entry.NewAttributeField("key"))
+				return cfg
+			}(),
 		},
 		{
 			"remove_multi_attribute",
+			func() *RemoveOperatorConfig {
+				cfg := defaultCfg()
+				cfg.Fields = append(cfg.Fields, entry.NewAttributeField("key1"))
+				cfg.Fields = append(cfg.Fields, entry.NewAttributeField("key2"))
+				return cfg
+			}(),
 		},
 		{
 			"remove_single_resource",
+			func() *RemoveOperatorConfig {
+				cfg := defaultCfg()
+				cfg.Fields = append(cfg.Fields, entry.NewResourceField("key"))
+				return cfg
+			}(),
 		},
 		{
 			"remove_multi_resource",
+			func() *RemoveOperatorConfig {
+				cfg := defaultCfg()
+				cfg.Fields = append(cfg.Fields, entry.NewResourceField("key1"))
+				cfg.Fields = append(cfg.Fields, entry.NewResourceField("key2"))
+				return cfg
+			}(),
 		},
 	}
 	for _, tc := range cases {
