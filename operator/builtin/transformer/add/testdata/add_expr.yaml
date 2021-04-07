@@ -1,3 +1,3 @@
 type: add 
-field: $record.new
+field: $body.new
 value: EXPR($.key + "_suffix")

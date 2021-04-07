@@ -31,20 +31,21 @@ func init() {
 	operator.Register("add", func() operator.Builder { return NewAddOperatorConfig("") })
 }
 
-// NewAddOperatorConfig creates a new restructure operator config with default values
+// NewAddOperatorConfig creates a new add operator config with default values
 func NewAddOperatorConfig(operatorID string) *AddOperatorConfig {
 	return &AddOperatorConfig{
 		TransformerConfig: helper.NewTransformerConfig(operatorID, "add"),
 	}
 }
 
-// AddOperatorConfig is the configuration of a restructure operator
+// AddOperatorConfig is the configuration of an add operator
 type AddOperatorConfig struct {
 	helper.TransformerConfig `mapstructure:",squash" yaml:",inline"`
 	Field                    entry.Field `mapstructure:"field" json:"field" yaml:"field"`
 	Value                    interface{} `mapstructure:"value,omitempty" json:"value,omitempty" yaml:"value,omitempty"`
 }
 
+// Build will build an add operator from the supplied configuration
 func (c AddOperatorConfig) Build(context operator.BuildContext) ([]operator.Operator, error) {
 	transformerOperator, err := c.TransformerConfig.Build(context)
 	if err != nil {
@@ -56,7 +57,7 @@ func (c AddOperatorConfig) Build(context operator.BuildContext) ([]operator.Oper
 		Field:               c.Field,
 	}
 	_, ok := c.Value.(string)
-	if ok && strings.Contains(c.Value.(string), "EXPR(") {
+	if ok && strings.HasPrefix(c.Value.(string), "EXPR(") && strings.HasSuffix(c.Value.(string), ")") {
 		exprStr := strings.TrimPrefix(c.Value.(string), "EXPR(")
 		exprStr = strings.TrimSuffix(exprStr, ")")
 		compiled, err := expr.Compile(exprStr, expr.AllowUndefinedVariables())
@@ -79,16 +80,17 @@ type AddOperator struct {
 	program *vm.Program
 }
 
-// Process will process an entry with a restructure transformation.
+// Process will process an entry with a add transformation.
 func (p *AddOperator) Process(ctx context.Context, entry *entry.Entry) error {
 	return p.ProcessWith(ctx, entry, p.Transform)
 }
 
-// Transform will apply the restructure operations to an entry
+// Transform will apply the add operations to an entry
 func (p *AddOperator) Transform(e *entry.Entry) error {
 	if p.Value != nil {
 		return e.Set(p.Field, p.Value)
-	} else if p.program != nil {
+	}
+	if p.program != nil {
 		env := helper.GetExprEnv(e)
 		defer helper.PutExprEnv(env)
 

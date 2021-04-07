@@ -15,17 +15,13 @@ package add
 
 import (
 	"context"
-	"fmt"
-	"io/ioutil"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/require"
-	"gopkg.in/yaml.v2"
 
 	"github.com/open-telemetry/opentelemetry-log-collection/entry"
 	"github.com/open-telemetry/opentelemetry-log-collection/operator"
-	"github.com/open-telemetry/opentelemetry-log-collection/operator/helper"
 	"github.com/open-telemetry/opentelemetry-log-collection/testutil"
 )
 
@@ -173,38 +169,4 @@ func TestAddGoldenConfig(t *testing.T) {
 			fake.ExpectEntry(t, tc.output())
 		})
 	}
-}
-
-func configFromFileViaYaml(file string) (*AddOperatorConfig, error) {
-	bytes, err := ioutil.ReadFile(file)
-	if err != nil {
-		return nil, fmt.Errorf("could not find config file: %s", err)
-	}
-
-	config := defaultCfg()
-	if err := yaml.Unmarshal(bytes, config); err != nil {
-		return nil, fmt.Errorf("failed to read config file as yaml: %s", err)
-	}
-
-	return config, nil
-}
-
-func configFromFileViaMapstructure(file string, result *AddOperatorConfig) error {
-	bytes, err := ioutil.ReadFile(file)
-	if err != nil {
-		return fmt.Errorf("could not find config file: %s", err)
-	}
-
-	raw := map[string]interface{}{}
-
-	if err := yaml.Unmarshal(bytes, raw); err != nil {
-		return fmt.Errorf("failed to read data from yaml: %s", err)
-	}
-
-	err = helper.UnmarshalMapstructure(raw, result)
-	return err
-}
-
-func defaultCfg() *AddOperatorConfig {
-	return NewAddOperatorConfig("remove")
 }

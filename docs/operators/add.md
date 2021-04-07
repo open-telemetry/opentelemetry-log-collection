@@ -22,19 +22,29 @@ The `add` operator adds a field to a record. It must have a `field` key and exac
 
 
 Example usage:
+
+<hr>
+adding to body
+
 ```yaml
 - type: add
-    field: "key"
-    value: "val"
+    field: key2
+    value: val2
 ```
 
 <table>
-<tr><td> Input body </td> <td> Output body </td></tr>
+<tr><td> Input entry </td> <td> Output entry </td></tr>
 <tr>
 <td>
 
 ```json
-{}
+{
+  "resource": { },
+  "attributes": { },  
+  "body": {
+    "key1": "val1",
+  }
+}
 ```
 
 </td>
@@ -42,8 +52,229 @@ Example usage:
 
 ```json
 {
-  "key1": "val1",
-  "key2": "val1-suffix"
+  "resource": { },
+  "attributes": { },  
+  "body": {
+    "key1": "val1",
+    "key2": "val2"
+  }
+}
+```
+
+</td>
+</tr>
+</table>
+
+<hr>
+adding expression to body
+
+```yaml
+- type: add
+    field: key2
+    value: EXPR($.key1 + "_suffix")
+```
+
+<table>
+<tr><td> Input entry </td> <td> Output entry </td></tr>
+<tr>
+<td>
+
+```json
+{
+  "resource": { },
+  "attributes": { },  
+  "body": {
+    "key1": "val1",
+  }
+}
+```
+
+</td>
+<td>
+
+```json
+{
+  "resource": { },
+  "attributes": { },  
+  "body": {
+    "key1": "val1",
+    "key2": "val_suffix"
+  }
+}
+```
+
+</td>
+</tr>
+</table>
+
+<hr>
+adding nest to body
+
+```yaml
+- type: add
+    field: key2
+    value: 
+      nestedkey: nestedvalue
+```
+
+<table>
+<tr><td> Input entry </td> <td> Output entry </td></tr>
+<tr>
+<td>
+
+```json
+{
+  "resource": { },
+  "attributes": { },  
+  "body": {
+    "key1": "val1",
+  }
+}
+```
+
+</td>
+<td>
+
+```json
+{
+  "resource": { },
+  "attributes": { },  
+  "body": {
+    "key1": "val1",
+    "key2": {
+      "nestedkey":"nested value"
+    }
+  }
+}
+```
+
+</td>
+</tr>
+</table>
+
+<hr>
+adding value to attribute
+
+```yaml
+- type: add
+    field: $attributes.key2
+    value: 
+      nestedkey: val2
+```
+
+<table>
+<tr><td> Input entry </td> <td> Output entry </td></tr>
+<tr>
+<td>
+
+```json
+{
+  "resource": { },
+  "attributes": { },  
+  "body": {
+    "key1": "val1",
+  }
+}
+```
+
+</td>
+<td>
+
+```json
+{
+  "resource": { },
+  "attributes": {
+     "key2": "val2"
+  },  
+  "body": {
+    "key1": "val1"
+  }
+}
+```
+
+</td>
+</tr>
+</table>
+
+<hr>
+adding value to resource
+
+```yaml
+- type: add
+    field: $resource.key2
+    value: 
+      nestedkey: val2
+```
+
+<table>
+<tr><td> Input entry </td> <td> Output entry </td></tr>
+<tr>
+<td>
+
+```json
+{
+  "resource": { },
+  "attributes": { },  
+  "body": {
+    "key1": "val1",
+  }
+}
+```
+
+</td>
+<td>
+
+```json
+{
+  "resource": { 
+    "key2": "val2"
+  },
+  "attributes": { },  
+  "body": {
+    "key1": "val1"
+  }
+}
+```
+
+</td>
+</tr>
+</table>
+
+adding expression to resource
+
+```yaml
+- type: add
+    field: $resource.key2
+    value: EXPR($.key1 + "_suffix")
+```
+
+<table>
+<tr><td> Input entry </td> <td> Output entry </td></tr>
+<tr>
+<td>
+
+```json
+{
+  "resource": { },
+  "attributes": { },  
+  "body": {
+    "key1": "val1",
+  }
+}
+```
+
+</td>
+<td>
+
+```json
+{
+  "resource": { 
+    "key2": "val_suffix"
+  },
+  "attributes": { },  
+  "body": {
+    "key1": "val1",
+  }
 }
 ```
 
