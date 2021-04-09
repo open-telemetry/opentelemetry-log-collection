@@ -106,7 +106,7 @@ retain an object in the body
 </table>
 
 <hr>
-retain the resource fields
+retain fields from resource
 
 ```yaml
 - type: retain
@@ -155,7 +155,7 @@ retain the resource fields
 </table>
 
 <hr>
-retain the attributes fields
+retain fields from attributes
 
 ```yaml
 - type: retain
