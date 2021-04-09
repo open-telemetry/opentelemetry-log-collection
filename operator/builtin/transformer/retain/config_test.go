@@ -24,6 +24,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v2"
 
+	"github.com/open-telemetry/opentelemetry-log-collection/entry"
 	"github.com/open-telemetry/opentelemetry-log-collection/operator/helper"
 )
 
@@ -33,35 +34,72 @@ type configTestCase struct {
 }
 
 // test unmarshalling of values into config struct
-func TestProcessAndBuild(t *testing.T) {
+func TestGoldenConfigs(t *testing.T) {
 	cases := []configTestCase{
 		{
 			"retain_single",
+			func() *RetainOperatorConfig {
+				cfg := defaultCfg()
+				cfg.Fields = append(cfg.Fields, entry.NewBodyField("key"))
+				return cfg
+			}(),
 		},
 		{
 			"retain_multi",
+			func() *RetainOperatorConfig {
+				cfg := defaultCfg()
+				cfg.Fields = append(cfg.Fields, entry.NewBodyField("key"))
+				cfg.Fields = append(cfg.Fields, entry.NewBodyField("nested2"))
+				return cfg
+			}(),
 		},
 		{
 			"retain_single_attribute",
+			func() *RetainOperatorConfig {
+				cfg := defaultCfg()
+				cfg.Fields = append(cfg.Fields, entry.NewAttributeField("key"))
+				return cfg
+			}(),
 		},
 		{
 			"retain_multi_attribute",
-		},
-		{
-			"retain_multi_attribute",
+			func() *RetainOperatorConfig {
+				cfg := defaultCfg()
+				cfg.Fields = append(cfg.Fields, entry.NewAttributeField("key1"))
+				cfg.Fields = append(cfg.Fields, entry.NewAttributeField("key2"))
+				return cfg
+			}(),
 		},
 		{
 			"retain_single_resource",
+			func() *RetainOperatorConfig {
+				cfg := defaultCfg()
+				cfg.Fields = append(cfg.Fields, entry.NewResourceField("key"))
+				return cfg
+			}(),
 		},
 		{
 			"retain_multi_resource",
+			func() *RetainOperatorConfig {
+				cfg := defaultCfg()
+				cfg.Fields = append(cfg.Fields, entry.NewResourceField("key1"))
+				cfg.Fields = append(cfg.Fields, entry.NewResourceField("key2"))
+				return cfg
+			}(),
 		},
 		{
 			"retain_one_of_each",
+			func() *RetainOperatorConfig {
+				cfg := defaultCfg()
+				cfg.Fields = append(cfg.Fields, entry.NewResourceField("key1"))
+				cfg.Fields = append(cfg.Fields, entry.NewAttributeField("key3"))
+				cfg.Fields = append(cfg.Fields, entry.NewBodyField("key"))
+				return cfg
+			}(),
 		},
 	}
 	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run("GoldenConfig/"+tc.name, func(t *testing.T) {
 			cfgFromYaml, yamlErr := configFromFileViaYaml(path.Join(".", "testdata", fmt.Sprintf("%s.yaml", tc.name)))
 			cfgFromMapstructure, mapErr := configFromFileViaMapstructure(path.Join(".", "testdata", fmt.Sprintf("%s.yaml", tc.name)))
 			require.NoError(t, yamlErr)
@@ -112,5 +150,5 @@ func configFromFileViaMapstructure(file string) (*RetainOperatorConfig, error) {
 }
 
 func defaultCfg() *RetainOperatorConfig {
-	return NewRemoveOperatorConfig("move")
+	return NewRetainOperatorConfig("retain")
 }

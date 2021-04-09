@@ -2,4 +2,4 @@ type: retain
 fields:
   - $resource.key1
   - $attributes.key3
-  - $record.key
+  - $body.key
