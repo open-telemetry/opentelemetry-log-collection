@@ -38,7 +38,7 @@ func NewRemoveOperatorConfig(operatorID string) *RemoveOperatorConfig {
 type RemoveOperatorConfig struct {
 	helper.TransformerConfig `mapstructure:",squash" yaml:",inline"`
 
-	Fields []entry.Field `mapstructure:"fields"  json:"fields" yaml:"fields"`
+	Field entry.Field `mapstructure:"field"  json:"field" yaml:"field"`
 }
 
 // Build will build a Remove operator from the supplied configuration
@@ -47,10 +47,13 @@ func (c RemoveOperatorConfig) Build(context operator.BuildContext) ([]operator.O
 	if err != nil {
 		return nil, err
 	}
+	if c.Field == entry.NewNilField() {
+		return nil, fmt.Errorf("remove: field is empty")
+	}
 
 	removeOperator := &RemoveOperator{
 		TransformerOperator: transformerOperator,
-		Fields:              c.Fields,
+		Field:               c.Field,
 	}
 
 	return []operator.Operator{removeOperator}, nil
@@ -59,7 +62,7 @@ func (c RemoveOperatorConfig) Build(context operator.BuildContext) ([]operator.O
 // RemoveOperator is an operator that deletes a field
 type RemoveOperator struct {
 	helper.TransformerOperator
-	Fields []entry.Field
+	Field entry.Field
 }
 
 // Process will process an entry with a restructure transformation.
@@ -69,14 +72,9 @@ func (p *RemoveOperator) Process(ctx context.Context, entry *entry.Entry) error 
 
 // Transform will apply the restructure operations to an entry
 func (p *RemoveOperator) Transform(entry *entry.Entry) error {
-	if p.Fields != nil {
-		for _, field := range p.Fields {
-			_, exist := entry.Delete(field)
-			if !exist {
-				return fmt.Errorf("remove: field does not exist")
-			}
-		}
-		return nil
+	_, exist := entry.Delete(p.Field)
+	if !exist {
+		return fmt.Errorf("remove: field does not exist")
 	}
-	return fmt.Errorf("remove: missing required field 'fields'")
+	return nil
 }

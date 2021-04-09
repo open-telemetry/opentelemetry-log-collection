@@ -51,7 +51,7 @@ func TestProcessAndBuild(t *testing.T) {
 			"remove_one",
 			func() *RemoveOperatorConfig {
 				cfg := defaultCfg()
-				cfg.Fields = append(cfg.Fields, entry.NewBodyField("key"))
+				cfg.Field = entry.NewBodyField("key")
 				return cfg
 			}(),
 			newTestEntry,
@@ -67,10 +67,28 @@ func TestProcessAndBuild(t *testing.T) {
 			false,
 		},
 		{
+			"remove_nestedkey",
+			func() *RemoveOperatorConfig {
+				cfg := defaultCfg()
+				cfg.Field = entry.NewBodyField("nested", "nestedkey")
+				return cfg
+			}(),
+			newTestEntry,
+			func() *entry.Entry {
+				e := newTestEntry()
+				e.Body = map[string]interface{}{
+					"key":    "val",
+					"nested": map[string]interface{}{},
+				}
+				return e
+			},
+			false,
+		},
+		{
 			"remove_obj",
 			func() *RemoveOperatorConfig {
 				cfg := defaultCfg()
-				cfg.Fields = append(cfg.Fields, entry.NewBodyField("nested"))
+				cfg.Field = entry.NewBodyField("nested")
 				return cfg
 			}(),
 			newTestEntry,
@@ -84,55 +102,16 @@ func TestProcessAndBuild(t *testing.T) {
 			false,
 		},
 		{
-			"remove_multi",
-			func() *RemoveOperatorConfig {
-				cfg := defaultCfg()
-				cfg.Fields = append(cfg.Fields, entry.NewBodyField("nested"))
-				cfg.Fields = append(cfg.Fields, entry.NewBodyField("key"))
-				return cfg
-			}(),
-			newTestEntry,
-			func() *entry.Entry {
-				e := newTestEntry()
-				e.Body = map[string]interface{}{}
-				return e
-			},
-			false,
-		},
-		{
 			"remove_single_attribute",
 			func() *RemoveOperatorConfig {
 				cfg := defaultCfg()
-				cfg.Fields = append(cfg.Fields, entry.NewAttributeField("key"))
+				cfg.Field = entry.NewAttributeField("key")
 				return cfg
 			}(),
 			func() *entry.Entry {
 				e := newTestEntry()
 				e.Attributes = map[string]string{
 					"key": "val",
-				}
-				return e
-			},
-			func() *entry.Entry {
-				e := newTestEntry()
-				e.Attributes = map[string]string{}
-				return e
-			},
-			false,
-		},
-		{
-			"remove_multi_attribute",
-			func() *RemoveOperatorConfig {
-				cfg := defaultCfg()
-				cfg.Fields = append(cfg.Fields, entry.NewAttributeField("key1"))
-				cfg.Fields = append(cfg.Fields, entry.NewAttributeField("key2"))
-				return cfg
-			}(),
-			func() *entry.Entry {
-				e := newTestEntry()
-				e.Attributes = map[string]string{
-					"key1": "val",
-					"key2": "val",
 				}
 				return e
 			},
@@ -147,36 +126,13 @@ func TestProcessAndBuild(t *testing.T) {
 			"remove_single_resource",
 			func() *RemoveOperatorConfig {
 				cfg := defaultCfg()
-				cfg.Fields = append(cfg.Fields, entry.NewResourceField("key"))
+				cfg.Field = entry.NewResourceField("key")
 				return cfg
 			}(),
 			func() *entry.Entry {
 				e := newTestEntry()
 				e.Resource = map[string]string{
 					"key": "val",
-				}
-				return e
-			},
-			func() *entry.Entry {
-				e := newTestEntry()
-				e.Resource = map[string]string{}
-				return e
-			},
-			false,
-		},
-		{
-			"remove_multi_resource",
-			func() *RemoveOperatorConfig {
-				cfg := defaultCfg()
-				cfg.Fields = append(cfg.Fields, entry.NewResourceField("key1"))
-				cfg.Fields = append(cfg.Fields, entry.NewResourceField("key2"))
-				return cfg
-			}(),
-			func() *entry.Entry {
-				e := newTestEntry()
-				e.Resource = map[string]string{
-					"key1": "val",
-					"key2": "val",
 				}
 				return e
 			},

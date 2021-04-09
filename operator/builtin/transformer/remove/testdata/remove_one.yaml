@@ -1,3 +1,0 @@
-type: remove
-fields:
-  - $body.nested

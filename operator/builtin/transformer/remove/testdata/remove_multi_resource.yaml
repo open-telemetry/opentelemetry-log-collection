@@ -1,4 +1,0 @@
-type: remove
-fields:
-  - $resource.key1
-  - $resource.key2

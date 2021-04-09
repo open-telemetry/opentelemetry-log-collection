@@ -1,4 +1,0 @@
-type: remove
-fields:
-  - $attributes.key1
-  - $attributes.key2

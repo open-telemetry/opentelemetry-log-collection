@@ -1,4 +1,0 @@
-type: remove
-fields:
-  - $body.nested
-  - $body.key

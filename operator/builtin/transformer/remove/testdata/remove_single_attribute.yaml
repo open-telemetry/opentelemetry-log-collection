@@ -1,3 +1,2 @@
 type: remove
-fields:
-  - $attributes.key
+field: $attributes.key

@@ -37,19 +37,10 @@ type configTestCase struct {
 func TestGoldenConfig(t *testing.T) {
 	cases := []configTestCase{
 		{
-			"remove_one",
+			"remove_body",
 			func() *RemoveOperatorConfig {
 				cfg := defaultCfg()
-				cfg.Fields = append(cfg.Fields, entry.NewBodyField("nested"))
-				return cfg
-			}(),
-		},
-		{
-			"remove_multi",
-			func() *RemoveOperatorConfig {
-				cfg := defaultCfg()
-				cfg.Fields = append(cfg.Fields, entry.NewBodyField("nested"))
-				cfg.Fields = append(cfg.Fields, entry.NewBodyField("key"))
+				cfg.Field = entry.NewBodyField("nested")
 				return cfg
 			}(),
 		},
@@ -57,16 +48,7 @@ func TestGoldenConfig(t *testing.T) {
 			"remove_single_attribute",
 			func() *RemoveOperatorConfig {
 				cfg := defaultCfg()
-				cfg.Fields = append(cfg.Fields, entry.NewAttributeField("key"))
-				return cfg
-			}(),
-		},
-		{
-			"remove_multi_attribute",
-			func() *RemoveOperatorConfig {
-				cfg := defaultCfg()
-				cfg.Fields = append(cfg.Fields, entry.NewAttributeField("key1"))
-				cfg.Fields = append(cfg.Fields, entry.NewAttributeField("key2"))
+				cfg.Field = entry.NewAttributeField("key")
 				return cfg
 			}(),
 		},
@@ -74,16 +56,7 @@ func TestGoldenConfig(t *testing.T) {
 			"remove_single_resource",
 			func() *RemoveOperatorConfig {
 				cfg := defaultCfg()
-				cfg.Fields = append(cfg.Fields, entry.NewResourceField("key"))
-				return cfg
-			}(),
-		},
-		{
-			"remove_multi_resource",
-			func() *RemoveOperatorConfig {
-				cfg := defaultCfg()
-				cfg.Fields = append(cfg.Fields, entry.NewResourceField("key1"))
-				cfg.Fields = append(cfg.Fields, entry.NewResourceField("key2"))
+				cfg.Field = entry.NewResourceField("key")
 				return cfg
 			}(),
 		},
