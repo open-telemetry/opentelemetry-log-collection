@@ -33,7 +33,7 @@ type testCase struct {
 	output    func() *entry.Entry
 }
 
-//test building and processing a config
+// Test building and processing a CopyOperatorConfig
 func TestBuildAndProcess(t *testing.T) {
 	newTestEntry := func() *entry.Entry {
 		e := entry.New()
