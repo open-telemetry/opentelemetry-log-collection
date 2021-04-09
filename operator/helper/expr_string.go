@@ -22,6 +22,7 @@ import (
 
 	"github.com/antonmedv/expr"
 	"github.com/antonmedv/expr/vm"
+
 	"github.com/open-telemetry/opentelemetry-log-collection/entry"
 	"github.com/open-telemetry/opentelemetry-log-collection/errors"
 )
@@ -140,8 +141,8 @@ var envPool = sync.Pool{
 // GetExprEnv returns a map of key/value pairs that can be be used to evaluate an expression
 func GetExprEnv(e *entry.Entry) map[string]interface{} {
 	env := envPool.Get().(map[string]interface{})
-	env["$"] = e.Record
-	env["$record"] = e.Record
+	env["$"] = e.Body
+	env["$body"] = e.Body
 	env["$attributes"] = e.Attributes
 	env["$resource"] = e.Resource
 	env["$timestamp"] = e.Timestamp

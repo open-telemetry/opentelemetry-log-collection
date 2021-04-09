@@ -17,10 +17,11 @@ package helper
 import (
 	"context"
 
+	"go.uber.org/zap"
+
 	"github.com/open-telemetry/opentelemetry-log-collection/entry"
 	"github.com/open-telemetry/opentelemetry-log-collection/errors"
 	"github.com/open-telemetry/opentelemetry-log-collection/operator"
-	"go.uber.org/zap"
 )
 
 // NewInputConfig creates a new input config with default values.
@@ -29,7 +30,7 @@ func NewInputConfig(operatorID, operatorType string) InputConfig {
 		AttributerConfig: NewAttributerConfig(),
 		IdentifierConfig: NewIdentifierConfig(),
 		WriterConfig:     NewWriterConfig(operatorID, operatorType),
-		WriteTo:          entry.NewRecordField(),
+		WriteTo:          entry.NewBodyField(),
 	}
 }
 
@@ -80,7 +81,7 @@ type InputOperator struct {
 func (i *InputOperator) NewEntry(value interface{}) (*entry.Entry, error) {
 	entry := entry.New()
 	if err := entry.Set(i.WriteTo, value); err != nil {
-		return nil, errors.Wrap(err, "add record to entry")
+		return nil, errors.Wrap(err, "add body to entry")
 	}
 
 	if err := i.Attribute(entry); err != nil {

@@ -28,10 +28,11 @@ import (
 	"time"
 
 	jsoniter "github.com/json-iterator/go"
+	"go.uber.org/zap"
+
 	"github.com/open-telemetry/opentelemetry-log-collection/entry"
 	"github.com/open-telemetry/opentelemetry-log-collection/operator"
 	"github.com/open-telemetry/opentelemetry-log-collection/operator/helper"
-	"go.uber.org/zap"
 )
 
 func init() {
@@ -191,15 +192,15 @@ func (operator *JournaldInput) Start() error {
 }
 
 func (operator *JournaldInput) parseJournalEntry(line []byte) (*entry.Entry, string, error) {
-	var record map[string]interface{}
-	err := operator.json.Unmarshal(line, &record)
+	var body map[string]interface{}
+	err := operator.json.Unmarshal(line, &body)
 	if err != nil {
 		return nil, "", err
 	}
 
-	timestamp, ok := record["__REALTIME_TIMESTAMP"]
+	timestamp, ok := body["__REALTIME_TIMESTAMP"]
 	if !ok {
-		return nil, "", errors.New("journald record missing __REALTIME_TIMESTAMP field")
+		return nil, "", errors.New("journald body missing __REALTIME_TIMESTAMP field")
 	}
 
 	timestampString, ok := timestamp.(string)
@@ -212,11 +213,11 @@ func (operator *JournaldInput) parseJournalEntry(line []byte) (*entry.Entry, str
 		return nil, "", fmt.Errorf("parse timestamp: %s", err)
 	}
 
-	delete(record, "__REALTIME_TIMESTAMP")
+	delete(body, "__REALTIME_TIMESTAMP")
 
-	cursor, ok := record["__CURSOR"]
+	cursor, ok := body["__CURSOR"]
 	if !ok {
-		return nil, "", errors.New("journald record missing __CURSOR field")
+		return nil, "", errors.New("journald body missing __CURSOR field")
 	}
 
 	cursorString, ok := cursor.(string)
@@ -224,7 +225,7 @@ func (operator *JournaldInput) parseJournalEntry(line []byte) (*entry.Entry, str
 		return nil, "", errors.New("journald field for cursor is not a string")
 	}
 
-	entry, err := operator.NewEntry(record)
+	entry, err := operator.NewEntry(body)
 	if err != nil {
 		return nil, "", fmt.Errorf("failed to create entry: %s", err)
 	}

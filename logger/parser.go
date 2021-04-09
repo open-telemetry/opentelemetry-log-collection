@@ -15,21 +15,22 @@
 package logger
 
 import (
-	"github.com/open-telemetry/opentelemetry-log-collection/entry"
 	"go.uber.org/zap/zapcore"
+
+	"github.com/open-telemetry/opentelemetry-log-collection/entry"
 )
 
 // parseEntry will create a stanza entry from a zapcore entry.
 func parseEntry(zapEntry zapcore.Entry, fields []zapcore.Field) entry.Entry {
 	return entry.Entry{
 		Timestamp: zapEntry.Time,
-		Record:    parseRecord(zapEntry, fields),
+		Body:      parseBody(zapEntry, fields),
 		Severity:  parseSeverity(zapEntry),
 	}
 }
 
-// parseRecord will parse a record from a zapcore entry.
-func parseRecord(zapEntry zapcore.Entry, fields []zapcore.Field) map[string]interface{} {
+// parseBody will parse a body from a zapcore entry.
+func parseBody(zapEntry zapcore.Entry, fields []zapcore.Field) map[string]interface{} {
 	encoder := zapcore.NewMapObjectEncoder()
 	encoder.AddString("message", zapEntry.Message)
 
