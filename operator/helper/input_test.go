@@ -18,9 +18,10 @@ import (
 	"context"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/open-telemetry/opentelemetry-log-collection/entry"
 	"github.com/open-telemetry/opentelemetry-log-collection/testutil"
-	"github.com/stretchr/testify/require"
 )
 
 func TestInputConfigMissingBase(t *testing.T) {
@@ -101,7 +102,7 @@ func TestInputOperatorProcess(t *testing.T) {
 
 func TestInputOperatorNewEntry(t *testing.T) {
 	buildContext := testutil.NewBuildContext(t)
-	writeTo := entry.NewRecordField("test-field")
+	writeTo := entry.NewBodyField("test-field")
 
 	labelExpr, err := ExprStringConfig("test").Build()
 	require.NoError(t, err)

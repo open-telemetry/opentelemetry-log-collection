@@ -17,14 +17,16 @@ package recombine
 import (
 	"context"
 	"fmt"
-	"github.com/antonmedv/expr"
-	"github.com/antonmedv/expr/vm"
-	"github.com/open-telemetry/opentelemetry-log-collection/entry"
-	"github.com/open-telemetry/opentelemetry-log-collection/operator"
-	"github.com/open-telemetry/opentelemetry-log-collection/operator/helper"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/antonmedv/expr"
+	"github.com/antonmedv/expr/vm"
+
+	"github.com/open-telemetry/opentelemetry-log-collection/entry"
+	"github.com/open-telemetry/opentelemetry-log-collection/operator"
+	"github.com/open-telemetry/opentelemetry-log-collection/operator/helper"
 )
 
 func init() {
@@ -122,7 +124,7 @@ type RecombineOperator struct {
 	batch []*entry.Entry
 }
 
-func (r *RecombineOperator) Start() error {
+func (r *RecombineOperator) Start(_ operator.Persister) error {
 	return nil
 }
 

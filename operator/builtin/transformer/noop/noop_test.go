@@ -18,10 +18,11 @@ import (
 	"context"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/open-telemetry/opentelemetry-log-collection/entry"
 	"github.com/open-telemetry/opentelemetry-log-collection/operator"
 	"github.com/open-telemetry/opentelemetry-log-collection/testutil"
-	"github.com/stretchr/testify/require"
 )
 
 func TestBuildValid(t *testing.T) {
@@ -54,6 +55,9 @@ func TestProcess(t *testing.T) {
 	entry := entry.New()
 	entry.AddAttribute("label", "value")
 	entry.AddResourceKey("resource", "value")
+	entry.TraceId = []byte{0x01}
+	entry.SpanId = []byte{0x01}
+	entry.TraceFlags = []byte{0x01}
 
 	expected := entry.Copy()
 	err = op.Process(context.Background(), entry)

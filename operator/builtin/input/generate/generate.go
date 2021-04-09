@@ -51,7 +51,7 @@ func (c *GenerateInputConfig) Build(context operator.BuildContext) ([]operator.O
 		return nil, err
 	}
 
-	c.Entry.Record = recursiveMapInterfaceToMapString(c.Entry.Record)
+	c.Entry.Body = recursiveMapInterfaceToMapString(c.Entry.Body)
 
 	generateInput := &GenerateInput{
 		InputOperator: inputOperator,
@@ -73,7 +73,7 @@ type GenerateInput struct {
 }
 
 // Start will start generating log entries.
-func (g *GenerateInput) Start() error {
+func (g *GenerateInput) Start(_ operator.Persister) error {
 	ctx, cancel := context.WithCancel(context.Background())
 	g.cancel = cancel
 

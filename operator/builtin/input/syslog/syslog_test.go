@@ -58,7 +58,7 @@ func SyslogInputTest(t *testing.T, cfg *SyslogInputConfig, tc syslog.Case) {
 	p, err := pipeline.NewDirectedPipeline(ops)
 	require.NoError(t, err)
 
-	err = p.Start()
+	err = p.Start(testutil.NewMockPersister("test"))
 	require.NoError(t, err)
 
 	var conn net.Conn
@@ -71,10 +71,10 @@ func SyslogInputTest(t *testing.T, cfg *SyslogInputConfig, tc syslog.Case) {
 		require.NoError(t, err)
 	}
 
-	if v, ok := tc.InputRecord.(string); ok {
+	if v, ok := tc.InputBody.(string); ok {
 		_, err = conn.Write([]byte(v))
 	} else {
-		_, err = conn.Write(tc.InputRecord.([]byte))
+		_, err = conn.Write(tc.InputBody.([]byte))
 	}
 
 	conn.Close()
@@ -84,7 +84,7 @@ func SyslogInputTest(t *testing.T, cfg *SyslogInputConfig, tc syslog.Case) {
 	select {
 	case e := <-fake.Received:
 		// close pipeline to avoid data race
-		require.Equal(t, tc.ExpectedRecord, e.Record)
+		require.Equal(t, tc.ExpectedBody, e.Body)
 		require.Equal(t, tc.ExpectedTimestamp, e.Timestamp)
 		require.Equal(t, tc.ExpectedSeverity, e.Severity)
 		require.Equal(t, tc.ExpectedSeverityText, e.SeverityText)

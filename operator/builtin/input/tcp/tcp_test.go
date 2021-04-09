@@ -101,7 +101,7 @@ func tcpInputTest(input []byte, expected []string) func(t *testing.T) {
 			entryChan <- args.Get(1).(*entry.Entry)
 		}).Return(nil)
 
-		err = tcpInput.Start()
+		err = tcpInput.Start(testutil.NewMockPersister("test"))
 		require.NoError(t, err)
 		defer tcpInput.Stop()
 
@@ -115,7 +115,7 @@ func tcpInputTest(input []byte, expected []string) func(t *testing.T) {
 		for _, expectedMessage := range expected {
 			select {
 			case entry := <-entryChan:
-				require.Equal(t, expectedMessage, entry.Record)
+				require.Equal(t, expectedMessage, entry.Body)
 			case <-time.After(time.Second):
 				require.FailNow(t, "Timed out waiting for message to be written")
 			}
@@ -170,7 +170,7 @@ func tlsTCPInputTest(input []byte, expected []string) func(t *testing.T) {
 			entryChan <- args.Get(1).(*entry.Entry)
 		}).Return(nil)
 
-		err = tcpInput.Start()
+		err = tcpInput.Start(testutil.NewMockPersister("test"))
 		require.NoError(t, err)
 		defer tcpInput.Stop()
 
@@ -184,7 +184,7 @@ func tlsTCPInputTest(input []byte, expected []string) func(t *testing.T) {
 		for _, expectedMessage := range expected {
 			select {
 			case entry := <-entryChan:
-				require.Equal(t, expectedMessage, entry.Record)
+				require.Equal(t, expectedMessage, entry.Body)
 			case <-time.After(time.Second):
 				require.FailNow(t, "Timed out waiting for message to be written")
 			}
@@ -201,9 +201,9 @@ func tlsTCPInputTest(input []byte, expected []string) func(t *testing.T) {
 
 func TestBuild(t *testing.T) {
 	cases := []struct {
-		name        string
-		inputRecord TCPInputConfig
-		expectErr   bool
+		name      string
+		inputBody TCPInputConfig
+		expectErr bool
 	}{
 		{
 			"default-auto-address",
@@ -264,9 +264,9 @@ func TestBuild(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			cfg := NewTCPInputConfig("test_id")
-			cfg.ListenAddress = tc.inputRecord.ListenAddress
-			cfg.MaxBufferSize = tc.inputRecord.MaxBufferSize
-			cfg.TLS = tc.inputRecord.TLS
+			cfg.ListenAddress = tc.inputBody.ListenAddress
+			cfg.MaxBufferSize = tc.inputBody.MaxBufferSize
+			cfg.TLS = tc.inputBody.TLS
 			_, err := cfg.Build(testutil.NewBuildContext(t))
 			if tc.expectErr {
 				require.Error(t, err)
@@ -299,7 +299,7 @@ func BenchmarkTcpInput(b *testing.B) {
 	tcpInput := op.(*TCPInput)
 	tcpInput.InputOperator.OutputOperators = []operator.Operator{fakeOutput}
 
-	err = tcpInput.Start()
+	err = tcpInput.Start(testutil.NewMockPersister("test"))
 	require.NoError(b, err)
 
 	done := make(chan struct{})

@@ -18,13 +18,12 @@ import (
 	"net/url"
 	"testing"
 
+	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v2"
 
 	"github.com/open-telemetry/opentelemetry-log-collection/entry"
 	"github.com/open-telemetry/opentelemetry-log-collection/operator/helper"
 	"github.com/open-telemetry/opentelemetry-log-collection/testutil"
-
-	"github.com/stretchr/testify/require"
 )
 
 func newTestParser(t *testing.T) *URIParser {
@@ -66,10 +65,10 @@ func TestRegexParserInvalidType(t *testing.T) {
 
 func TestURIParserParse(t *testing.T) {
 	cases := []struct {
-		name           string
-		inputRecord    interface{}
-		expectedRecord map[string]interface{}
-		expectErr      bool
+		name       string
+		inputBody  interface{}
+		outputBody map[string]interface{}
+		expectErr  bool
 	}{
 		{
 			"string",
@@ -112,13 +111,13 @@ func TestURIParserParse(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			parser := URIParser{}
-			x, err := parser.parse(tc.inputRecord)
+			x, err := parser.parse(tc.inputBody)
 			if tc.expectErr {
 				require.Error(t, err)
 				return
 			}
 			require.NoError(t, err)
-			require.Equal(t, tc.expectedRecord, x)
+			require.Equal(t, tc.outputBody, x)
 		})
 	}
 }
@@ -126,10 +125,10 @@ func TestURIParserParse(t *testing.T) {
 // Test all usecases: absolute uri, relative uri, query string
 func TestParseURI(t *testing.T) {
 	cases := []struct {
-		name           string
-		inputRecord    string
-		expectedRecord map[string]interface{}
-		expectErr      bool
+		name       string
+		inputBody  string
+		outputBody map[string]interface{}
+		expectErr  bool
 	}{
 		{
 			"scheme-http",
@@ -388,13 +387,13 @@ func TestParseURI(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			x, err := parseURI(tc.inputRecord)
+			x, err := parseURI(tc.inputBody)
 			if tc.expectErr {
 				require.Error(t, err)
 				return
 			}
 			require.NoError(t, err)
-			require.Equal(t, tc.expectedRecord, x)
+			require.Equal(t, tc.outputBody, x)
 		})
 	}
 }
@@ -415,9 +414,9 @@ func TestBuildParserURL(t *testing.T) {
 
 func TestURLToMap(t *testing.T) {
 	cases := []struct {
-		name           string
-		inputRecord    url.URL
-		expectedRecord map[string]interface{}
+		name       string
+		inputBody  url.URL
+		outputBody map[string]interface{}
 	}{
 		{
 			"absolute-uri",
@@ -495,16 +494,16 @@ func TestURLToMap(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			m := make(map[string]interface{})
-			require.Equal(t, tc.expectedRecord, urlToMap(&tc.inputRecord, m))
+			require.Equal(t, tc.outputBody, urlToMap(&tc.inputBody, m))
 		})
 	}
 }
 
 func TestQueryToMap(t *testing.T) {
 	cases := []struct {
-		name           string
-		inputRecord    url.Values
-		expectedRecord map[string]interface{}
+		name       string
+		inputBody  url.Values
+		outputBody map[string]interface{}
 	}{
 		{
 			"query",
@@ -533,16 +532,16 @@ func TestQueryToMap(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			m := make(map[string]interface{})
-			require.Equal(t, tc.expectedRecord, queryToMap(tc.inputRecord, m))
+			require.Equal(t, tc.outputBody, queryToMap(tc.inputBody, m))
 		})
 	}
 }
 
 func TestQueryParamValuesToMap(t *testing.T) {
 	cases := []struct {
-		name           string
-		inputRecord    []string
-		expectedRecord []interface{}
+		name       string
+		inputBody  []string
+		outputBody []interface{}
 	}{
 		{
 			"simple",
@@ -564,7 +563,7 @@ func TestQueryParamValuesToMap(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			require.Equal(t, tc.expectedRecord, queryParamValuesToMap(tc.inputRecord))
+			require.Equal(t, tc.outputBody, queryParamValuesToMap(tc.inputBody))
 		})
 	}
 }
@@ -615,8 +614,8 @@ func BenchmarkQueryParamValuesToMap(b *testing.B) {
 
 func TestURIParserConfig(t *testing.T) {
 	expect := NewURIParserConfig("test")
-	expect.ParseFrom = entry.NewRecordField("from")
-	expect.ParseTo = entry.NewRecordField("to")
+	expect.ParseFrom = entry.NewBodyField("from")
+	expect.ParseTo = entry.NewBodyField("to")
 
 	t.Run("mapstructure", func(t *testing.T) {
 		input := map[string]interface{}{

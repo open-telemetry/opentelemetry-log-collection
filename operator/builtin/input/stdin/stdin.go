@@ -15,16 +15,17 @@
 package stdin
 
 import (
+	"bufio"
 	"context"
 	"fmt"
-	"github.com/open-telemetry/opentelemetry-log-collection/entry"
-	"github.com/open-telemetry/opentelemetry-log-collection/operator"
-	"github.com/open-telemetry/opentelemetry-log-collection/operator/helper"
 	"os"
 	"sync"
 
-	"bufio"
 	"go.uber.org/zap"
+
+	"github.com/open-telemetry/opentelemetry-log-collection/entry"
+	"github.com/open-telemetry/opentelemetry-log-collection/operator"
+	"github.com/open-telemetry/opentelemetry-log-collection/operator/helper"
 )
 
 func init() {
@@ -66,7 +67,7 @@ type StdinInput struct {
 }
 
 // Start will start generating log entries.
-func (g *StdinInput) Start() error {
+func (g *StdinInput) Start(_ operator.Persister) error {
 	ctx, cancel := context.WithCancel(context.Background())
 	g.cancel = cancel
 
@@ -101,7 +102,7 @@ func (g *StdinInput) Start() error {
 			}
 
 			e := entry.New()
-			e.Record = scanner.Text()
+			e.Body = scanner.Text()
 			g.Write(ctx, e)
 		}
 	}()

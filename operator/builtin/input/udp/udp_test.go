@@ -19,11 +19,12 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
+
 	"github.com/open-telemetry/opentelemetry-log-collection/entry"
 	"github.com/open-telemetry/opentelemetry-log-collection/operator"
 	"github.com/open-telemetry/opentelemetry-log-collection/testutil"
-	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
 )
 
 func udpInputTest(input []byte, expected []string) func(t *testing.T) {
@@ -46,7 +47,7 @@ func udpInputTest(input []byte, expected []string) func(t *testing.T) {
 			entryChan <- args.Get(1).(*entry.Entry)
 		}).Return(nil)
 
-		err = udpInput.Start()
+		err = udpInput.Start(testutil.NewMockPersister("test"))
 		require.NoError(t, err)
 		defer udpInput.Stop()
 
@@ -57,10 +58,10 @@ func udpInputTest(input []byte, expected []string) func(t *testing.T) {
 		_, err = conn.Write(input)
 		require.NoError(t, err)
 
-		for _, expectedRecord := range expected {
+		for _, expectedBody := range expected {
 			select {
 			case entry := <-entryChan:
-				require.Equal(t, expectedRecord, entry.Record)
+				require.Equal(t, expectedBody, entry.Body)
 			case <-time.After(time.Second):
 				require.FailNow(t, "Timed out waiting for message to be written")
 			}
@@ -94,7 +95,7 @@ func BenchmarkUdpInput(b *testing.B) {
 	udpInput := op.(*UDPInput)
 	udpInput.InputOperator.OutputOperators = []operator.Operator{fakeOutput}
 
-	err = udpInput.Start()
+	err = udpInput.Start(testutil.NewMockPersister("test"))
 	require.NoError(b, err)
 
 	done := make(chan struct{})

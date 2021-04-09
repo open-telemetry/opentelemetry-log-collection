@@ -22,10 +22,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/open-telemetry/opentelemetry-log-collection/entry"
-	"github.com/open-telemetry/opentelemetry-log-collection/testutil"
 	"github.com/stretchr/testify/require"
 	yaml "gopkg.in/yaml.v2"
+
+	"github.com/open-telemetry/opentelemetry-log-collection/entry"
+	"github.com/open-telemetry/opentelemetry-log-collection/testutil"
 )
 
 func Test_setTimestampYear(t *testing.T) {
@@ -316,8 +317,8 @@ func TestTimeParser(t *testing.T) {
 		},
 	}
 
-	rootField := entry.NewRecordField()
-	someField := entry.NewRecordField("some_field")
+	rootField := entry.NewBodyField()
+	someField := entry.NewBodyField("some_field")
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -483,8 +484,8 @@ func TestTimeEpochs(t *testing.T) {
 		},
 	}
 
-	rootField := entry.NewRecordField()
-	someField := entry.NewRecordField("some_field")
+	rootField := entry.NewBodyField()
+	someField := entry.NewBodyField("some_field")
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -558,8 +559,8 @@ func TestTimeErrors(t *testing.T) {
 		},
 	}
 
-	rootField := entry.NewRecordField()
-	someField := entry.NewRecordField("some_field")
+	rootField := entry.NewBodyField()
+	someField := entry.NewBodyField("some_field")
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -631,7 +632,7 @@ func TestGoldenTimeParserConfig(t *testing.T) {
 			false,
 			func() *TimeParser {
 				cfg := defaultTimeCfg()
-				newParse := entry.NewRecordField("from")
+				newParse := entry.NewBodyField("from")
 				cfg.ParseFrom = &newParse
 				return cfg
 			}(),
@@ -659,7 +660,7 @@ func TestGoldenTimeParserConfig(t *testing.T) {
 			false,
 			func() *TimeParser {
 				cfg := defaultTimeCfg()
-				newPreserve := entry.NewRecordField("aField")
+				newPreserve := entry.NewBodyField("aField")
 				cfg.PreserveTo = &newPreserve
 				return cfg
 			}(),

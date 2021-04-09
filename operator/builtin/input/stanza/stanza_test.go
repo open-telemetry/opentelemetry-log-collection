@@ -18,9 +18,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/open-telemetry/opentelemetry-log-collection/operator"
 	"github.com/open-telemetry/opentelemetry-log-collection/testutil"
-	"github.com/stretchr/testify/require"
 )
 
 func TestStanzaOperator(t *testing.T) {
@@ -35,20 +36,19 @@ func TestStanzaOperator(t *testing.T) {
 	fake := testutil.NewFakeOutput(t)
 	op.SetOutputs([]operator.Operator{fake})
 
-	require.NoError(t, op.Start())
+	require.NoError(t, op.Start(testutil.NewMockPersister("test")))
 	defer op.Stop()
 
 	bc.Logger.Errorw("test failure", "key", "value")
 
-	expectedRecord := map[string]interface{}{
+	expectedBody := map[string]interface{}{
 		"message": "test failure",
 		"key":     "value",
 	}
 
 	select {
 	case e := <-fake.Received:
-		require.Equal(t, expectedRecord, e.Record)
-
+		require.Equal(t, expectedBody, e.Body)
 	case <-time.After(time.Second):
 		require.FailNow(t, "timed out")
 	}
