@@ -8,13 +8,13 @@ The `retain` operator keeps the specified list of fields, and removes the rest.
 | ---        | ---              | ---                                                                                                                                                                                                                                      |
 | `id`       | `retain`    | A unique identifier for the operator                                                                                                                                                                                                     |
 | `output`   | Next in pipeline | The connected operator(s) that will receive all outbound entries                                                                                                                                                                         |
-| `fields`      | required         | A list of fields to be kept.                                                                                                                                                     |
+| `fields`      | required         | A list of [fields](/docs/types/field.md)  to be kept.                                                                                                                                                     |
 | `on_error` | `send`           | The behavior of the operator if it encounters an error. See [on_error](/docs/types/on_error.md)                                                                                                                                          |
 | `if`       |                  | An [expression](/docs/types/expression.md) that, when set, will be evaluated to determine whether this operator should be used for the given entry. This allows you to do easy conditional parsing without branching logic with routers. |
 
 Example usage:
 <hr>
-retain body fields
+retain fields in the body
 
 ```yaml
 - type: retain
@@ -60,7 +60,7 @@ retain body fields
 </table>
 
 <hr>
-retain body object
+retain an object in the body
 
 ```yaml
 - type: retain
@@ -106,7 +106,7 @@ retain body object
 </table>
 
 <hr>
-retain resource fields
+retain the resource fields
 
 ```yaml
 - type: retain
@@ -155,7 +155,7 @@ retain resource fields
 </table>
 
 <hr>
-retain attributes fields
+retain the attributes fields
 
 ```yaml
 - type: retain
@@ -194,6 +194,60 @@ retain attributes fields
      "key2": "val2",
   },  
   "body": { }
+}
+```
+
+</td>
+</tr>
+</table>
+
+<hr>
+retain fields from all sources
+
+```yaml
+- type: retain
+    fields:
+      - $resource.key1
+      - $attributes.key3
+      - key5
+```
+
+<table>
+<tr><td> Input record </td> <td> Output record </td></tr>
+<tr>
+<td>
+
+```json
+{
+  "resource": { 
+     "key1": "val1",
+     "key2": "val2"
+  },
+  "attributes": { 
+     "key3": "val3",
+     "key4": "val4"
+  },  
+  "body": { 
+    "key5": "val5",
+    "key6": "val6",
+  }
+}
+```
+
+</td>
+<td>
+
+```json
+{
+  "resource": { 
+     "key1": "val1",
+  },
+  "attributes": { 
+     "key3": "val3",
+  },  
+  "body": { 
+    "key5": "val5",
+  }
 }
 ```
 
