@@ -101,7 +101,7 @@ Remove object from body
 
 <hr>
 
-Remove multiple fields from body
+Remove multiple Values from body
 ```yaml
 - type: remove 
     field: 
