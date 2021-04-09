@@ -2,13 +2,6 @@
 
 The `add` operator adds a value to an `entry`'s `body`, `attributes`, or `resource`.
 
-`field` is a [field](/docs/types/field.md) that will be set to `value` or the evaluated expression.
-
-`value` is a static string that will be added to each entry at the field defined by `field`. 
- Expressions can be used in this field through surrounding it with `EXPR()`
-
-
-
 ### Configuration Fields
 
 | Field      | Default          | Description                                                                                                                                                                                                                              |
