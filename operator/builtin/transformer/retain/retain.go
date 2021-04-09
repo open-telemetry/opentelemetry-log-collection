@@ -46,6 +46,9 @@ func (c RetainOperatorConfig) Build(context operator.BuildContext) ([]operator.O
 	if err != nil {
 		return nil, err
 	}
+	if c.Fields == nil {
+		return nil, fmt.Errorf("retain: 'fields' is empty")
+	}
 
 	retainOp := &RetainOperator{
 		TransformerOperator: transformerOperator,
