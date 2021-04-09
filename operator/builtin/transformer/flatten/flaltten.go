@@ -38,7 +38,7 @@ func NewFlattenOperatorConfig(operatorID string) *FlattenOperatorConfig {
 // FlattenOperatorConfig is the configuration of a restructure operator
 type FlattenOperatorConfig struct {
 	helper.TransformerConfig `mapstructure:",squash" yaml:",inline"`
-	Field                    entry.RecordField `mapstructure:"field" json:"field" yaml:"field"`
+	Field                    entry.BodyField `mapstructure:"field" json:"field" yaml:"field"`
 }
 
 func (c FlattenOperatorConfig) Build(context operator.BuildContext) ([]operator.Operator, error) {
@@ -57,7 +57,7 @@ func (c FlattenOperatorConfig) Build(context operator.BuildContext) ([]operator.
 
 type FlattenOperator struct {
 	helper.TransformerOperator
-	Field entry.RecordField
+	Field entry.BodyField
 }
 
 // Process will process an entry with a restructure transformation.
