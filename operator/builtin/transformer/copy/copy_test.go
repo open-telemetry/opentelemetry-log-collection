@@ -183,14 +183,26 @@ func TestBuildAndProcess(t *testing.T) {
 				return e
 			},
 		},
+		{
+			"invalid_key",
+			true,
+			func() *CopyOperatorConfig {
+				cfg := defaultCfg()
+				cfg.From = entry.NewAttributeField("nonexistentkey")
+				cfg.To = entry.NewResourceField("key2")
+				return cfg
+			}(),
+			newTestEntry,
+			nil,
+		},
 	}
 
 	for _, tc := range cases {
 		t.Run("BuildAndProcess/"+tc.name, func(t *testing.T) {
-			cfgFromMapstructure := tc.op
-			cfgFromMapstructure.OutputIDs = []string{"fake"}
-			cfgFromMapstructure.OnError = "drop"
-			ops, err := cfgFromMapstructure.Build(testutil.NewBuildContext(t))
+			cfg := tc.op
+			cfg.OutputIDs = []string{"fake"}
+			cfg.OnError = "drop"
+			ops, err := cfg.Build(testutil.NewBuildContext(t))
 			require.NoError(t, err)
 			op := ops[0]
 

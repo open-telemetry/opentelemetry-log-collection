@@ -16,6 +16,7 @@ package copy
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/open-telemetry/opentelemetry-log-collection/entry"
 	"github.com/open-telemetry/opentelemetry-log-collection/operator"
@@ -26,35 +27,45 @@ func init() {
 	operator.Register("copy", func() operator.Builder { return NewCopyOperatorConfig("") })
 }
 
-// NewCopyOperatorConfig creates a new restructure operator config with default values
+// NewCopyOperatorConfig creates a new copy operator config with default values
 func NewCopyOperatorConfig(operatorID string) *CopyOperatorConfig {
 	return &CopyOperatorConfig{
 		TransformerConfig: helper.NewTransformerConfig(operatorID, "copy"),
 	}
 }
 
-// CopyOperatorConfig is the configuration of a restructure operator
+// CopyOperatorConfig is the configuration of a copy operator
 type CopyOperatorConfig struct {
 	helper.TransformerConfig `mapstructure:",squash" yaml:",inline"`
 	From                     entry.Field `mapstructure:"from" json:"from" yaml:"from"`
 	To                       entry.Field `mapstructure:"to" json:"to" yaml:"to"`
 }
 
+// Build will build a Copy operator from the supplied configuration
 func (c CopyOperatorConfig) Build(context operator.BuildContext) ([]operator.Operator, error) {
 	transformerOperator, err := c.TransformerConfig.Build(context)
 	if err != nil {
 		return nil, err
 	}
 
-	addOperator := &CopyOperator{
+	if c.From == entry.NewNilField() {
+		return nil, fmt.Errorf("copy: missing from field")
+	}
+
+	if c.To == entry.NewNilField() {
+		return nil, fmt.Errorf("copy: missing to field")
+	}
+
+	copyOp := &CopyOperator{
 		TransformerOperator: transformerOperator,
 		From:                c.From,
 		To:                  c.To,
 	}
 
-	return []operator.Operator{addOperator}, nil
+	return []operator.Operator{copyOp}, nil
 }
 
+// CopyOperator copies a value from one field and creates a new field with that value
 type CopyOperator struct {
 	helper.TransformerOperator
 	From entry.Field
@@ -68,7 +79,10 @@ func (p *CopyOperator) Process(ctx context.Context, entry *entry.Entry) error {
 
 // Transform will apply the restructure operations to an entry
 func (p *CopyOperator) Transform(e *entry.Entry) error {
-	val, _ := p.From.Get(e)
+	val, exist := p.From.Get(e)
+	if !exist {
+		return fmt.Errorf("copy: from field does not exist in this entry")
+	}
 	p.To.Set(e, val)
 	return nil
 }
