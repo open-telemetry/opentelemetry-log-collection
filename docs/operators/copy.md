@@ -6,7 +6,7 @@ The `copy` operator copies a value from one [field](/docs/types/field.md) to ano
 
 | Field      | Default          | Description                                                                                                                                                                                                                              |
 | ---        | ---              | ---                                                                                                                                                                                                                                      |
-| `id`       | `move`    | A unique identifier for the operator                                                                                                                                                                                                     |
+| `id`       | `copy`    | A unique identifier for the operator                                                                                                                                                                                                     |
 | `output`   | Next in pipeline | The connected operator(s) that will receive all outbound entries                                                                                                                                                                         |
 | `from`      | required       | The [field](/docs/types/field.md)  to copy the value of.   
 | `to`      | required       | The [field](/docs/types/field.md)  to copy the value into.
@@ -19,7 +19,7 @@ copy a value from the body to attributes
 ```yaml
 - type: move
     from: key2
-    to: $attributes.key5
+    to: $attributes.newkey
 ```
 
 <table>
@@ -45,7 +45,7 @@ copy a value from the body to attributes
 {
   "resource": { },
   "attributes": { 
-      "key5": "val2"
+      "newkey": "val2"
   },  
   "body": {
     "key3": "val1",
@@ -108,7 +108,7 @@ copy a value from attributes to the body
 
 <hr>
 
-copy a value from the an object to the body
+copy a value from an object to the body
 ```yaml
 - type: move
     from: obj.nested
@@ -152,7 +152,7 @@ copy a value from the an object to the body
 </tr>
 </table>
 
-copy a value from the resource to the body
+copy a value from resource to the body
 ```yaml
 - type: move
     from: $resource.key
