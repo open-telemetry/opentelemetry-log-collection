@@ -81,8 +81,11 @@ func (p *CopyOperator) Process(ctx context.Context, entry *entry.Entry) error {
 func (p *CopyOperator) Transform(e *entry.Entry) error {
 	val, exist := p.From.Get(e)
 	if !exist {
-		return fmt.Errorf("copy: from field does not exist in this entry")
+		return fmt.Errorf("copy: from field does not exist in this entry: %s", p.From.String())
 	}
-	p.To.Set(e, val)
+	err := p.To.Set(e, val)
+	if err != nil {
+		return err
+	}
 	return nil
 }

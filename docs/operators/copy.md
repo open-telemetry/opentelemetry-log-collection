@@ -15,9 +15,9 @@ The `copy` operator copies a value from one [field](/docs/types/field.md) to ano
 
 Example usage:
 
-copy a value from the body to attributes
+Copy a value from the body to attributes
 ```yaml
-- type: move
+- type: copy
     from: key2
     to: $attributes.newkey
 ```
@@ -60,9 +60,9 @@ copy a value from the body to attributes
 
 <hr>
 
-copy a value from attributes to the body
+Copy a value from attributes to the body
 ```yaml
-- type: move
+- type: copy
     from: $attributes.key
     to: newkey
 ```
@@ -108,9 +108,9 @@ copy a value from attributes to the body
 
 <hr>
 
-copy a value from an object to the body
+Copy a value from an object to the body
 ```yaml
-- type: move
+- type: copy
     from: obj.nested
     to: newkey
 ```
@@ -152,9 +152,9 @@ copy a value from an object to the body
 </tr>
 </table>
 
-copy a value from resource to the body
+Copy a value from resource to the body
 ```yaml
-- type: move
+- type: copy
     from: $resource.key
     to: newkey
 ```

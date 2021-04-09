@@ -185,6 +185,49 @@ func TestBuildAndProcess(t *testing.T) {
 			},
 		},
 		{
+			"overwrite",
+			false,
+			func() *CopyOperatorConfig {
+				cfg := defaultCfg()
+				cfg.From = entry.NewBodyField("key")
+				cfg.To = entry.NewBodyField("nested")
+				return cfg
+			}(),
+			newTestEntry,
+			func() *entry.Entry {
+				e := newTestEntry()
+				e.Body = map[string]interface{}{
+					"key":    "val",
+					"nested": "val",
+				}
+				return e
+			},
+		},
+		{
+			"invalid_copy_obj_to_resource",
+			true,
+			func() *CopyOperatorConfig {
+				cfg := defaultCfg()
+				cfg.From = entry.NewBodyField("nested")
+				cfg.To = entry.NewResourceField("invalid")
+				return cfg
+			}(),
+			newTestEntry,
+			nil,
+		},
+		{
+			"invalid_copy_obj_to_attributes",
+			true,
+			func() *CopyOperatorConfig {
+				cfg := defaultCfg()
+				cfg.From = entry.NewBodyField("nested")
+				cfg.To = entry.NewAttributeField("invalid")
+				return cfg
+			}(),
+			newTestEntry,
+			nil,
+		},
+		{
 			"invalid_key",
 			true,
 			func() *CopyOperatorConfig {
