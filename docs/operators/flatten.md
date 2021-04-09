@@ -2,8 +2,6 @@
 
 The `flatten` operator flattens a field by moving its children up to the same level as the field.
 
-The operator is configured with a field to be flattened.
-
 ### Configuration Fields
 
 | Field      | Default          | Description                                                                                                                                                                                                                              |

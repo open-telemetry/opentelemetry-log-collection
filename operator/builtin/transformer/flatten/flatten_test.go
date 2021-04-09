@@ -45,7 +45,6 @@ func TestFlattenGoldenConfig(t *testing.T) {
 		}
 		return e
 	}
-
 	cases := []testCase{
 		{
 			"flatten_one_level",
@@ -99,6 +98,19 @@ func TestFlattenGoldenConfig(t *testing.T) {
 				}
 				return e
 			},
+		},
+		{
+			"flatten_invalid_field",
+			true,
+			func() *FlattenOperatorConfig {
+				cfg := defaultCfg()
+				cfg.Field = entry.BodyField{
+					Keys: []string{"invalid"},
+				}
+				return cfg
+			}(),
+			newTestEntry,
+			nil,
 		},
 	}
 

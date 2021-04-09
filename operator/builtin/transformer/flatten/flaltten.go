@@ -41,20 +41,22 @@ type FlattenOperatorConfig struct {
 	Field                    entry.BodyField `mapstructure:"field" json:"field" yaml:"field"`
 }
 
+// Build will build a Flatten operator from the supplied configuration
 func (c FlattenOperatorConfig) Build(context operator.BuildContext) ([]operator.Operator, error) {
 	transformerOperator, err := c.TransformerConfig.Build(context)
 	if err != nil {
 		return nil, err
 	}
 
-	addOperator := &FlattenOperator{
+	flattenOp := &FlattenOperator{
 		TransformerOperator: transformerOperator,
 		Field:               c.Field,
 	}
 
-	return []operator.Operator{addOperator}, nil
+	return []operator.Operator{flattenOp}, nil
 }
 
+// FlattenOperator flattens an object in the body field
 type FlattenOperator struct {
 	helper.TransformerOperator
 	Field entry.BodyField
