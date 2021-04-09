@@ -1,3 +1,0 @@
-type: copy
-from: $record.key
-to: $record.key2
