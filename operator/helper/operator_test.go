@@ -17,10 +17,11 @@ package helper
 import (
 	"testing"
 
-	"github.com/open-telemetry/opentelemetry-log-collection/operator"
-	"github.com/open-telemetry/opentelemetry-log-collection/testutil"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
+
+	"github.com/open-telemetry/opentelemetry-log-collection/operator"
+	"github.com/open-telemetry/opentelemetry-log-collection/testutil"
 )
 
 func TestBasicConfigID(t *testing.T) {
@@ -112,7 +113,7 @@ func TestBasicOperatorStart(t *testing.T) {
 		OperatorID:   "test-id",
 		OperatorType: "test-type",
 	}
-	err := operator.Start()
+	err := operator.Start(testutil.NewMockPersister("test"))
 	require.NoError(t, err)
 }
 

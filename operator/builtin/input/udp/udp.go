@@ -20,9 +20,10 @@ import (
 	"net"
 	"sync"
 
+	"go.uber.org/zap"
+
 	"github.com/open-telemetry/opentelemetry-log-collection/operator"
 	"github.com/open-telemetry/opentelemetry-log-collection/operator/helper"
-	"go.uber.org/zap"
 )
 
 func init() {
@@ -79,7 +80,7 @@ type UDPInput struct {
 }
 
 // Start will start listening for messages on a socket.
-func (u *UDPInput) Start() error {
+func (u *UDPInput) Start(persister operator.Persister) error {
 	ctx, cancel := context.WithCancel(context.Background())
 	u.cancel = cancel
 

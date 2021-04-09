@@ -18,9 +18,10 @@ import (
 	"os"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/open-telemetry/opentelemetry-log-collection/operator"
 	"github.com/open-telemetry/opentelemetry-log-collection/testutil"
-	"github.com/stretchr/testify/require"
 )
 
 func TestStdin(t *testing.T) {
@@ -39,10 +40,10 @@ func TestStdin(t *testing.T) {
 	stdin := op[0].(*StdinInput)
 	stdin.stdin = r
 
-	require.NoError(t, stdin.Start())
+	require.NoError(t, stdin.Start(testutil.NewMockPersister("test")))
 	defer stdin.Stop()
 
 	w.WriteString("test")
 	w.Close()
-	fake.ExpectRecord(t, "test")
+	fake.ExpectBody(t, "test")
 }

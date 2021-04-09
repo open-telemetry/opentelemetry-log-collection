@@ -15,15 +15,14 @@
 package agent
 
 import (
-	"fmt"
 	"time"
 
-	"github.com/open-telemetry/opentelemetry-log-collection/database"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
+
 	"github.com/open-telemetry/opentelemetry-log-collection/errors"
 	"github.com/open-telemetry/opentelemetry-log-collection/operator"
 	"github.com/open-telemetry/opentelemetry-log-collection/plugin"
-	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
 )
 
 // LogAgentBuilder is a construct used to build a log agent
@@ -32,8 +31,6 @@ type LogAgentBuilder struct {
 	config        *Config
 	logger        *zap.SugaredLogger
 	pluginDir     string
-	namespace     string
-	databaseFile  string
 	defaultOutput operator.Operator
 }
 
@@ -62,13 +59,6 @@ func (b *LogAgentBuilder) WithConfig(cfg *Config) *LogAgentBuilder {
 	return b
 }
 
-// WithDatabaseFile adds the specified database file when building a log agent
-func (b *LogAgentBuilder) WithDatabaseFile(databaseFile, namespace string) *LogAgentBuilder {
-	b.databaseFile = databaseFile
-	b.namespace = namespace
-	return b
-}
-
 // WithDefaultOutput adds a default output when building a log agent
 func (b *LogAgentBuilder) WithDefaultOutput(defaultOutput operator.Operator) *LogAgentBuilder {
 	b.defaultOutput = defaultOutput
@@ -77,15 +67,6 @@ func (b *LogAgentBuilder) WithDefaultOutput(defaultOutput operator.Operator) *Lo
 
 // Build will build a new log agent using the values defined on the builder
 func (b *LogAgentBuilder) Build() (*LogAgent, error) {
-	if b.databaseFile != "" && b.namespace == "" {
-		return nil, fmt.Errorf("use of database requires namespace")
-	}
-
-	db, err := database.OpenDatabase(b.databaseFile)
-	if err != nil {
-		return nil, errors.Wrap(err, "open database")
-	}
-
 	if b.pluginDir != "" {
 		if errs := plugin.RegisterPlugins(b.pluginDir, operator.DefaultRegistry); len(errs) != 0 {
 			b.logger.Errorw("Got errors parsing plugins", "errors", errs)
@@ -99,10 +80,11 @@ func (b *LogAgentBuilder) Build() (*LogAgent, error) {
 		return nil, errors.NewError("agent cannot be built without WithConfig or WithConfigFiles", "")
 	}
 	if len(b.configFiles) > 0 {
-		b.config, err = NewConfigFromGlobs(b.configFiles)
+		cfgs, err := NewConfigFromGlobs(b.configFiles)
 		if err != nil {
 			return nil, errors.Wrap(err, "read configs from globs")
 		}
+		b.config = cfgs
 	}
 
 	sampledLogger := b.logger.Desugar().WithOptions(
@@ -111,10 +93,7 @@ func (b *LogAgentBuilder) Build() (*LogAgent, error) {
 		}),
 	).Sugar()
 
-	buildContext := operator.NewBuildContext(db, sampledLogger)
-	if b.namespace != "" {
-		buildContext = buildContext.WithSubNamespace(b.namespace)
-	}
+	buildContext := operator.NewBuildContext(sampledLogger)
 
 	pipeline, err := b.config.Pipeline.BuildPipeline(buildContext, b.defaultOutput)
 	if err != nil {
@@ -123,7 +102,6 @@ func (b *LogAgentBuilder) Build() (*LogAgent, error) {
 
 	return &LogAgent{
 		pipeline:      pipeline,
-		database:      db,
 		SugaredLogger: b.logger,
 	}, nil
 }

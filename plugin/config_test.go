@@ -17,14 +17,15 @@ package plugin
 import (
 	"testing"
 
+	"github.com/stretchr/testify/require"
+	"go.uber.org/zap/zaptest"
+	yaml "gopkg.in/yaml.v2"
+
 	"github.com/open-telemetry/opentelemetry-log-collection/operator"
 	"github.com/open-telemetry/opentelemetry-log-collection/operator/builtin/transformer/noop"
 	"github.com/open-telemetry/opentelemetry-log-collection/operator/helper"
 	"github.com/open-telemetry/opentelemetry-log-collection/pipeline"
 	"github.com/open-telemetry/opentelemetry-log-collection/testutil"
-	"github.com/stretchr/testify/require"
-	"go.uber.org/zap/zaptest"
-	yaml "gopkg.in/yaml.v2"
 )
 
 func TestGetRenderParams(t *testing.T) {
@@ -128,7 +129,7 @@ pipeline:
 	err = yaml.Unmarshal(pipelineConfig, &pipeline)
 	require.NoError(t, err)
 
-	_, err = pipeline.BuildOperators(operator.NewBuildContext(nil, zaptest.NewLogger(t).Sugar()))
+	_, err = pipeline.BuildOperators(operator.NewBuildContext(zaptest.NewLogger(t).Sugar()))
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "reached max plugin depth")
 }

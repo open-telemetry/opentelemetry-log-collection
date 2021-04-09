@@ -20,11 +20,12 @@ import (
 	"os"
 	"testing"
 
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
+
 	"github.com/open-telemetry/opentelemetry-log-collection/entry"
 	"github.com/open-telemetry/opentelemetry-log-collection/operator"
 	"github.com/open-telemetry/opentelemetry-log-collection/testutil"
-	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
 )
 
 func TestFilterOperator(t *testing.T) {
@@ -38,9 +39,9 @@ func TestFilterOperator(t *testing.T) {
 		filtered   bool
 	}{
 		{
-			"RecordMatch",
+			"BodyMatch",
 			&entry.Entry{
-				Record: map[string]interface{}{
+				Body: map[string]interface{}{
 					"message": "test_message",
 				},
 			},
@@ -48,9 +49,9 @@ func TestFilterOperator(t *testing.T) {
 			true,
 		},
 		{
-			"NoMatchRecord",
+			"NoMatchBody",
 			&entry.Entry{
-				Record: map[string]interface{}{
+				Body: map[string]interface{}{
 					"message": "invalid",
 				},
 			},
@@ -60,7 +61,7 @@ func TestFilterOperator(t *testing.T) {
 		{
 			"MatchAttribute",
 			&entry.Entry{
-				Record: map[string]interface{}{
+				Body: map[string]interface{}{
 					"message": "test_message",
 				},
 				Attributes: map[string]string{
@@ -73,7 +74,7 @@ func TestFilterOperator(t *testing.T) {
 		{
 			"NoMatchAttribute",
 			&entry.Entry{
-				Record: map[string]interface{}{
+				Body: map[string]interface{}{
 					"message": "test_message",
 				},
 			},
@@ -83,7 +84,7 @@ func TestFilterOperator(t *testing.T) {
 		{
 			"MatchEnv",
 			&entry.Entry{
-				Record: map[string]interface{}{
+				Body: map[string]interface{}{
 					"message": "test_message",
 				},
 			},
@@ -93,7 +94,7 @@ func TestFilterOperator(t *testing.T) {
 		{
 			"NoMatchEnv",
 			&entry.Entry{
-				Record: map[string]interface{}{
+				Body: map[string]interface{}{
 					"message": "test_message",
 				},
 			},
@@ -150,7 +151,7 @@ func TestFilterDropRatio(t *testing.T) {
 	require.True(t, ok)
 
 	testEntry := &entry.Entry{
-		Record: map[string]interface{}{
+		Body: map[string]interface{}{
 			"message": "test_message",
 		},
 	}

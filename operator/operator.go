@@ -19,8 +19,9 @@ package operator
 import (
 	"context"
 
-	"github.com/open-telemetry/opentelemetry-log-collection/entry"
 	"go.uber.org/zap"
+
+	"github.com/open-telemetry/opentelemetry-log-collection/entry"
 )
 
 // Operator is a log monitoring component.
@@ -31,7 +32,7 @@ type Operator interface {
 	Type() string
 
 	// Start will start the operator.
-	Start() error
+	Start(Persister) error
 	// Stop will stop the operator.
 	Stop() error
 
