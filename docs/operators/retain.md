@@ -14,7 +14,7 @@ The `retain` operator keeps the specified list of fields, and removes the rest.
 
 Example usage:
 <hr>
-retain fields in the body
+Retain fields in the body
 
 ```yaml
 - type: retain
@@ -60,7 +60,7 @@ retain fields in the body
 </table>
 
 <hr>
-retain an object in the body
+Retain an object in the body
 
 ```yaml
 - type: retain
@@ -106,7 +106,7 @@ retain an object in the body
 </table>
 
 <hr>
-retain fields from resource
+Retain fields from resource
 
 ```yaml
 - type: retain
@@ -155,7 +155,7 @@ retain fields from resource
 </table>
 
 <hr>
-retain fields from attributes
+Retain fields from attributes
 
 ```yaml
 - type: retain
@@ -202,7 +202,7 @@ retain fields from attributes
 </table>
 
 <hr>
-retain fields from all sources
+Retain fields from all sources
 
 ```yaml
 - type: retain
