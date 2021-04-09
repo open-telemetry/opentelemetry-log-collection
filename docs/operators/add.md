@@ -13,7 +13,7 @@ The `add` operator adds a value to an `entry`'s `body`, `attributes`, or `resour
 
 | Field      | Default          | Description                                                                                                                                                                                                                              |
 | ---        | ---              | ---                                                                                                                                                                                                                                      |
-| `id`       | `restructure`    | A unique identifier for the operator                                                                                                                                                                                                     |
+| `id`       | `add`    | A unique identifier for the operator                                                                                                                                                                                                     |
 | `output`   | Next in pipeline | The connected operator(s) that will receive all outbound entries                                                                                                                                                                         |
 | `field`      | required       | The [field](/docs/types/field.md) to be added.    
 | `value`      | required       | The value of the field to be added. Can be either a value or an [expression](https://github.com/open-telemetry/opentelemetry-log-collection/blob/main/docs/types/expression.md)
