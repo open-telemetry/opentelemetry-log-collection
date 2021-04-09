@@ -2,13 +2,11 @@
 
 The `remove` operator removes a field from a record.
 
-It's configured by passing a field to remove.
-
 ### Configuration Fields
 
 | Field      | Default          | Description                                                                                                                                                                                                                              |
 | ---        | ---              | ---                                                                                                                                                                                                                                      |
-| `id`       | `restructure`    | A unique identifier for the operator                                                                                                                                                                                                     |
+| `id`       | `remove`    | A unique identifier for the operator                                                                                                                                                                                                     |
 | `output`   | Next in pipeline | The connected operator(s) that will receive all outbound entries                                                                                                                                                                         |
 | `field`      | required       | The [field](/docs/types/field.md) to remove.
 | `on_error` | `send`           | The behavior of the operator if it encounters an error. See [on_error](/docs/types/on_error.md)                                                                                                                                          |
@@ -21,8 +19,7 @@ Example usage:
 Remove value from body
 ```yaml
 - type: remove 
-    field: 
-    - key1
+    field: key1
 ```
 
 <table>
@@ -60,53 +57,7 @@ Remove value from body
 Remove object from body
 ```yaml
 - type: remove 
-    field: 
-    - object
-```
-
-<table>
-<tr><td> Input Entry </td> <td> Output Entry </td></tr>
-<tr>
-<td>
-
-```json
-{
-  "resource": { },
-  "attributes": { },  
-  "body": {
-    "object": {
-      "nestedkey": "nestedval"
-    }
-  },
-  "key": "val"
-}
-```
-
-</td>
-<td>
-
-```json
-{
-  "resource": { },
-  "attributes": { },  
-  "body": { 
-     "key": "val"
-  }
-}
-```
-
-</td>
-</tr>
-</table>
-
-<hr>
-
-Remove multiple Values from body
-```yaml
-- type: remove 
-    field: 
-    - object
-    - key
+    field: object
 ```
 
 <table>
@@ -134,7 +85,9 @@ Remove multiple Values from body
 {
   "resource": { },
   "attributes": { },  
-  "body": { }
+  "body": { 
+     "key": "val"
+  }
 }
 ```
 
@@ -147,8 +100,7 @@ Remove multiple Values from body
 Remove Value from attributes
 ```yaml
 - type: remove 
-    field: 
-    - $attributes.otherkey
+    field: $attributes.otherkey
 ```
 
 <table>
@@ -163,9 +115,6 @@ Remove Value from attributes
     "otherkey": "val"
   },  
   "body": {
-    "object": {
-      "nestedkey": "nestedval"
-    }, 
     "key": "val"
   },
 }
@@ -179,60 +128,6 @@ Remove Value from attributes
   "resource": { },
   "attributes": {  },  
   "body": { 
-    "object": {
-      "nestedkey": "nestedval"
-    }, 
-    "key": "val"
-  }
-}
-```
-
-</td>
-</tr>
-</table>
-
-<hr>
-
-Remove multiple values from attributes
-```yaml
-- type: remove 
-    field: 
-    - $attributes.otherkey
-    - $attributes.otherkey2
-```
-
-<table>
-<tr><td> Input Entry </td> <td> Output Entry </td></tr>
-<tr>
-<td>
-
-```json
-{
-  "resource": { },
-  "attributes": { 
-    "otherkey": "val",
-    "otherkey2": "val2"
-  },  
-  "body": {
-    "object": {
-      "nestedkey": "nestedval"
-    }, 
-    "key": "val"
-  },
-}
-```
-
-</td>
-<td>
-
-```json
-{
-  "resource": { },
-  "attributes": {  },  
-  "body": { 
-    "object": {
-      "nestedkey": "nestedval"
-    }, 
     "key": "val"
   }
 }
@@ -247,8 +142,7 @@ Remove multiple values from attributes
 Remove Value from resource
 ```yaml
 - type: remove 
-    field: 
-    - $resource.otherkey
+    field: $resource.otherkey
 ```
 
 <table>
@@ -263,60 +157,6 @@ Remove Value from resource
   },
   "attributes": {  },  
   "body": {
-    "object": {
-      "nestedkey": "nestedval"
-    }, 
-    "key": "val"
-  },
-}
-```
-
-</td>
-<td>
-
-```json
-{
-  "resource": { },
-  "attributes": {  },  
-  "body": { 
-    "object": {
-      "nestedkey": "nestedval"
-    }, 
-    "key": "val"
-  }
-}
-```
-
-</td>
-</tr>
-</table>
-
-<hr>
-
-Remove multiple values from attributes
-```yaml
-- type: remove 
-    field: 
-    - $resource.otherkey
-    - $resource.otherkey2
-```
-
-<table>
-<tr><td> Input Entry </td> <td> Output Entry </td></tr>
-<tr>
-<td>
-
-```json
-{
-  "resource": { 
-    "otherkey": "val",
-    "otherkey2": "val2"
-  },
-  "attributes": {  },  
-  "body": {
-    "object": {
-      "nestedkey": "nestedval"
-    }, 
     "key": "val"
   },
 }
@@ -330,9 +170,6 @@ Remove multiple values from attributes
   "resource": { },
   "attributes": { },  
   "body": { 
-    "object": {
-      "nestedkey": "nestedval"
-    }, 
     "key": "val"
   }
 }
