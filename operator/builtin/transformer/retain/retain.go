@@ -58,7 +58,7 @@ func (c RetainOperatorConfig) Build(context operator.BuildContext) ([]operator.O
 	return []operator.Operator{retainOp}, nil
 }
 
-//RetainOperator keeps the given fields and deletes the rest.
+// RetainOperator keeps the given fields and deletes the rest.
 type RetainOperator struct {
 	helper.TransformerOperator
 	Fields []entry.Field
