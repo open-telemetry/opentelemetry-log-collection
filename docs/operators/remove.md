@@ -16,7 +16,7 @@ Example usage:
 
 <hr>
 
-Remove value from body
+Remove a value from the body
 ```yaml
 - type: remove 
     field: key1
@@ -54,7 +54,7 @@ Remove value from body
 
 <hr>
 
-Remove object from body
+Remove an object from the body
 ```yaml
 - type: remove 
     field: object
@@ -97,7 +97,7 @@ Remove object from body
 
 <hr>
 
-Remove Value from attributes
+Remove a value from attributes
 ```yaml
 - type: remove 
     field: $attributes.otherkey
@@ -139,7 +139,7 @@ Remove Value from attributes
 
 <hr>
 
-Remove Value from resource
+Remove a value from resource
 ```yaml
 - type: remove 
     field: $resource.otherkey
