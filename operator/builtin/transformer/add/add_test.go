@@ -231,17 +231,7 @@ func TestProcessAndBuild(t *testing.T) {
 				return cfg
 			}(),
 			newTestEntry,
-			func() *entry.Entry {
-				e := newTestEntry()
-				e.Body = map[string]interface{}{
-					"key": "val",
-					"nested": map[string]interface{}{
-						"nestedkey": "nestedval",
-					},
-					"new": 1,
-				}
-				return e
-			},
+			nil,
 			true,
 		},
 	}
