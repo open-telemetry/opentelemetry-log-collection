@@ -2,11 +2,13 @@
 
 The `move` operator moves (or renames) a field from one location to another.
 
+It's configured by passing 'to' and 'from' fields.
+
 ### Configuration Fields
 
 | Field      | Default          | Description                                                                                                                                                                                                                              |
 | ---        | ---              | ---                                                                                                                                                                                                                                      |
-| `id`       | `move`    | A unique identifier for the operator                                                                                                                                                                                                     |
+| `id`       | `restructure`    | A unique identifier for the operator                                                                                                                                                                                                     |
 | `output`   | Next in pipeline | The connected operator(s) that will receive all outbound entries                                                                                                                                                                         |
 | `from`      | required       | The [field](/docs/types/field.md)  to move the value out of.   
 | `to`      | required       | The [field](/docs/types/field.md)  to move the value into.
@@ -218,6 +220,59 @@ Remove a layer from the body
     "key1": "val1",
     "key2": "val2",
     "key3": "val3"
+  }
+}
+```
+
+</td>
+</tr>
+</table>
+
+<hr>
+
+Merge a layer to the body
+```yaml
+- type: move
+    from: wrapper
+    to: $body
+```
+
+<table>
+<tr><td> Input Entry</td> <td> Output Entry </td></tr>
+<tr>
+<td>
+
+```json
+{
+  "resource": { },
+  "attributes": { },  
+  "body": {
+    "wrapper": {
+      "key1": "val1",
+      "key2": "val2",
+      "key3": "val3"
+    },
+      "key4": "val1",
+      "key5": "val2",
+      "key6": "val3"
+  }
+}
+```
+
+</td>
+<td>
+
+```json
+{
+  "resource": { },
+  "attributes": { },  
+  "body": {
+    "key1": "val1",
+    "key2": "val2",
+    "key3": "val3",
+    "key4": "val1",
+    "key5": "val2",
+    "key6": "val3"
   }
 }
 ```

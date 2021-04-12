@@ -34,7 +34,7 @@ type processTestCase struct {
 	output    func() *entry.Entry
 }
 
-func TestProcessAndBuild(t *testing.T) {
+func TestMoveProcess(t *testing.T) {
 	newTestEntry := func() *entry.Entry {
 		e := entry.New()
 		e.Timestamp = time.Unix(1586632809, 0)
@@ -295,7 +295,55 @@ func TestProcessAndBuild(t *testing.T) {
 			nil,
 		},
 		{
+			"ReplaceBodyObj",
+			false,
+			func() *MoveOperatorConfig {
+				cfg := defaultCfg()
+				cfg.From = entry.NewBodyField("wrapper")
+				cfg.To = entry.NewBodyField()
+				return cfg
+			}(),
+			func() *entry.Entry {
+				e := newTestEntry()
+				e.Body = map[string]interface{}{
+					"wrapper": map[string]interface{}{
+						"key": "val",
+						"nested": map[string]interface{}{
+							"nestedkey": "nestedval",
+						},
+					},
+				}
+				return e
+			},
+			func() *entry.Entry {
+				e := newTestEntry()
+				e.Body = map[string]interface{}{
+					"key": "val",
+					"nested": map[string]interface{}{
+						"nestedkey": "nestedval",
+					},
+				}
+				return e
+			},
+		},
+		{
 			"ReplaceBodyString",
+			false,
+			func() *MoveOperatorConfig {
+				cfg := defaultCfg()
+				cfg.From = entry.NewBodyField("key")
+				cfg.To = entry.NewBodyField()
+				return cfg
+			}(),
+			newTestEntry,
+			func() *entry.Entry {
+				e := newTestEntry()
+				e.Body = "val"
+				return e
+			},
+		},
+		{
+			"MergeObjToBody",
 			false,
 			func() *MoveOperatorConfig {
 				cfg := defaultCfg()
@@ -307,8 +355,8 @@ func TestProcessAndBuild(t *testing.T) {
 			func() *entry.Entry {
 				e := newTestEntry()
 				e.Body = map[string]interface{}{
-					"nestedkey": "nestedval",
 					"key":       "val",
+					"nestedkey": "nestedval",
 				}
 				return e
 			},
@@ -316,10 +364,10 @@ func TestProcessAndBuild(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run("BuildandProcess/"+tc.name, func(t *testing.T) {
-			cfg := tc.op
-			cfg.OutputIDs = []string{"fake"}
-			cfg.OnError = "drop"
-			ops, err := cfg.Build(testutil.NewBuildContext(t))
+			cfgFromMapstructure := tc.op
+			cfgFromMapstructure.OutputIDs = []string{"fake"}
+			cfgFromMapstructure.OnError = "drop"
+			ops, err := cfgFromMapstructure.Build(testutil.NewBuildContext(t))
 			require.NoError(t, err)
 			op := ops[0]
 
