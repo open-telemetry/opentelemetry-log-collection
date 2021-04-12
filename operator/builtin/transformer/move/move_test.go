@@ -343,7 +343,7 @@ func TestMoveProcess(t *testing.T) {
 			},
 		},
 		{
-			"MergeObj to base",
+			"MergeObjToBody",
 			false,
 			func() *MoveOperatorConfig {
 				cfg := defaultCfg()

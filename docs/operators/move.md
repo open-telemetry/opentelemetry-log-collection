@@ -228,3 +228,56 @@ Remove a layer from the body
 </tr>
 </table>
 
+<hr>
+
+Merge a layer to the body
+```yaml
+- type: move
+    from: wrapper
+    to: $body
+```
+
+<table>
+<tr><td> Input Entry</td> <td> Output Entry </td></tr>
+<tr>
+<td>
+
+```json
+{
+  "resource": { },
+  "attributes": { },  
+  "body": {
+    "wrapper": {
+      "key1": "val1",
+      "key2": "val2",
+      "key3": "val3"
+    },
+      "key4": "val1",
+      "key5": "val2",
+      "key6": "val3"
+  }
+}
+```
+
+</td>
+<td>
+
+```json
+{
+  "resource": { },
+  "attributes": { },  
+  "body": {
+    "key1": "val1",
+    "key2": "val2",
+    "key3": "val3",
+    "key4": "val1",
+    "key5": "val2",
+    "key6": "val3"
+  }
+}
+```
+
+</td>
+</tr>
+</table>
+
