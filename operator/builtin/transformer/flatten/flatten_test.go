@@ -33,7 +33,8 @@ type testCase struct {
 	output    func() *entry.Entry
 }
 
-func TestFlattenGoldenConfig(t *testing.T) {
+// test building and processing a given config.
+func TestBuildAndProcess(t *testing.T) {
 	newTestEntry := func() *entry.Entry {
 		e := entry.New()
 		e.Timestamp = time.Unix(1586632809, 0)

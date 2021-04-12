@@ -73,7 +73,7 @@ func (p *FlattenOperator) Transform(entry *entry.Entry) error {
 	val, ok := entry.Delete(p.Field)
 	if !ok {
 		// The field doesn't exist, so ignore it
-		return fmt.Errorf("apply flatten: field %s does not exist on record", p.Field)
+		return fmt.Errorf("apply flatten: field %s does not exist on body", p.Field)
 	}
 
 	valMap, ok := val.(map[string]interface{})

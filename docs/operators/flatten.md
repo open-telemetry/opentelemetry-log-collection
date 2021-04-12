@@ -15,7 +15,7 @@ The `flatten` operator flattens a field by moving its children up to the same le
 Example usage:
 ```yaml
 - type: flatten
-    field: "key1"
+    field: key1
 ```
 
 <table>

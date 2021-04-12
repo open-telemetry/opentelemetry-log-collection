@@ -32,8 +32,8 @@ type configTestCase struct {
 	expect *FlattenOperatorConfig
 }
 
-// test unmarshalling of values into config struct
-func TestMoveGoldenConfig(t *testing.T) {
+// Test unmarshalling of values into config struct
+func TestGoldenConfig(t *testing.T) {
 	cases := []configTestCase{
 		{
 			"flatten_one_level",
