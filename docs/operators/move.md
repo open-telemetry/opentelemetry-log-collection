@@ -231,7 +231,7 @@ Remove a layer from the body
 Merge a layer to the body
 ```yaml
 - type: move
-    from: wrapper
+    from: object
     to: $body
 ```
 
@@ -245,14 +245,13 @@ Merge a layer to the body
   "resource": { },
   "attributes": { },  
   "body": {
-    "wrapper": {
-      "key1": "val1",
-      "key2": "val2",
-      "key3": "val3"
+    "firstTimestamp": "2020-08-13T16:43:57Z",
+    "object": {
+      "apiVersion": "v1",
+      "name": "stanza-g6rzd",
+      "uid": "47d965e6-4bb3-4c58-a089-1a8b16bf21b0"
     },
-      "key4": "val1",
-      "key5": "val2",
-      "key6": "val3"
+    "lastTimestamp": "2020-08-13T16:43:57Z",
   }
 }
 ```
@@ -265,12 +264,11 @@ Merge a layer to the body
   "resource": { },
   "attributes": { },  
   "body": {
-    "key1": "val1",
-    "key2": "val2",
-    "key3": "val3",
-    "key4": "val1",
-    "key5": "val2",
-    "key6": "val3"
+    "firstTimestamp": "2020-08-13T16:43:57Z",
+    "apiVersion": "v1",
+    "name": "stanza-g6rzd",
+    "uid": "47d965e6-4bb3-4c58-a089-1a8b16bf21b0",
+    "lastTimestamp": "2020-08-13T16:43:57Z",
   }
 }
 ```
