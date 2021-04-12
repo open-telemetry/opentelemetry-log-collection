@@ -2,11 +2,13 @@
 
 The `move` operator moves (or renames) a field from one location to another.
 
+It's configured by passing 'to' and 'from' fields.
+
 ### Configuration Fields
 
 | Field      | Default          | Description                                                                                                                                                                                                                              |
 | ---        | ---              | ---                                                                                                                                                                                                                                      |
-| `id`       | `move`    | A unique identifier for the operator                                                                                                                                                                                                     |
+| `id`       | `restructure`    | A unique identifier for the operator                                                                                                                                                                                                     |
 | `output`   | Next in pipeline | The connected operator(s) that will receive all outbound entries                                                                                                                                                                         |
 | `from`      | required       | The [field](/docs/types/field.md)  to move the value out of.   
 | `to`      | required       | The [field](/docs/types/field.md)  to move the value into.
