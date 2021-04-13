@@ -55,13 +55,34 @@ func (c RetainOperatorConfig) Build(context operator.BuildContext) ([]operator.O
 		Fields:              c.Fields,
 	}
 
+	for _, field := range c.Fields {
+		// if reflect.TypeOf(field) == reflect.TypeOf(entry.AttributeField{}) {
+		// 	retainOp.ContainsAttributeFields = true
+		// } else if reflect.TypeOf(field) == reflect.TypeOf(entry.ResourceField{}) {
+		// 	retainOp.ContainsResourceFields = true
+		// } else if reflect.TypeOf(field) == reflect.TypeOf(entry.BodyField{}) {
+		// 	retainOp.ContainsBodyFields = true
+		// }
+
+		_, bodyOk := field.FieldInterface.(entry.ResourceField)
+		if _, attributeOk := field.FieldInterface.(entry.AttributeField); attributeOk {
+			retainOp.ContainsAttributeFields = true
+		} else if _, resourceOk := field.FieldInterface.(entry.ResourceField); resourceOk {
+			retainOp.ContainsResourceFields = true
+		} else if bodyOk {
+			retainOp.ContainsBodyFields = true
+		}
+	}
 	return []operator.Operator{retainOp}, nil
 }
 
 // RetainOperator keeps the given fields and deletes the rest.
 type RetainOperator struct {
 	helper.TransformerOperator
-	Fields []entry.Field
+	Fields                  []entry.Field
+	ContainsBodyFields      bool
+	ContainsAttributeFields bool
+	ContainsResourceFields  bool
 }
 
 // Process will process an entry with a retain transformation.
@@ -73,16 +94,28 @@ func (p *RetainOperator) Process(ctx context.Context, entry *entry.Entry) error 
 func (p *RetainOperator) Transform(e *entry.Entry) error {
 	newEntry := entry.New()
 	newEntry.Timestamp = e.Timestamp
+
+	if !p.ContainsAttributeFields {
+		newEntry.Attributes = e.Attributes
+	}
+	if !p.ContainsResourceFields {
+		newEntry.Resource = e.Resource
+	}
+	if !p.ContainsBodyFields {
+		newEntry.Body = e.Body
+	}
+
 	for _, field := range p.Fields {
 		val, ok := e.Get(field)
 		if !ok {
-			return fmt.Errorf("retain: field does not exist: %s", field)
+			continue
 		}
 		err := newEntry.Set(field, val)
 		if err != nil {
 			return err
 		}
 	}
+
 	*e = *newEntry
 	return nil
 }
