@@ -1,0 +1,116 @@
+// Copyright The OpenTelemetry Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package remove
+
+import (
+	"encoding/json"
+
+	"github.com/open-telemetry/opentelemetry-log-collection/entry"
+)
+
+// RootableField represents a potential field on an entry.
+// It differs from a normal Field in that it allows users to
+// specify `$resource` or `$attributes` with the intention
+// of refering to "all" fields within those groups.
+// It is used to get, set, and delete values at this field.
+// It is deserialized from JSON dot notation.
+type RootableField struct {
+	*entry.Field
+	allResource   bool
+	allAttributes bool
+}
+
+// UnmarshalJSON will unmarshal a field from JSON
+func (f *RootableField) UnmarshalJSON(raw []byte) error {
+	var s string
+	err := json.Unmarshal(raw, &s)
+	if err != nil {
+		return err
+	}
+
+	if s == entry.ResourcePrefix {
+		*f = RootableField{allResource: true}
+		return nil
+	}
+
+	if s == entry.AttributesPrefix {
+		*f = RootableField{allAttributes: true}
+		return nil
+	}
+
+	field, err := entry.FieldFromString(s) // TODO make method available
+	if err != nil {
+		return err
+	}
+	*f = RootableField{Field: &field}
+	return nil
+}
+
+// UnmarshalYAML will unmarshal a field from YAML
+func (f *RootableField) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	var s string
+	err := unmarshal(&s)
+	if err != nil {
+		return err
+	}
+
+	if s == entry.ResourcePrefix {
+		*f = RootableField{allResource: true}
+		return nil
+	}
+
+	if s == entry.AttributesPrefix {
+		*f = RootableField{allAttributes: true}
+		return nil
+	}
+
+	field, err := entry.FieldFromString(s)
+	if err != nil {
+		return err
+	}
+	*f = RootableField{Field: &field}
+	return nil
+}
+
+func (f *RootableField) Get(entry *entry.Entry) (interface{}, bool) {
+	if f.allAttributes || f.allResource {
+		return nil, false
+	}
+	return f.Field.Get(entry)
+}
+
+func (f *RootableField) Set(entry *entry.Entry, value interface{}) error {
+	if f.allAttributes || f.allResource {
+		return nil // TODO maybe return error
+	}
+	return f.Field.Set(entry, value)
+}
+
+func (f *RootableField) Delete(entry *entry.Entry) (interface{}, bool) {
+	if f.allAttributes || f.allResource {
+		return nil, false
+	}
+	return f.Field.Delete(entry)
+}
+
+func (f *RootableField) String() string {
+	if f.allAttributes {
+		return entry.AttributesPrefix
+	}
+	if f.allResource {
+		return entry.ResourcePrefix
+	}
+	return f.Field.String()
+}

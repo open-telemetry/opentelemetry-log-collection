@@ -20,9 +20,10 @@ import (
 )
 
 const (
-	attributesPrefix = "$attributes"
-	resourcePrefix   = "$resource"
-	bodyPrefix       = "$body"
+	// TODO fix all references to lower case
+	AttributesPrefix = "$attributes"
+	ResourcePrefix   = "$resource"
+	BodyPrefix       = "$body"
 )
 
 // Field represents a potential field on an entry.

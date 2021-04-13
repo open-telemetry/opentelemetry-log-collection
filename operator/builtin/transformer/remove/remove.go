@@ -38,7 +38,7 @@ func NewRemoveOperatorConfig(operatorID string) *RemoveOperatorConfig {
 type RemoveOperatorConfig struct {
 	helper.TransformerConfig `mapstructure:",squash" yaml:",inline"`
 
-	Field entry.Field `mapstructure:"field"  json:"field" yaml:"field"`
+	Field entry.RootableField `mapstructure:"field"  json:"field" yaml:"field"`
 }
 
 // Build will build a Remove operator from the supplied configuration
@@ -47,6 +47,7 @@ func (c RemoveOperatorConfig) Build(context operator.BuildContext) ([]operator.O
 	if err != nil {
 		return nil, err
 	}
+	// TODO what is the nil value of RootableField and how do we detect it?
 	if c.Field == entry.NewNilField() {
 		return nil, fmt.Errorf("remove: field is empty")
 	}
@@ -68,7 +69,7 @@ func (c RemoveOperatorConfig) Build(context operator.BuildContext) ([]operator.O
 // RemoveOperator is an operator that deletes a field
 type RemoveOperator struct {
 	helper.TransformerOperator
-	Field            entry.Field
+	Field            entry.RootableField
 	RemoveBody       bool
 	RemoveAttributes bool
 	RemoveResource   bool
@@ -81,6 +82,19 @@ func (p *RemoveOperator) Process(ctx context.Context, entry *entry.Entry) error 
 
 // Transform will apply the restructure operations to an entry
 func (p *RemoveOperator) Transform(entry *entry.Entry) error {
+
+	if p.Field.AllAttributes {
+		entry.Attributes = nil
+		return nil
+	}
+
+	if p.Field.AllResource {
+		entry.Attributes = nil
+		return nil
+	}
+
+	// TODO whatever else
+
 	if p.RemoveBody {
 		entry.Body = nil
 	} else if p.RemoveResource {
