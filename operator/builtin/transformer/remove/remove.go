@@ -55,6 +55,12 @@ func (c RemoveOperatorConfig) Build(context operator.BuildContext) ([]operator.O
 		TransformerOperator: transformerOperator,
 		Field:               c.Field,
 	}
+	if c.Field == entry.NewBodyField() {
+		removeOperator.RemoveBody = true
+	}
+	// else if c.Field == entry.NewResourceField() {
+
+	// }
 
 	return []operator.Operator{removeOperator}, nil
 }
@@ -62,7 +68,10 @@ func (c RemoveOperatorConfig) Build(context operator.BuildContext) ([]operator.O
 // RemoveOperator is an operator that deletes a field
 type RemoveOperator struct {
 	helper.TransformerOperator
-	Field entry.Field
+	Field            entry.Field
+	RemoveBody       bool
+	RemoveAttributes bool
+	RemoveResource   bool
 }
 
 // Process will process an entry with a restructure transformation.
@@ -72,6 +81,14 @@ func (p *RemoveOperator) Process(ctx context.Context, entry *entry.Entry) error 
 
 // Transform will apply the restructure operations to an entry
 func (p *RemoveOperator) Transform(entry *entry.Entry) error {
+	if p.RemoveBody {
+		entry.Body = nil
+	} else if p.RemoveResource {
+		entry.Resource = nil
+	} else if p.RemoveAttributes {
+		entry.Attributes = nil
+	}
+
 	_, exist := entry.Delete(p.Field)
 	if !exist {
 		return fmt.Errorf("remove: field does not exist")

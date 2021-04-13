@@ -143,6 +143,21 @@ func TestProcessAndBuild(t *testing.T) {
 			},
 			false,
 		},
+		{
+			"remove_body",
+			func() *RemoveOperatorConfig {
+				cfg := defaultCfg()
+				cfg.Field = entry.NewBodyField()
+				return cfg
+			}(),
+			newTestEntry,
+			func() *entry.Entry {
+				e := newTestEntry()
+				e.Body = nil
+				return e
+			},
+			false,
+		},
 	}
 	for _, tc := range cases {
 		t.Run("BuildandProcess/"+tc.name, func(t *testing.T) {
