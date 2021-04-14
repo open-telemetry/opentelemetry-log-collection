@@ -50,7 +50,7 @@ func (c FlattenOperatorConfig) Build(context operator.BuildContext) ([]operator.
 	}
 
 	if strings.Contains(c.Field.String(), "$attributes") || strings.Contains(c.Field.String(), "$resource") {
-		return nil, fmt.Errorf("flatten: field cannot be resource or attribute")
+		return nil, fmt.Errorf("flatten: field cannot be a resource or attribute")
 	}
 
 	flattenOp := &FlattenOperator{
