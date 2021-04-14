@@ -17,6 +17,7 @@ package flatten
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/open-telemetry/opentelemetry-log-collection/entry"
 	"github.com/open-telemetry/opentelemetry-log-collection/errors"
@@ -28,14 +29,14 @@ func init() {
 	operator.Register("flatten", func() operator.Builder { return NewFlattenOperatorConfig("") })
 }
 
-// NewFlattenOperatorConfig creates a new restructure operator config with default values
+// NewFlattenOperatorConfig creates a new flatten operator config with default values
 func NewFlattenOperatorConfig(operatorID string) *FlattenOperatorConfig {
 	return &FlattenOperatorConfig{
 		TransformerConfig: helper.NewTransformerConfig(operatorID, "flatten"),
 	}
 }
 
-// FlattenOperatorConfig is the configuration of a restructure operator
+// FlattenOperatorConfig is the configuration of a flatten operator
 type FlattenOperatorConfig struct {
 	helper.TransformerConfig `mapstructure:",squash" yaml:",inline"`
 	Field                    entry.BodyField `mapstructure:"field" json:"field" yaml:"field"`
@@ -46,6 +47,10 @@ func (c FlattenOperatorConfig) Build(context operator.BuildContext) ([]operator.
 	transformerOperator, err := c.TransformerConfig.Build(context)
 	if err != nil {
 		return nil, err
+	}
+
+	if strings.Contains(c.Field.String(), "$attributes") || strings.Contains(c.Field.String(), "$resource") {
+		return nil, fmt.Errorf("flatten: field cannot be resource or attribute")
 	}
 
 	flattenOp := &FlattenOperator{
@@ -62,12 +67,12 @@ type FlattenOperator struct {
 	Field entry.BodyField
 }
 
-// Process will process an entry with a restructure transformation.
+// Process will process an entry with a flatten transformation.
 func (p *FlattenOperator) Process(ctx context.Context, entry *entry.Entry) error {
 	return p.ProcessWith(ctx, entry, p.Transform)
 }
 
-// Transform will apply the restructure operations to an entry
+// Transform will apply the flatten operation to an entry
 func (p *FlattenOperator) Transform(entry *entry.Entry) error {
 	parent := p.Field.Parent()
 	val, ok := entry.Delete(p.Field)

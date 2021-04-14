@@ -113,6 +113,19 @@ func TestBuildAndProcess(t *testing.T) {
 			newTestEntry,
 			nil,
 		},
+		{
+			"flatten_resource",
+			true,
+			func() *FlattenOperatorConfig {
+				cfg := defaultCfg()
+				cfg.Field = entry.BodyField{
+					Keys: []string{"$resource", "invalid"},
+				}
+				return cfg
+			}(),
+			newTestEntry,
+			nil,
+		},
 	}
 
 	for _, tc := range cases {
@@ -120,15 +133,21 @@ func TestBuildAndProcess(t *testing.T) {
 			cfg := tc.op
 			cfg.OutputIDs = []string{"fake"}
 			cfg.OnError = "drop"
-			ops, err := cfg.Build(testutil.NewBuildContext(t))
-			require.NoError(t, err)
-			op := ops[0]
 
+			ops, err := cfg.Build(testutil.NewBuildContext(t))
+			if tc.expectErr && err != nil {
+				require.Error(t, err)
+				t.SkipNow()
+			}
+			require.NoError(t, err)
+
+			op := ops[0]
 			flatten := op.(*FlattenOperator)
 			fake := testutil.NewFakeOutput(t)
 			flatten.SetOutputs([]operator.Operator{fake})
 			val := tc.input()
 			err = flatten.Process(context.Background(), val)
+
 			if tc.expectErr {
 				require.Error(t, err)
 			} else {

@@ -28,8 +28,9 @@ import (
 )
 
 type configTestCase struct {
-	name   string
-	expect *FlattenOperatorConfig
+	name      string
+	expect    *FlattenOperatorConfig
+	expectErr bool
 }
 
 // Test unmarshalling of values into config struct
@@ -44,6 +45,7 @@ func TestGoldenConfig(t *testing.T) {
 				}
 				return cfg
 			}(),
+			false,
 		},
 		{
 			"flatten_second_level",
@@ -54,16 +56,34 @@ func TestGoldenConfig(t *testing.T) {
 				}
 				return cfg
 			}(),
+			false,
+		},
+		{
+			"flatten_attributes",
+			func() *FlattenOperatorConfig {
+				cfg := defaultCfg()
+				cfg.Field = entry.BodyField{
+					Keys: []string{"$attributes", "errField"},
+				}
+				return cfg
+			}(),
+			false,
 		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			cfgFromYaml, yamlErr := configFromFileViaYaml(path.Join(".", "testdata", fmt.Sprintf("%s.yaml", tc.name)))
 			cfgFromMapstructure, mapErr := configFromFileViaMapstructure(path.Join(".", "testdata", fmt.Sprintf("%s.yaml", tc.name)))
-			require.NoError(t, yamlErr)
-			require.Equal(t, tc.expect, cfgFromYaml)
-			require.NoError(t, mapErr)
-			require.Equal(t, tc.expect, cfgFromMapstructure)
+			if tc.expectErr {
+				t.Log(cfgFromYaml)
+				require.Error(t, mapErr)
+				require.Error(t, yamlErr)
+			} else {
+				require.NoError(t, yamlErr)
+				require.Equal(t, tc.expect, cfgFromYaml)
+				require.NoError(t, mapErr)
+				require.Equal(t, tc.expect, cfgFromMapstructure)
+			}
 		})
 	}
 }
