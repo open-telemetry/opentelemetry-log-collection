@@ -11,7 +11,9 @@ The `retain` operator keeps the specified list of fields, and removes the rest.
 | `fields`      | required         | A list of [fields](/docs/types/field.md)  to be kept.                                                                                                                                                     |
 | `on_error` | `send`           | The behavior of the operator if it encounters an error. See [on_error](/docs/types/on_error.md)                                                                                                                                          |
 | `if`       |                  | An [expression](/docs/types/expression.md) that, when set, will be evaluated to determine whether this operator should be used for the given entry. This allows you to do easy conditional parsing without branching logic with routers. |
-
+<hr>
+<b>NOTE:</b> If no fields in a group (attributes,resource, or body) are specified, that entire group will be retained.
+<hr>
 Example usage:
 <hr>
 Retain fields in the body
@@ -111,8 +113,8 @@ Retain fields from resource
 ```yaml
 - type: retain
     fields:
-      - key1
-      - key2
+      - $resource.key1
+      - $resource.key2
 ```
 
 <table>
@@ -145,7 +147,8 @@ Retain fields from resource
      "key2": "val2",
   },
   "attributes": { },  
-  "body": { }
+  "body": { 
+    "key1": "val1",
   }
 }
 ```
@@ -160,8 +163,8 @@ Retain fields from attributes
 ```yaml
 - type: retain
     fields:
-      - key1
-      - key2
+      - $attributes.key1
+      - $attributes.key2
 ```
 
 <table>
@@ -193,7 +196,9 @@ Retain fields from attributes
      "key1": "val1",
      "key2": "val2",
   },  
-  "body": { }
+  "body": { 
+    "key1": "val1",
+  }
 }
 ```
 

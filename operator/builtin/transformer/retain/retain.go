@@ -28,14 +28,14 @@ func init() {
 	operator.Register("retain", func() operator.Builder { return NewRetainOperatorConfig("") })
 }
 
-// NewRetainOperatorConfig creates a new restructure operator config with default values
+// NewRetainOperatorConfig creates a new retain operator config with default values
 func NewRetainOperatorConfig(operatorID string) *RetainOperatorConfig {
 	return &RetainOperatorConfig{
 		TransformerConfig: helper.NewTransformerConfig(operatorID, "retain"),
 	}
 }
 
-// RetainOperatorConfig is the configuration of a restructure operator
+// RetainOperatorConfig is the configuration of a retain operator
 type RetainOperatorConfig struct {
 	helper.TransformerConfig `mapstructure:",squash" yaml:",inline"`
 	Fields                   []entry.Field `mapstructure:"fields" json:"fields" yaml:"fields"`
