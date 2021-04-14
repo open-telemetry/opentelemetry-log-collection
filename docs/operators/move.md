@@ -215,8 +215,6 @@ Remove a layer from the body
   "resource": { },
   "attributes": { },  
   "body": {
-    "wrapper": {
-    }
     "key1": "val1",
     "key2": "val2",
     "key3": "val3"
