@@ -60,11 +60,13 @@ func (c RetainOperatorConfig) Build(context operator.BuildContext) ([]operator.O
 		typeCheck := field.String()
 		if strings.HasPrefix(typeCheck, "$resource") {
 			retainOp.ContainsResourceFields = true
-		} else if strings.HasPrefix(typeCheck, "$attributes") {
-			retainOp.ContainsAttributeFields = true
-		} else {
-			retainOp.ContainsBodyFields = true
+			continue
 		}
+		if strings.HasPrefix(typeCheck, "$attributes") {
+			retainOp.ContainsAttributeFields = true
+			continue
+		}
+		retainOp.ContainsBodyFields = true
 	}
 	return []operator.Operator{retainOp}, nil
 }
