@@ -17,6 +17,7 @@ package retain
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/open-telemetry/opentelemetry-log-collection/entry"
 	"github.com/open-telemetry/opentelemetry-log-collection/operator"
@@ -56,20 +57,12 @@ func (c RetainOperatorConfig) Build(context operator.BuildContext) ([]operator.O
 	}
 
 	for _, field := range c.Fields {
-		// if reflect.TypeOf(field) == reflect.TypeOf(entry.AttributeField{}) {
-		// 	retainOp.ContainsAttributeFields = true
-		// } else if reflect.TypeOf(field) == reflect.TypeOf(entry.ResourceField{}) {
-		// 	retainOp.ContainsResourceFields = true
-		// } else if reflect.TypeOf(field) == reflect.TypeOf(entry.BodyField{}) {
-		// 	retainOp.ContainsBodyFields = true
-		// }
-
-		_, bodyOk := field.FieldInterface.(entry.ResourceField)
-		if _, attributeOk := field.FieldInterface.(entry.AttributeField); attributeOk {
-			retainOp.ContainsAttributeFields = true
-		} else if _, resourceOk := field.FieldInterface.(entry.ResourceField); resourceOk {
+		typeCheck := field.String()
+		if strings.HasPrefix(typeCheck, "$resource") {
 			retainOp.ContainsResourceFields = true
-		} else if bodyOk {
+		} else if strings.HasPrefix(typeCheck, "$attributes") {
+			retainOp.ContainsAttributeFields = true
+		} else {
 			retainOp.ContainsBodyFields = true
 		}
 	}
