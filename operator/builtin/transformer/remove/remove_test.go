@@ -51,7 +51,7 @@ func TestProcessAndBuild(t *testing.T) {
 			"remove_one",
 			func() *RemoveOperatorConfig {
 				cfg := defaultCfg()
-				cfg.Field = entry.NewBodyField("key")
+				cfg.Field = NewBodyField("key")
 				return cfg
 			}(),
 			newTestEntry,
@@ -70,7 +70,7 @@ func TestProcessAndBuild(t *testing.T) {
 			"remove_nestedkey",
 			func() *RemoveOperatorConfig {
 				cfg := defaultCfg()
-				cfg.Field = entry.NewBodyField("nested", "nestedkey")
+				cfg.Field = NewBodyField("nested", "nestedkey")
 				return cfg
 			}(),
 			newTestEntry,
@@ -88,7 +88,7 @@ func TestProcessAndBuild(t *testing.T) {
 			"remove_obj",
 			func() *RemoveOperatorConfig {
 				cfg := defaultCfg()
-				cfg.Field = entry.NewBodyField("nested")
+				cfg.Field = NewBodyField("nested")
 				return cfg
 			}(),
 			newTestEntry,
@@ -105,7 +105,7 @@ func TestProcessAndBuild(t *testing.T) {
 			"remove_single_attribute",
 			func() *RemoveOperatorConfig {
 				cfg := defaultCfg()
-				cfg.Field = entry.NewAttributeField("key")
+				cfg.Field = NewAttributeField("key")
 				return cfg
 			}(),
 			func() *entry.Entry {
@@ -126,7 +126,7 @@ func TestProcessAndBuild(t *testing.T) {
 			"remove_single_resource",
 			func() *RemoveOperatorConfig {
 				cfg := defaultCfg()
-				cfg.Field = entry.NewResourceField("key")
+				cfg.Field = NewResourceField("key")
 				return cfg
 			}(),
 			func() *entry.Entry {
@@ -147,13 +147,34 @@ func TestProcessAndBuild(t *testing.T) {
 			"remove_body",
 			func() *RemoveOperatorConfig {
 				cfg := defaultCfg()
-				cfg.Field = entry.NewBodyField()
+				cfg.Field.allBody = true
 				return cfg
 			}(),
 			newTestEntry,
 			func() *entry.Entry {
 				e := newTestEntry()
 				e.Body = nil
+				return e
+			},
+			false,
+		},
+		{
+			"remove_resource",
+			func() *RemoveOperatorConfig {
+				cfg := defaultCfg()
+				cfg.Field.allResource = true
+				return cfg
+			}(),
+			func() *entry.Entry {
+				e := newTestEntry()
+				e.Resource = map[string]string{
+					"key": "val",
+				}
+				return e
+			},
+			func() *entry.Entry {
+				e := newTestEntry()
+				e.Resource = nil
 				return e
 			},
 			false,

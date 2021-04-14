@@ -30,6 +30,7 @@ type RootableField struct {
 	*entry.Field
 	allResource   bool
 	allAttributes bool
+	allBody       bool
 }
 
 // UnmarshalJSON will unmarshal a field from JSON
@@ -50,7 +51,12 @@ func (f *RootableField) UnmarshalJSON(raw []byte) error {
 		return nil
 	}
 
-	field, err := entry.FieldFromString(s) // TODO make method available
+	if s == entry.BodyPrefix {
+		*f = RootableField{allBody: true}
+		return nil
+	}
+
+	field, err := entry.FieldFromString(s)
 	if err != nil {
 		return err
 	}
@@ -113,4 +119,24 @@ func (f *RootableField) String() string {
 		return entry.ResourcePrefix
 	}
 	return f.Field.String()
+}
+
+func NewNilRootableField() RootableField {
+	nilField := entry.NewNilField()
+	return RootableField{Field: &nilField}
+}
+
+func NewBodyField(keys ...string) RootableField {
+	field := entry.NewBodyField(keys...)
+	return RootableField{Field: &field}
+}
+
+func NewResourceField(key string) RootableField {
+	field := entry.NewResourceField(key)
+	return RootableField{Field: &field}
+}
+
+func NewAttributeField(key string) RootableField {
+	field := entry.NewAttributeField(key)
+	return RootableField{Field: &field}
 }

@@ -23,7 +23,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v2"
 
-	"github.com/open-telemetry/opentelemetry-log-collection/entry"
 	"github.com/open-telemetry/opentelemetry-log-collection/operator/helper"
 )
 
@@ -39,7 +38,7 @@ func TestGoldenConfig(t *testing.T) {
 		// 	"remove_body",
 		// 	func() *RemoveOperatorConfig {
 		// 		cfg := defaultCfg()
-		// 		cfg.Field = entry.NewBodyField("nested")
+		// 		cfg.Field = NewBodyField("nested")
 		// 		return cfg
 		// 	}(),
 		// },
@@ -47,7 +46,7 @@ func TestGoldenConfig(t *testing.T) {
 		// 	"remove_single_attribute",
 		// 	func() *RemoveOperatorConfig {
 		// 		cfg := defaultCfg()
-		// 		cfg.Field = entry.NewAttributeField("key")
+		// 		cfg.Field = NewAttributeField("key")
 		// 		return cfg
 		// 	}(),
 		// },
@@ -55,15 +54,31 @@ func TestGoldenConfig(t *testing.T) {
 		// 	"remove_single_resource",
 		// 	func() *RemoveOperatorConfig {
 		// 		cfg := defaultCfg()
-		// 		cfg.Field = entry.NewResourceField("key")
+		// 		cfg.Field = NewResourceField("key")
+		// 		return cfg
+		// 	}(),
+		// },
+		// {
+		// 	"remove_entire_resource",
+		// 	func() *RemoveOperatorConfig {
+		// 		cfg := defaultCfg()
+		// 		cfg.Field.allResource = true
 		// 		return cfg
 		// 	}(),
 		// },
 		{
-			"remove_entire_resource",
+			"remove_entire_body",
 			func() *RemoveOperatorConfig {
 				cfg := defaultCfg()
-				cfg.Field = entry.NewResourceField("asd")
+				cfg.Field.allBody = true
+				return cfg
+			}(),
+		},
+		{
+			"remove_entire_attributes",
+			func() *RemoveOperatorConfig {
+				cfg := defaultCfg()
+				cfg.Field.allAttributes = true
 				return cfg
 			}(),
 		},

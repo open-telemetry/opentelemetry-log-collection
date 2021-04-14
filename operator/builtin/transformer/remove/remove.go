@@ -38,7 +38,7 @@ func NewRemoveOperatorConfig(operatorID string) *RemoveOperatorConfig {
 type RemoveOperatorConfig struct {
 	helper.TransformerConfig `mapstructure:",squash" yaml:",inline"`
 
-	Field entry.RootableField `mapstructure:"field"  json:"field" yaml:"field"`
+	Field RootableField `mapstructure:"field"  json:"field" yaml:"field"`
 }
 
 // Build will build a Remove operator from the supplied configuration
@@ -47,8 +47,8 @@ func (c RemoveOperatorConfig) Build(context operator.BuildContext) ([]operator.O
 	if err != nil {
 		return nil, err
 	}
-	// TODO what is the nil value of RootableField and how do we detect it?
-	if c.Field == entry.NewNilField() {
+
+	if c.Field == NewNilRootableField() {
 		return nil, fmt.Errorf("remove: field is empty")
 	}
 
@@ -56,12 +56,6 @@ func (c RemoveOperatorConfig) Build(context operator.BuildContext) ([]operator.O
 		TransformerOperator: transformerOperator,
 		Field:               c.Field,
 	}
-	if c.Field == entry.NewBodyField() {
-		removeOperator.RemoveBody = true
-	}
-	// else if c.Field == entry.NewResourceField() {
-
-	// }
 
 	return []operator.Operator{removeOperator}, nil
 }
@@ -69,10 +63,7 @@ func (c RemoveOperatorConfig) Build(context operator.BuildContext) ([]operator.O
 // RemoveOperator is an operator that deletes a field
 type RemoveOperator struct {
 	helper.TransformerOperator
-	Field            entry.RootableField
-	RemoveBody       bool
-	RemoveAttributes bool
-	RemoveResource   bool
+	Field RootableField
 }
 
 // Process will process an entry with a restructure transformation.
@@ -83,27 +74,22 @@ func (p *RemoveOperator) Process(ctx context.Context, entry *entry.Entry) error 
 // Transform will apply the restructure operations to an entry
 func (p *RemoveOperator) Transform(entry *entry.Entry) error {
 
-	if p.Field.AllAttributes {
+	if p.Field.allAttributes {
 		entry.Attributes = nil
 		return nil
 	}
 
-	if p.Field.AllResource {
-		entry.Attributes = nil
-		return nil
-	}
-
-	// TODO whatever else
-
-	if p.RemoveBody {
-		entry.Body = nil
-	} else if p.RemoveResource {
+	if p.Field.allResource {
 		entry.Resource = nil
-	} else if p.RemoveAttributes {
-		entry.Attributes = nil
+		return nil
 	}
 
-	_, exist := entry.Delete(p.Field)
+	if p.Field.allBody {
+		entry.Body = nil
+		return nil
+	}
+
+	_, exist := entry.Delete(p.Field.Field)
 	if !exist {
 		return fmt.Errorf("remove: field does not exist")
 	}
