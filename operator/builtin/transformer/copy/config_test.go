@@ -124,5 +124,5 @@ func configFromFileViaMapstructure(file string) (*CopyOperatorConfig, error) {
 }
 
 func defaultCfg() *CopyOperatorConfig {
-	return NewCopyOperatorConfig("move")
+	return NewCopyOperatorConfig("copy")
 }

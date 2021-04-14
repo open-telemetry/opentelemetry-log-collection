@@ -41,7 +41,7 @@ type CopyOperatorConfig struct {
 	To                       entry.Field `mapstructure:"to" json:"to" yaml:"to"`
 }
 
-// Build will build a Copy operator from the supplied configuration
+// Build will build a copy operator from the supplied configuration
 func (c CopyOperatorConfig) Build(context operator.BuildContext) ([]operator.Operator, error) {
 	transformerOperator, err := c.TransformerConfig.Build(context)
 	if err != nil {
@@ -72,20 +72,16 @@ type CopyOperator struct {
 	To   entry.Field
 }
 
-// Process will process an entry with a restructure transformation.
+// Process will process an entry with a copy transformation.
 func (p *CopyOperator) Process(ctx context.Context, entry *entry.Entry) error {
 	return p.ProcessWith(ctx, entry, p.Transform)
 }
 
-// Transform will apply the restructure operations to an entry
+// Transform will apply the copy operation to an entry
 func (p *CopyOperator) Transform(e *entry.Entry) error {
 	val, exist := p.From.Get(e)
 	if !exist {
 		return fmt.Errorf("copy: from field does not exist in this entry: %s", p.From.String())
 	}
-	err := p.To.Set(e, val)
-	if err != nil {
-		return err
-	}
-	return nil
+	return p.To.Set(e, val)
 }

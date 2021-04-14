@@ -15,6 +15,51 @@ The `copy` operator copies a value from one [field](/docs/types/field.md) to ano
 
 Example usage:
 
+<hr>
+Copy a value from the body to resource
+
+```yaml
+- type: copy
+    from: key
+    to: $resource.newkey
+```
+
+<table>
+<tr><td> Input Entry</td> <td> Output Entry </td></tr>
+<tr>
+<td>
+
+```json
+{
+  "resource": { },
+  "attributes": { },  
+  "body": { 
+    "key":"value"
+  }
+}
+```
+
+</td>
+<td>
+
+```json
+{
+  "resource": { 
+       "newkey":"value"
+  },
+  "attributes": { },  
+  "body": {
+    "key":"value"
+  }
+}
+```
+
+</td>
+</tr>
+</table>
+
+<hr>
+
 Copy a value from the body to attributes
 ```yaml
 - type: copy
@@ -108,7 +153,7 @@ Copy a value from attributes to the body
 
 <hr>
 
-Copy a value from an object to the body
+Copy a value within the body
 ```yaml
 - type: copy
     from: obj.nested
@@ -144,47 +189,6 @@ Copy a value from an object to the body
         "nested":"nestedvalue"
     },
     "newkey":"nestedvalue"
-  }
-}
-```
-
-</td>
-</tr>
-</table>
-
-Copy a value from resource to the body
-```yaml
-- type: copy
-    from: $resource.key
-    to: newkey
-```
-
-<table>
-<tr><td> Input Entry</td> <td> Output Entry </td></tr>
-<tr>
-<td>
-
-```json
-{
-  "resource": { 
-    "key":"value"
-  },
-  "attributes": { },  
-  "body": { }
-}
-```
-
-</td>
-<td>
-
-```json
-{
-  "resource": { 
-       "key":"value"
-  },
-  "attributes": { },  
-  "body": {
-    "newkey":"value"
   }
 }
 ```
