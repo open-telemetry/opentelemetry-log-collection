@@ -47,7 +47,7 @@ func (c RetainOperatorConfig) Build(context operator.BuildContext) ([]operator.O
 	if err != nil {
 		return nil, err
 	}
-	if c.Fields == nil {
+	if c.Fields == nil || len(c.Fields) == 0 {
 		return nil, fmt.Errorf("retain: 'fields' is empty")
 	}
 
@@ -59,14 +59,14 @@ func (c RetainOperatorConfig) Build(context operator.BuildContext) ([]operator.O
 	for _, field := range c.Fields {
 		typeCheck := field.String()
 		if strings.HasPrefix(typeCheck, "$resource") {
-			retainOp.ContainsResourceFields = true
+			retainOp.AllResourceFields = true
 			continue
 		}
 		if strings.HasPrefix(typeCheck, "$attributes") {
-			retainOp.ContainsAttributeFields = true
+			retainOp.AllAttributeFields = true
 			continue
 		}
-		retainOp.ContainsBodyFields = true
+		retainOp.AllBodyFields = true
 	}
 	return []operator.Operator{retainOp}, nil
 }
@@ -74,10 +74,10 @@ func (c RetainOperatorConfig) Build(context operator.BuildContext) ([]operator.O
 // RetainOperator keeps the given fields and deletes the rest.
 type RetainOperator struct {
 	helper.TransformerOperator
-	Fields                  []entry.Field
-	ContainsBodyFields      bool
-	ContainsAttributeFields bool
-	ContainsResourceFields  bool
+	Fields             []entry.Field
+	AllBodyFields      bool
+	AllAttributeFields bool
+	AllResourceFields  bool
 }
 
 // Process will process an entry with a retain transformation.
@@ -90,13 +90,13 @@ func (p *RetainOperator) Transform(e *entry.Entry) error {
 	newEntry := entry.New()
 	newEntry.Timestamp = e.Timestamp
 
-	if !p.ContainsAttributeFields {
-		newEntry.Attributes = e.Attributes
-	}
-	if !p.ContainsResourceFields {
+	if !p.AllResourceFields {
 		newEntry.Resource = e.Resource
 	}
-	if !p.ContainsBodyFields {
+	if !p.AllAttributeFields {
+		newEntry.Attributes = e.Attributes
+	}
+	if !p.AllBodyFields {
 		newEntry.Body = e.Body
 	}
 

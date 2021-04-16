@@ -296,6 +296,21 @@ func TestBuildAndProcess(t *testing.T) {
 				return e
 			},
 		},
+		{
+			"retain_a_non_existant_key",
+			false,
+			func() *RetainOperatorConfig {
+				cfg := defaultCfg()
+				cfg.Fields = append(cfg.Fields, entry.NewBodyField("aNonExsistentKey"))
+				return cfg
+			}(),
+			newTestEntry,
+			func() *entry.Entry {
+				e := newTestEntry()
+				e.Body = nil
+				return e
+			},
+		},
 	}
 	for _, tc := range cases {
 		t.Run("BuildandProcess/"+tc.name, func(t *testing.T) {
