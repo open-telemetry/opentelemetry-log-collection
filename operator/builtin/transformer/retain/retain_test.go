@@ -297,7 +297,7 @@ func TestBuildAndProcess(t *testing.T) {
 			},
 		},
 		{
-			"retain_a_non_existant_key",
+			"retain_a_non_existent_key",
 			false,
 			func() *RetainOperatorConfig {
 				cfg := defaultCfg()
