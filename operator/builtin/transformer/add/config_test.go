@@ -15,26 +15,17 @@ package add
 // limitations under the License.
 
 import (
-	"fmt"
-	"path"
 	"testing"
-
-	"github.com/stretchr/testify/require"
 
 	"github.com/open-telemetry/opentelemetry-log-collection/entry"
 	"github.com/open-telemetry/opentelemetry-log-collection/operator/helper/operatortest"
 )
 
-type configTestCase struct {
-	name   string
-	expect *AddOperatorConfig
-}
-
 func TestGoldenConfig(t *testing.T) {
-	cases := []configTestCase{
+	cases := []operatortest.ConfigTestCase{
 		{
-			"add_value",
-			func() *AddOperatorConfig {
+			Name: "add_value",
+			Expect: func() *AddOperatorConfig {
 				cfg := defaultCfg()
 				cfg.Field = entry.NewBodyField("new")
 				cfg.Value = "randomMessage"
@@ -42,8 +33,8 @@ func TestGoldenConfig(t *testing.T) {
 			}(),
 		},
 		{
-			"add_expr",
-			func() *AddOperatorConfig {
+			Name: "add_expr",
+			Expect: func() *AddOperatorConfig {
 				cfg := defaultCfg()
 				cfg.Field = entry.NewBodyField("new")
 				cfg.Value = `EXPR($.key + "_suffix")`
@@ -51,8 +42,8 @@ func TestGoldenConfig(t *testing.T) {
 			}(),
 		},
 		{
-			"add_nest",
-			func() *AddOperatorConfig {
+			Name: "add_nest",
+			Expect: func() *AddOperatorConfig {
 				cfg := defaultCfg()
 				cfg.Field = entry.NewBodyField("new")
 				cfg.Value = map[interface{}]interface{}{
@@ -62,8 +53,8 @@ func TestGoldenConfig(t *testing.T) {
 			}(),
 		},
 		{
-			"add_attribute",
-			func() *AddOperatorConfig {
+			Name: "add_attribute",
+			Expect: func() *AddOperatorConfig {
 				cfg := defaultCfg()
 				cfg.Field = entry.NewAttributeField("new")
 				cfg.Value = "newVal"
@@ -71,8 +62,8 @@ func TestGoldenConfig(t *testing.T) {
 			}(),
 		},
 		{
-			"add_resource",
-			func() *AddOperatorConfig {
+			Name: "add_resource",
+			Expect: func() *AddOperatorConfig {
 				cfg := defaultCfg()
 				cfg.Field = entry.NewResourceField("new")
 				cfg.Value = "newVal"
@@ -80,8 +71,8 @@ func TestGoldenConfig(t *testing.T) {
 			}(),
 		},
 		{
-			"add_resource_expr",
-			func() *AddOperatorConfig {
+			Name: "add_resource_expr",
+			Expect: func() *AddOperatorConfig {
 				cfg := defaultCfg()
 				cfg.Field = entry.NewResourceField("new")
 				cfg.Value = `EXPR($.key + "_suffix")`
@@ -89,8 +80,8 @@ func TestGoldenConfig(t *testing.T) {
 			}(),
 		},
 		{
-			"add_array_to_body",
-			func() *AddOperatorConfig {
+			Name: "add_array_to_body",
+			Expect: func() *AddOperatorConfig {
 				cfg := defaultCfg()
 				cfg.Field = entry.NewBodyField("new")
 				cfg.Value = []interface{}{1, 2, 3, 4}
@@ -99,13 +90,8 @@ func TestGoldenConfig(t *testing.T) {
 		},
 	}
 	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
-			cfgFromYaml, yamlErr := operatortest.ConfigFromFileViaYaml(path.Join(".", "testdata", fmt.Sprintf("%s.yaml", tc.name)), defaultCfg())
-			cfgFromMapstructure, mapErr := operatortest.ConfigFromFileViaMapstructure(path.Join(".", "testdata", fmt.Sprintf("%s.yaml", tc.name)), defaultCfg())
-			require.NoError(t, yamlErr)
-			require.Equal(t, tc.expect, cfgFromYaml)
-			require.NoError(t, mapErr)
-			require.Equal(t, tc.expect, cfgFromMapstructure)
+		t.Run(tc.Name, func(t *testing.T) {
+			operatortest.RunGoldenConfigTest(defaultCfg(), t, tc)
 		})
 	}
 }

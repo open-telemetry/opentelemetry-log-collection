@@ -3,13 +3,22 @@ package operatortest
 import (
 	"fmt"
 	"io/ioutil"
+	"path"
+	"testing"
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/open-telemetry/opentelemetry-log-collection/operator/helper"
+	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v2"
 )
 
-func ConfigFromFileViaYaml(file string, config interface{}) (interface{}, error) {
+// ConfigTestCase is used for testing golden configs
+type ConfigTestCase struct {
+	Name   string
+	Expect interface{}
+}
+
+func configFromFileViaYaml(file string, config interface{}) (interface{}, error) {
 	bytes, err := ioutil.ReadFile(file)
 	if err != nil {
 		return nil, fmt.Errorf("could not find config file: %s", err)
@@ -21,7 +30,7 @@ func ConfigFromFileViaYaml(file string, config interface{}) (interface{}, error)
 	return config, nil
 }
 
-func ConfigFromFileViaMapstructure(file string, config interface{}) (interface{}, error) {
+func configFromFileViaMapstructure(file string, config interface{}) (interface{}, error) {
 	bytes, err := ioutil.ReadFile(file)
 	if err != nil {
 		return nil, fmt.Errorf("could not find config file: %s", err)
@@ -43,4 +52,14 @@ func ConfigFromFileViaMapstructure(file string, config interface{}) (interface{}
 		return nil, err
 	}
 	return config, nil
+}
+
+// RunGoldenConfigTest Unmarshalls yaml files and compares them against the expected.
+func RunGoldenConfigTest(config interface{}, t *testing.T, tc ConfigTestCase) {
+	cfgFromYaml, yamlErr := configFromFileViaYaml(path.Join(".", "testdata", fmt.Sprintf("%s.yaml", tc.Name)), config)
+	cfgFromMapstructure, mapErr := configFromFileViaMapstructure(path.Join(".", "testdata", fmt.Sprintf("%s.yaml", tc.Name)), config)
+	require.NoError(t, yamlErr)
+	require.Equal(t, tc.Expect, cfgFromYaml)
+	require.NoError(t, mapErr)
+	require.Equal(t, tc.Expect, cfgFromMapstructure)
 }
