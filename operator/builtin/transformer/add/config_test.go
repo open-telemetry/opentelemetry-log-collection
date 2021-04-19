@@ -16,16 +16,13 @@ package add
 
 import (
 	"fmt"
-	"io/ioutil"
 	"path"
 	"testing"
 
-	"github.com/mitchellh/mapstructure"
 	"github.com/stretchr/testify/require"
-	"gopkg.in/yaml.v2"
 
 	"github.com/open-telemetry/opentelemetry-log-collection/entry"
-	"github.com/open-telemetry/opentelemetry-log-collection/operator/helper"
+	"github.com/open-telemetry/opentelemetry-log-collection/operator/helper/operatortest"
 )
 
 type configTestCase struct {
@@ -103,53 +100,14 @@ func TestGoldenConfig(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			cfgFromYaml, yamlErr := configFromFileViaYaml(path.Join(".", "testdata", fmt.Sprintf("%s.yaml", tc.name)))
-			cfgFromMapstructure, mapErr := configFromFileViaMapstructure(path.Join(".", "testdata", fmt.Sprintf("%s.yaml", tc.name)))
+			cfgFromYaml, yamlErr := operatortest.ConfigFromFileViaYaml(path.Join(".", "testdata", fmt.Sprintf("%s.yaml", tc.name)), defaultCfg())
+			cfgFromMapstructure, mapErr := operatortest.ConfigFromFileViaMapstructure(path.Join(".", "testdata", fmt.Sprintf("%s.yaml", tc.name)), defaultCfg())
 			require.NoError(t, yamlErr)
 			require.Equal(t, tc.expect, cfgFromYaml)
 			require.NoError(t, mapErr)
 			require.Equal(t, tc.expect, cfgFromMapstructure)
 		})
 	}
-}
-
-func configFromFileViaYaml(file string) (*AddOperatorConfig, error) {
-	bytes, err := ioutil.ReadFile(file)
-	if err != nil {
-		return nil, fmt.Errorf("could not find config file: %s", err)
-	}
-
-	config := defaultCfg()
-	if err := yaml.Unmarshal(bytes, config); err != nil {
-		return nil, fmt.Errorf("failed to read config file as yaml: %s", err)
-	}
-
-	return config, nil
-}
-
-func configFromFileViaMapstructure(file string) (*AddOperatorConfig, error) {
-	bytes, err := ioutil.ReadFile(file)
-	if err != nil {
-		return nil, fmt.Errorf("could not find config file: %s", err)
-	}
-
-	raw := map[string]interface{}{}
-
-	if err := yaml.Unmarshal(bytes, raw); err != nil {
-		return nil, fmt.Errorf("failed to read data from yaml: %s", err)
-	}
-
-	cfg := defaultCfg()
-	dc := &mapstructure.DecoderConfig{Result: cfg, DecodeHook: helper.JSONUnmarshalerHook()}
-	ms, err := mapstructure.NewDecoder(dc)
-	if err != nil {
-		return nil, err
-	}
-	err = ms.Decode(raw)
-	if err != nil {
-		return nil, err
-	}
-	return cfg, nil
 }
 
 func defaultCfg() *AddOperatorConfig {
