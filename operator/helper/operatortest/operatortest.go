@@ -21,9 +21,10 @@ import (
 	"testing"
 
 	"github.com/mitchellh/mapstructure"
-	"github.com/open-telemetry/opentelemetry-log-collection/operator/helper"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v2"
+
+	"github.com/open-telemetry/opentelemetry-log-collection/operator/helper"
 )
 
 // ConfigTestCase is used for testing golden configs
