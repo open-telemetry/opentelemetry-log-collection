@@ -91,7 +91,7 @@ func TestGoldenConfig(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.Name, func(t *testing.T) {
-			operatortest.RunGoldenConfigTest(defaultCfg(), t, tc)
+			operatortest.RunGoldenConfigTest(t, defaultCfg(), tc)
 		})
 	}
 }
