@@ -1,6 +1,7 @@
 ## `flatten` operator
 
 The `flatten` operator flattens a field by moving its children up to the same level as the field.
+The operator only flattens a single level deep.
 
 ### Configuration Fields
 
@@ -25,17 +26,21 @@ Flatten an object to the base of the body
 ```
 
 <table>
-<tr><td> Input Body </td> <td> Output Body </td></tr>
+<tr><td> Input Entry </td> <td> Output Entry </td></tr>
 <tr>
 <td>
 
 ```json
 {
-  "key1": {
-    "nested1": "nestedval1",
-    "nested2": "nestedval2"
-  },
-  "key2": "val2"
+  "resource": { },
+  "attributes": { },  
+  "body": {
+    "key1": {
+      "nested1": "nestedval1",
+      "nested2": "nestedval2"
+    },
+    "key2": "val2"
+  }
 }
 ```
 
@@ -43,11 +48,15 @@ Flatten an object to the base of the body
 <td>
 
 ```json
-{
-  "nested1": "nestedval1",
-  "nested2": "nestedval2",
-  "key2": "val2"
-}
+  {
+    "resource": { },
+    "attributes": { },  
+    "body": {
+      "nested1": "nestedval1",
+      "nested2": "nestedval2",
+      "key2": "val2"
+    }
+  }
 ```
 
 </td>
@@ -65,18 +74,22 @@ Flatten an object within another object
 ```
 
 <table>
-<tr><td> Input Body </td> <td> Output Body </td></tr>
+<tr><td> Input Entry </td> <td> Output Entry </td></tr>
 <tr>
 <td>
 
 ```json
 {
-  "wrapper": {
-    "key1": {
-      "nested1": "nestedval1",
-      "nested2": "nestedval2"
-    },
-    "key2": "val2"
+  "resource": { },
+  "attributes": { },  
+  "body": {
+    "wrapper": {
+      "key1": {
+        "nested1": "nestedval1",
+        "nested2": "nestedval2"
+      },
+      "key2": "val2"
+    }
   }
 }
 ```
@@ -86,10 +99,14 @@ Flatten an object within another object
 
 ```json
 {
-  "wrapper": {
-    "nested1": "nestedval1",
-    "nested2": "nestedval2",
-    "key2": "val2"
+  "resource": { },
+  "attributes": { },  
+  "body": {
+    "wrapper": {
+      "nested1": "nestedval1",
+      "nested2": "nestedval2",
+      "key2": "val2"
+    }
   }
 }
 ```

@@ -68,6 +68,41 @@ func TestBuildAndProcess(t *testing.T) {
 			},
 		},
 		{
+			"flatten_one_level_multiValue",
+			false,
+			func() *FlattenOperatorConfig {
+				cfg := defaultCfg()
+				cfg.Field = entry.BodyField{
+					Keys: []string{"nested"},
+				}
+				return cfg
+			}(),
+			func() *entry.Entry {
+				e := newTestEntry()
+				e.Body = map[string]interface{}{
+					"key": "val",
+					"nested": map[string]interface{}{
+						"nestedkey1": "nestedval",
+						"nestedkey2": "nestedval",
+						"nestedkey3": "nestedval",
+						"nestedkey4": "nestedval",
+					},
+				}
+				return e
+			},
+			func() *entry.Entry {
+				e := newTestEntry()
+				e.Body = map[string]interface{}{
+					"key":        "val",
+					"nestedkey1": "nestedval",
+					"nestedkey2": "nestedval",
+					"nestedkey3": "nestedval",
+					"nestedkey4": "nestedval",
+				}
+				return e
+			},
+		},
+		{
 			"flatten_second_level",
 			false,
 			func() *FlattenOperatorConfig {
@@ -96,6 +131,106 @@ func TestBuildAndProcess(t *testing.T) {
 					"nested": map[string]interface{}{
 						"nestedkey": "nestedval",
 					},
+				}
+				return e
+			},
+		},
+		{
+			"flatten_second_level_multivalue",
+			false,
+			func() *FlattenOperatorConfig {
+				cfg := defaultCfg()
+				cfg.Field = entry.BodyField{
+					Keys: []string{"nested", "secondlevel"},
+				}
+				return cfg
+			}(),
+			func() *entry.Entry {
+				e := newTestEntry()
+				e.Body = map[string]interface{}{
+					"key": "val",
+					"nested": map[string]interface{}{
+						"secondlevel": map[string]interface{}{
+							"nestedkey1": "nestedval",
+							"nestedkey2": "nestedval",
+							"nestedkey3": "nestedval",
+							"nestedkey4": "nestedval",
+						},
+					},
+				}
+				return e
+			},
+			func() *entry.Entry {
+				e := newTestEntry()
+				e.Body = map[string]interface{}{
+					"key": "val",
+					"nested": map[string]interface{}{
+						"nestedkey1": "nestedval",
+						"nestedkey2": "nestedval",
+						"nestedkey3": "nestedval",
+						"nestedkey4": "nestedval",
+					},
+				}
+				return e
+			},
+		},
+		{
+			"flatten_move_nest",
+			false,
+			func() *FlattenOperatorConfig {
+				cfg := defaultCfg()
+				cfg.Field = entry.BodyField{
+					Keys: []string{"nested"},
+				}
+				return cfg
+			}(),
+			func() *entry.Entry {
+				e := newTestEntry()
+				e.Body = map[string]interface{}{
+					"key": "val",
+					"nested": map[string]interface{}{
+						"secondlevel": map[string]interface{}{
+							"nestedkey": "nestedval",
+						},
+					},
+				}
+				return e
+			},
+			func() *entry.Entry {
+				e := newTestEntry()
+				e.Body = map[string]interface{}{
+					"key": "val",
+					"secondlevel": map[string]interface{}{
+						"nestedkey": "nestedval",
+					},
+				}
+				return e
+			},
+		},
+		{
+			"flatten_collision",
+			false,
+			func() *FlattenOperatorConfig {
+				cfg := defaultCfg()
+				cfg.Field = entry.BodyField{
+					Keys: []string{"nested"},
+				}
+				return cfg
+			}(),
+			func() *entry.Entry {
+				e := newTestEntry()
+				e.Body = map[string]interface{}{
+					"key": "val",
+					"nested": map[string]interface{}{
+						"key": "nestedval",
+					},
+				}
+				return e
+			},
+			func() *entry.Entry {
+				e := newTestEntry()
+				e.Body = map[string]interface{}{
+					"key": "nestedval",
 				}
 				return e
 			},
