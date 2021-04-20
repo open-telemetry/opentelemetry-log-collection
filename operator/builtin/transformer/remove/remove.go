@@ -73,7 +73,6 @@ func (p *RemoveOperator) Process(ctx context.Context, entry *entry.Entry) error 
 
 // Transform will apply the restructure operations to an entry
 func (p *RemoveOperator) Transform(entry *entry.Entry) error {
-
 	if p.Field.allAttributes {
 		entry.Attributes = nil
 		return nil
