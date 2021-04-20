@@ -82,6 +82,11 @@ func (f *RootableField) UnmarshalYAML(unmarshal func(interface{}) error) error {
 		return nil
 	}
 
+	if s == entry.BodyPrefix {
+		*f = RootableField{allBody: true}
+		return nil
+	}
+
 	field, err := entry.FieldFromString(s)
 	if err != nil {
 		return err

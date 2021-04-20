@@ -179,6 +179,27 @@ func TestProcessAndBuild(t *testing.T) {
 			},
 			false,
 		},
+		{
+			"remove_attributes",
+			func() *RemoveOperatorConfig {
+				cfg := defaultCfg()
+				cfg.Field.allAttributes = true
+				return cfg
+			}(),
+			func() *entry.Entry {
+				e := newTestEntry()
+				e.Attributes = map[string]string{
+					"key": "val",
+				}
+				return e
+			},
+			func() *entry.Entry {
+				e := newTestEntry()
+				e.Attributes = nil
+				return e
+			},
+			false,
+		},
 	}
 	for _, tc := range cases {
 		t.Run("BuildandProcess/"+tc.name, func(t *testing.T) {

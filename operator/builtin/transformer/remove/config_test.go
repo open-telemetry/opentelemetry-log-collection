@@ -34,38 +34,38 @@ type configTestCase struct {
 // test unmarshalling of values into config struct
 func TestGoldenConfig(t *testing.T) {
 	cases := []configTestCase{
-		// {
-		// 	"remove_body",
-		// 	func() *RemoveOperatorConfig {
-		// 		cfg := defaultCfg()
-		// 		cfg.Field = NewBodyField("nested")
-		// 		return cfg
-		// 	}(),
-		// },
-		// {
-		// 	"remove_single_attribute",
-		// 	func() *RemoveOperatorConfig {
-		// 		cfg := defaultCfg()
-		// 		cfg.Field = NewAttributeField("key")
-		// 		return cfg
-		// 	}(),
-		// },
-		// {
-		// 	"remove_single_resource",
-		// 	func() *RemoveOperatorConfig {
-		// 		cfg := defaultCfg()
-		// 		cfg.Field = NewResourceField("key")
-		// 		return cfg
-		// 	}(),
-		// },
-		// {
-		// 	"remove_entire_resource",
-		// 	func() *RemoveOperatorConfig {
-		// 		cfg := defaultCfg()
-		// 		cfg.Field.allResource = true
-		// 		return cfg
-		// 	}(),
-		// },
+		{
+			"remove_body",
+			func() *RemoveOperatorConfig {
+				cfg := defaultCfg()
+				cfg.Field = NewBodyField("nested")
+				return cfg
+			}(),
+		},
+		{
+			"remove_single_attribute",
+			func() *RemoveOperatorConfig {
+				cfg := defaultCfg()
+				cfg.Field = NewAttributeField("key")
+				return cfg
+			}(),
+		},
+		{
+			"remove_single_resource",
+			func() *RemoveOperatorConfig {
+				cfg := defaultCfg()
+				cfg.Field = NewResourceField("key")
+				return cfg
+			}(),
+		},
+		{
+			"remove_entire_resource",
+			func() *RemoveOperatorConfig {
+				cfg := defaultCfg()
+				cfg.Field.allResource = true
+				return cfg
+			}(),
+		},
 		{
 			"remove_entire_body",
 			func() *RemoveOperatorConfig {
