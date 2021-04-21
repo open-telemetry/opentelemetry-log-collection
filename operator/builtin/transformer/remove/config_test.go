@@ -48,24 +48,24 @@ func TestGoldenConfig(t *testing.T) {
 			}(),
 		},
 		{
-			"remove_entire_resource",
-			func() *RemoveOperatorConfig {
+			Name: "remove_entire_resource",
+			Expect: func() *RemoveOperatorConfig {
 				cfg := defaultCfg()
 				cfg.Field.allResource = true
 				return cfg
 			}(),
 		},
 		{
-			"remove_entire_body",
-			func() *RemoveOperatorConfig {
+			Name: "remove_entire_body",
+			Expect: func() *RemoveOperatorConfig {
 				cfg := defaultCfg()
 				cfg.Field.allBody = true
 				return cfg
 			}(),
 		},
 		{
-			"remove_entire_attributes",
-			func() *RemoveOperatorConfig {
+			Name: "remove_entire_attributes",
+			Expect: func() *RemoveOperatorConfig {
 				cfg := defaultCfg()
 				cfg.Field.allAttributes = true
 				return cfg
