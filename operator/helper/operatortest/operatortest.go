@@ -27,7 +27,7 @@ import (
 	"github.com/open-telemetry/opentelemetry-log-collection/operator/helper"
 )
 
-// ConfigTestCase is used for testing golden configs
+// ConfigUnmarshalTest is used for testing golden configs
 type ConfigUnmarshalTest struct {
 	Name      string
 	Expect    interface{}
@@ -70,7 +70,7 @@ func configFromFileViaMapstructure(file string, config interface{}) error {
 	return nil
 }
 
-// RunGoldenConfigTest Unmarshalls yaml files and compares them against the expected.
+// Run Unmarshalls yaml files and compares them against the expected.
 func (c ConfigUnmarshalTest) Run(t *testing.T, config interface{}) {
 	mapConfig := config
 	yamlConfig := config
