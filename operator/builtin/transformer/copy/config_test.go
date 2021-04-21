@@ -11,7 +11,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-package remove
+package copy
 
 import (
 	"testing"
@@ -24,50 +24,38 @@ import (
 func TestGoldenConfig(t *testing.T) {
 	cases := []operatortest.ConfigUnmarshalTest{
 		{
-			Name: "remove_body",
-			Expect: func() *RemoveOperatorConfig {
+			Name: "body_to_body",
+			Expect: func() *CopyOperatorConfig {
 				cfg := defaultCfg()
-				cfg.Field = newBodyField("nested")
+				cfg.From = entry.NewBodyField("key")
+				cfg.To = entry.NewBodyField("key2")
 				return cfg
 			}(),
 		},
 		{
-			Name: "remove_single_attribute",
-			Expect: func() *RemoveOperatorConfig {
+			Name: "body_to_attribute",
+			Expect: func() *CopyOperatorConfig {
 				cfg := defaultCfg()
-				cfg.Field = newAttributeField("key")
+				cfg.From = entry.NewBodyField("key")
+				cfg.To = entry.NewAttributeField("key2")
 				return cfg
 			}(),
 		},
 		{
-			Name: "remove_single_resource",
-			Expect: func() *RemoveOperatorConfig {
+			Name: "attribute_to_resource",
+			Expect: func() *CopyOperatorConfig {
 				cfg := defaultCfg()
-				cfg.Field = newResourceField("key")
+				cfg.From = entry.NewAttributeField("key")
+				cfg.To = entry.NewResourceField("key2")
 				return cfg
 			}(),
 		},
 		{
-			"remove_entire_resource",
-			func() *RemoveOperatorConfig {
+			Name: "attribute_to_body",
+			Expect: func() *CopyOperatorConfig {
 				cfg := defaultCfg()
-				cfg.Field.allResource = true
-				return cfg
-			}(),
-		},
-		{
-			"remove_entire_body",
-			func() *RemoveOperatorConfig {
-				cfg := defaultCfg()
-				cfg.Field.allBody = true
-				return cfg
-			}(),
-		},
-		{
-			"remove_entire_attributes",
-			func() *RemoveOperatorConfig {
-				cfg := defaultCfg()
-				cfg.Field.allAttributes = true
+				cfg.From = entry.NewAttributeField("key")
+				cfg.To = entry.NewBodyField("key2")
 				return cfg
 			}(),
 		},
@@ -79,21 +67,6 @@ func TestGoldenConfig(t *testing.T) {
 	}
 }
 
-func defaultCfg() *RemoveOperatorConfig {
-	return NewRemoveOperatorConfig("move")
-}
-
-func newBodyField(keys ...string) RootableField {
-	field := entry.NewBodyField(keys...)
-	return RootableField{Field: field}
-}
-
-func newResourceField(key string) RootableField {
-	field := entry.NewResourceField(key)
-	return RootableField{Field: field}
-}
-
-func newAttributeField(key string) RootableField {
-	field := entry.NewAttributeField(key)
-	return RootableField{Field: field}
+func defaultCfg() *CopyOperatorConfig {
+	return NewCopyOperatorConfig("copy")
 }
