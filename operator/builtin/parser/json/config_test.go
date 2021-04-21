@@ -22,7 +22,7 @@ import (
 )
 
 func TestJSONParserConfig(t *testing.T) {
-	cases := []operatortest.ConfigTestCase{
+	cases := []operatortest.ConfigUnmarshalTest{
 		{
 			Name:   "default",
 			Expect: defaultCfg(),
@@ -96,7 +96,7 @@ func TestJSONParserConfig(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.Name, func(t *testing.T) {
-			operatortest.RunGoldenConfigTest(t, defaultCfg(), tc)
+			tc.Run(t, defaultCfg())
 		})
 	}
 }

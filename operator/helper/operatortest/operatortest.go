@@ -28,60 +28,62 @@ import (
 )
 
 // ConfigTestCase is used for testing golden configs
-type ConfigTestCase struct {
+type ConfigUnmarshalTest struct {
 	Name      string
 	Expect    interface{}
 	ExpectErr bool
 }
 
-func configFromFileViaYaml(file string, config interface{}) (interface{}, error) {
+func configFromFileViaYaml(file string, config interface{}) error {
 	bytes, err := ioutil.ReadFile(file)
 	if err != nil {
-		return nil, fmt.Errorf("could not find config file: %s", err)
+		return fmt.Errorf("could not find config file: %s", err)
 	}
 	if err := yaml.Unmarshal(bytes, config); err != nil {
-		return nil, fmt.Errorf("failed to read config file as yaml: %s", err)
+		return fmt.Errorf("failed to read config file as yaml: %s", err)
 	}
 
-	return config, nil
+	return nil
 }
 
-func configFromFileViaMapstructure(file string, config interface{}) (interface{}, error) {
+func configFromFileViaMapstructure(file string, config interface{}) error {
 	bytes, err := ioutil.ReadFile(file)
 	if err != nil {
-		return nil, fmt.Errorf("could not find config file: %s", err)
+		return fmt.Errorf("could not find config file: %s", err)
 	}
 
 	raw := map[string]interface{}{}
 
 	if err := yaml.Unmarshal(bytes, raw); err != nil {
-		return nil, fmt.Errorf("failed to read data from yaml: %s", err)
+		return fmt.Errorf("failed to read data from yaml: %s", err)
 	}
 
 	dc := &mapstructure.DecoderConfig{Result: config, DecodeHook: helper.JSONUnmarshalerHook()}
 	ms, err := mapstructure.NewDecoder(dc)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	err = ms.Decode(raw)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	return config, nil
+	return nil
 }
 
 // RunGoldenConfigTest Unmarshalls yaml files and compares them against the expected.
-func RunGoldenConfigTest(t *testing.T, config interface{}, tc ConfigTestCase) {
-	cfgFromYaml, yamlErr := configFromFileViaYaml(path.Join(".", "testdata", fmt.Sprintf("%s.yaml", tc.Name)), config)
-	cfgFromMapstructure, mapErr := configFromFileViaMapstructure(path.Join(".", "testdata", fmt.Sprintf("%s.yaml", tc.Name)), config)
+func (c ConfigUnmarshalTest) Run(t *testing.T, config interface{}) {
+	mapConfig := config
+	yamlConfig := config
+	yamlErr := configFromFileViaYaml(path.Join(".", "testdata", fmt.Sprintf("%s.yaml", c.Name)), yamlConfig)
+	mapErr := configFromFileViaMapstructure(path.Join(".", "testdata", fmt.Sprintf("%s.yaml", c.Name)), mapConfig)
 
-	if tc.ExpectErr {
+	if c.ExpectErr {
 		require.Error(t, mapErr)
 		require.Error(t, yamlErr)
 	} else {
 		require.NoError(t, yamlErr)
-		require.Equal(t, tc.Expect, cfgFromYaml)
+		require.Equal(t, c.Expect, yamlConfig)
 		require.NoError(t, mapErr)
-		require.Equal(t, tc.Expect, cfgFromMapstructure)
+		require.Equal(t, c.Expect, mapConfig)
 	}
 }

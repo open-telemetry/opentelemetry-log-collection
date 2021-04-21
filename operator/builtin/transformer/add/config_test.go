@@ -22,7 +22,7 @@ import (
 )
 
 func TestGoldenConfig(t *testing.T) {
-	cases := []operatortest.ConfigTestCase{
+	cases := []operatortest.ConfigUnmarshalTest{
 		{
 			Name: "add_value",
 			Expect: func() *AddOperatorConfig {
@@ -91,7 +91,7 @@ func TestGoldenConfig(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.Name, func(t *testing.T) {
-			operatortest.RunGoldenConfigTest(t, defaultCfg(), tc)
+			tc.Run(t, defaultCfg())
 		})
 	}
 }

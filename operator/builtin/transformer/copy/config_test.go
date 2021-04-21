@@ -22,7 +22,7 @@ import (
 
 // test unmarshalling of values into config struct
 func TestGoldenConfig(t *testing.T) {
-	cases := []operatortest.ConfigTestCase{
+	cases := []operatortest.ConfigUnmarshalTest{
 		{
 			Name: "body_to_body",
 			Expect: func() *CopyOperatorConfig {
@@ -62,7 +62,7 @@ func TestGoldenConfig(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.Name, func(t *testing.T) {
-			operatortest.RunGoldenConfigTest(t, defaultCfg(), tc)
+			tc.Run(t, defaultCfg())
 		})
 	}
 }

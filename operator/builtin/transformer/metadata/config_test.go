@@ -21,7 +21,7 @@ import (
 )
 
 func TestMetaDataGoldenConfig(t *testing.T) {
-	cases := []operatortest.ConfigTestCase{
+	cases := []operatortest.ConfigUnmarshalTest{
 		{
 			Name:   "default",
 			Expect: defaultCfg(),
@@ -98,7 +98,7 @@ func TestMetaDataGoldenConfig(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.Name, func(t *testing.T) {
-			operatortest.RunGoldenConfigTest(t, defaultCfg(), tc)
+			tc.Run(t, defaultCfg())
 		})
 	}
 }
