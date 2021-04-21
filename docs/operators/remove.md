@@ -249,7 +249,7 @@ Remove all attributes
 ```
 
 </td>
-<td>
+<td> 
 
 ```json
 {
