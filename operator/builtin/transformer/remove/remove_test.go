@@ -33,6 +33,7 @@ type testCase struct {
 	expectErr bool
 }
 
+// Test building and processing a given remove config
 func TestProcessAndBuild(t *testing.T) {
 	newTestEntry := func() *entry.Entry {
 		e := entry.New()
@@ -51,7 +52,7 @@ func TestProcessAndBuild(t *testing.T) {
 			"remove_one",
 			func() *RemoveOperatorConfig {
 				cfg := defaultCfg()
-				cfg.Field = NewBodyField("key")
+				cfg.Field = newBodyField("key")
 				return cfg
 			}(),
 			newTestEntry,
@@ -70,7 +71,7 @@ func TestProcessAndBuild(t *testing.T) {
 			"remove_nestedkey",
 			func() *RemoveOperatorConfig {
 				cfg := defaultCfg()
-				cfg.Field = NewBodyField("nested", "nestedkey")
+				cfg.Field = newBodyField("nested", "nestedkey")
 				return cfg
 			}(),
 			newTestEntry,
@@ -88,7 +89,7 @@ func TestProcessAndBuild(t *testing.T) {
 			"remove_obj",
 			func() *RemoveOperatorConfig {
 				cfg := defaultCfg()
-				cfg.Field = NewBodyField("nested")
+				cfg.Field = newBodyField("nested")
 				return cfg
 			}(),
 			newTestEntry,
@@ -105,7 +106,7 @@ func TestProcessAndBuild(t *testing.T) {
 			"remove_single_attribute",
 			func() *RemoveOperatorConfig {
 				cfg := defaultCfg()
-				cfg.Field = NewAttributeField("key")
+				cfg.Field = newAttributeField("key")
 				return cfg
 			}(),
 			func() *entry.Entry {
@@ -126,7 +127,7 @@ func TestProcessAndBuild(t *testing.T) {
 			"remove_single_resource",
 			func() *RemoveOperatorConfig {
 				cfg := defaultCfg()
-				cfg.Field = NewResourceField("key")
+				cfg.Field = newResourceField("key")
 				return cfg
 			}(),
 			func() *entry.Entry {

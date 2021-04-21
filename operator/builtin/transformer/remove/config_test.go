@@ -23,6 +23,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v2"
 
+	"github.com/open-telemetry/opentelemetry-log-collection/entry"
 	"github.com/open-telemetry/opentelemetry-log-collection/operator/helper"
 )
 
@@ -38,7 +39,7 @@ func TestGoldenConfig(t *testing.T) {
 			"remove_body",
 			func() *RemoveOperatorConfig {
 				cfg := defaultCfg()
-				cfg.Field = NewBodyField("nested")
+				cfg.Field = newBodyField("nested")
 				return cfg
 			}(),
 		},
@@ -46,7 +47,7 @@ func TestGoldenConfig(t *testing.T) {
 			"remove_single_attribute",
 			func() *RemoveOperatorConfig {
 				cfg := defaultCfg()
-				cfg.Field = NewAttributeField("key")
+				cfg.Field = newAttributeField("key")
 				return cfg
 			}(),
 		},
@@ -54,7 +55,7 @@ func TestGoldenConfig(t *testing.T) {
 			"remove_single_resource",
 			func() *RemoveOperatorConfig {
 				cfg := defaultCfg()
-				cfg.Field = NewResourceField("key")
+				cfg.Field = newResourceField("key")
 				return cfg
 			}(),
 		},
@@ -136,4 +137,19 @@ func configFromFileViaMapstructure(file string) (*RemoveOperatorConfig, error) {
 
 func defaultCfg() *RemoveOperatorConfig {
 	return NewRemoveOperatorConfig("move")
+}
+
+func newBodyField(keys ...string) RootableField {
+	field := entry.NewBodyField(keys...)
+	return RootableField{Field: field}
+}
+
+func newResourceField(key string) RootableField {
+	field := entry.NewResourceField(key)
+	return RootableField{Field: field}
+}
+
+func newAttributeField(key string) RootableField {
+	field := entry.NewAttributeField(key)
+	return RootableField{Field: field}
 }

@@ -27,14 +27,14 @@ func init() {
 	operator.Register("remove", func() operator.Builder { return NewRemoveOperatorConfig("") })
 }
 
-// NewRemoveOperatorConfig creates a new restructure operator config with default values
+// NewRemoveOperatorConfig creates a new remove operator config with default values
 func NewRemoveOperatorConfig(operatorID string) *RemoveOperatorConfig {
 	return &RemoveOperatorConfig{
 		TransformerConfig: helper.NewTransformerConfig(operatorID, "remove"),
 	}
 }
 
-// RemoveOperatorConfig is the configuration of a restructure operator
+// RemoveOperatorConfig is the configuration of a remove operator
 type RemoveOperatorConfig struct {
 	helper.TransformerConfig `mapstructure:",squash" yaml:",inline"`
 
@@ -48,7 +48,7 @@ func (c RemoveOperatorConfig) Build(context operator.BuildContext) ([]operator.O
 		return nil, err
 	}
 
-	if c.Field == NewNilRootableField() {
+	if c.Field.Field == entry.NewNilField() {
 		return nil, fmt.Errorf("remove: field is empty")
 	}
 
@@ -66,7 +66,7 @@ type RemoveOperator struct {
 	Field RootableField
 }
 
-// Process will process an entry with a restructure transformation.
+// Process will process an entry with a remove transformation.
 func (p *RemoveOperator) Process(ctx context.Context, entry *entry.Entry) error {
 	return p.ProcessWith(ctx, entry, p.Transform)
 }

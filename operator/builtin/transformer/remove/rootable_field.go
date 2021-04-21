@@ -27,7 +27,7 @@ import (
 // It is used to get, set, and delete values at this field.
 // It is deserialized from JSON dot notation.
 type RootableField struct {
-	*entry.Field
+	entry.Field
 	allResource   bool
 	allAttributes bool
 	allBody       bool
@@ -40,28 +40,7 @@ func (f *RootableField) UnmarshalJSON(raw []byte) error {
 	if err != nil {
 		return err
 	}
-
-	if s == entry.ResourcePrefix {
-		*f = RootableField{allResource: true}
-		return nil
-	}
-
-	if s == entry.AttributesPrefix {
-		*f = RootableField{allAttributes: true}
-		return nil
-	}
-
-	if s == entry.BodyPrefix {
-		*f = RootableField{allBody: true}
-		return nil
-	}
-
-	field, err := entry.FieldFromString(s)
-	if err != nil {
-		return err
-	}
-	*f = RootableField{Field: &field}
-	return nil
+	return f.unmarshalCheckString(s)
 }
 
 // UnmarshalYAML will unmarshal a field from YAML
@@ -71,7 +50,10 @@ func (f *RootableField) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	if err != nil {
 		return err
 	}
+	return f.unmarshalCheckString(s)
+}
 
+func (f *RootableField) unmarshalCheckString(s string) error {
 	if s == entry.ResourcePrefix {
 		*f = RootableField{allResource: true}
 		return nil
@@ -87,61 +69,18 @@ func (f *RootableField) UnmarshalYAML(unmarshal func(interface{}) error) error {
 		return nil
 	}
 
-	field, err := entry.FieldFromString(s)
+	field, err := entry.NewField(s)
 	if err != nil {
 		return err
 	}
-	*f = RootableField{Field: &field}
+	*f = RootableField{Field: field}
 	return nil
 }
 
+// Get gets the value of the field if the flags for 'allAttributes' or 'allResource' isn't set
 func (f *RootableField) Get(entry *entry.Entry) (interface{}, bool) {
 	if f.allAttributes || f.allResource {
 		return nil, false
 	}
 	return f.Field.Get(entry)
-}
-
-func (f *RootableField) Set(entry *entry.Entry, value interface{}) error {
-	if f.allAttributes || f.allResource {
-		return nil // TODO maybe return error
-	}
-	return f.Field.Set(entry, value)
-}
-
-func (f *RootableField) Delete(entry *entry.Entry) (interface{}, bool) {
-	if f.allAttributes || f.allResource {
-		return nil, false
-	}
-	return f.Field.Delete(entry)
-}
-
-func (f *RootableField) String() string {
-	if f.allAttributes {
-		return entry.AttributesPrefix
-	}
-	if f.allResource {
-		return entry.ResourcePrefix
-	}
-	return f.Field.String()
-}
-
-func NewNilRootableField() RootableField {
-	nilField := entry.NewNilField()
-	return RootableField{Field: &nilField}
-}
-
-func NewBodyField(keys ...string) RootableField {
-	field := entry.NewBodyField(keys...)
-	return RootableField{Field: &field}
-}
-
-func NewResourceField(key string) RootableField {
-	field := entry.NewResourceField(key)
-	return RootableField{Field: &field}
-}
-
-func NewAttributeField(key string) RootableField {
-	field := entry.NewAttributeField(key)
-	return RootableField{Field: &field}
 }

@@ -20,7 +20,6 @@ import (
 )
 
 const (
-	// TODO fix all references to lower case
 	AttributesPrefix = "$attributes"
 	ResourcePrefix   = "$resource"
 	BodyPrefix       = "$body"
@@ -48,7 +47,7 @@ func (f *Field) UnmarshalJSON(raw []byte) error {
 	if err != nil {
 		return err
 	}
-	*f, err = FieldFromString(s)
+	*f, err = NewField(s)
 	return err
 }
 
@@ -59,11 +58,11 @@ func (f *Field) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	if err != nil {
 		return err
 	}
-	*f, err = FieldFromString(s)
+	*f, err = NewField(s)
 	return err
 }
 
-func FieldFromString(s string) (Field, error) {
+func NewField(s string) (Field, error) {
 	split, err := splitField(s)
 	if err != nil {
 		return Field{}, fmt.Errorf("splitting field: %s", err)
