@@ -224,8 +224,7 @@ func TestParserCSVMultipleBodys(t *testing.T) {
 		entry := entry.New()
 		entry.Body = "stanza,INFO,started agent\nstanza,DEBUG,started agent"
 		err = op.Process(context.Background(), entry)
-		// require.Nil(t, err, "Expected to parse a single csv record, got '2'")
-		// require.Contains(t, err.Error(), "Expected to parse a single csv record, got '2'")
+		require.Nil(t, err, "Expected to parse a single csv record, got '2'")
 		require.NoError(t, err)
 
 		fake.ExpectBody(t, map[string]interface{}{
