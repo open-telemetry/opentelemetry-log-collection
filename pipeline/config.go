@@ -15,6 +15,8 @@
 package pipeline
 
 import (
+	"fmt"
+
 	"github.com/open-telemetry/opentelemetry-log-collection/operator"
 )
 
@@ -32,7 +34,21 @@ func (c Config) BuildOperators(bc operator.BuildContext) ([]operator.Operator, e
 		}
 		operators = append(operators, op...)
 	}
+	dedeplucateIDs(operators)
 	return operators, nil
+}
+
+func dedeplucateIDs(ops []operator.Operator) error {
+	typeMap := make(map[string]int)
+	for _, op := range ops {
+		if op.ID() != op.Type() {
+			continue
+		}
+
+		op.SetID(fmt.Sprintf("%s%d", op.Type(), typeMap[op.Type()]))
+		typeMap[op.Type()]++
+	}
+	return nil
 }
 
 // BuildPipeline will build a pipeline from the config.

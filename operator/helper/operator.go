@@ -92,6 +92,11 @@ func (p *BasicOperator) ID() string {
 	return p.OperatorID
 }
 
+// SetID sets a new ID on the operator.
+func (p *BasicOperator) SetID(id string) {
+	p.OperatorID = id
+}
+
 // Type will return the operator type.
 func (p *BasicOperator) Type() string {
 	return p.OperatorType

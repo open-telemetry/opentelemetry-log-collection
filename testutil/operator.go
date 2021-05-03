@@ -106,6 +106,11 @@ func (_m *Operator) Process(_a0 context.Context, _a1 *entry.Entry) error {
 	return r0
 }
 
+// SetID provides a mock function with given fields: _a0
+func (_m *Operator) SetID(_a0 string) {
+	_m.Called(_a0)
+}
+
 // SetOutputs provides a mock function with given fields: _a0
 func (_m *Operator) SetOutputs(_a0 []operator.Operator) error {
 	ret := _m.Called(_a0)
