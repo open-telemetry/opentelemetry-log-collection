@@ -16,13 +16,9 @@ package file
 
 import (
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/bmatcuk/doublestar/v3"
-	"golang.org/x/text/encoding"
-	"golang.org/x/text/encoding/ianaindex"
-	"golang.org/x/text/encoding/unicode"
 
 	"github.com/open-telemetry/opentelemetry-log-collection/entry"
 	"github.com/open-telemetry/opentelemetry-log-collection/operator"
@@ -48,7 +44,7 @@ func NewInputConfig(operatorID string) *InputConfig {
 		StartAt:            "end",
 		MaxLogSize:         defaultMaxLogSize,
 		MaxConcurrentFiles: defaultMaxConcurrentFiles,
-		Encoding:           "nop",
+		Encoding:           helper.NewEncodingConfig(),
 	}
 }
 
@@ -67,7 +63,7 @@ type InputConfig struct {
 	FingerprintSize    helper.ByteSize        `mapstructure:"fingerprint_size,omitempty"      json:"fingerprint_size,omitempty"     yaml:"fingerprint_size,omitempty"`
 	MaxLogSize         helper.ByteSize        `mapstructure:"max_log_size,omitempty"          json:"max_log_size,omitempty"         yaml:"max_log_size,omitempty"`
 	MaxConcurrentFiles int                    `mapstructure:"max_concurrent_files,omitempty"  json:"max_concurrent_files,omitempty" yaml:"max_concurrent_files,omitempty"`
-	Encoding           string                 `mapstructure:"encoding,omitempty"              json:"encoding,omitempty"             yaml:"encoding,omitempty"`
+	Encoding           helper.EncodingConfig  `mapstructure:",squash,omitempty"               json:",inline,omitempty"              yaml:",inline,omitempty"`
 }
 
 // Build will build a file input operator from the supplied configuration
@@ -111,7 +107,7 @@ func (c InputConfig) Build(context operator.BuildContext) ([]operator.Operator, 
 		return nil, fmt.Errorf("`fingerprint_size` must be at least %d bytes", minFingerprintSize)
 	}
 
-	encoding, err := lookupEncoding(c.Encoding)
+	encoding, err := c.Encoding.Build(context)
 	if err != nil {
 		return nil, err
 	}
@@ -162,28 +158,4 @@ func (c InputConfig) Build(context operator.BuildContext) ([]operator.Operator, 
 	}
 
 	return []operator.Operator{op}, nil
-}
-
-var encodingOverrides = map[string]encoding.Encoding{
-	"utf-16":   unicode.UTF16(unicode.LittleEndian, unicode.IgnoreBOM),
-	"utf16":    unicode.UTF16(unicode.LittleEndian, unicode.IgnoreBOM),
-	"utf8":     unicode.UTF8,
-	"ascii":    unicode.UTF8,
-	"us-ascii": unicode.UTF8,
-	"nop":      encoding.Nop,
-	"":         encoding.Nop,
-}
-
-func lookupEncoding(enc string) (encoding.Encoding, error) {
-	if encoding, ok := encodingOverrides[strings.ToLower(enc)]; ok {
-		return encoding, nil
-	}
-	encoding, err := ianaindex.IANA.Encoding(enc)
-	if err != nil {
-		return nil, fmt.Errorf("unsupported encoding '%s'", enc)
-	}
-	if encoding == nil {
-		return nil, fmt.Errorf("no charmap defined for encoding '%s'", enc)
-	}
-	return encoding, nil
 }

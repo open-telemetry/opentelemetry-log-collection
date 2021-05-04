@@ -1,0 +1,66 @@
+// Copyright The OpenTelemetry Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package helper
+
+import (
+	"fmt"
+	"strings"
+
+	"github.com/open-telemetry/opentelemetry-log-collection/operator"
+	"golang.org/x/text/encoding"
+	"golang.org/x/text/encoding/ianaindex"
+	"golang.org/x/text/encoding/unicode"
+)
+
+// NewBasicConfig creates a new Encoding config
+func NewEncodingConfig() EncodingConfig {
+	return EncodingConfig{
+		Encoding: "nop",
+	}
+}
+
+// EncodingConfig is the configuration of a Encoding helper
+type EncodingConfig struct {
+	Encoding string `mapstructure:"encoding,omitempty"              json:"encoding,omitempty"             yaml:"encoding,omitempty"`
+}
+
+// Build will build a Multiline operator.
+func (c EncodingConfig) Build(context operator.BuildContext) (encoding.Encoding, error) {
+	return lookupEncoding(c.Encoding)
+}
+
+var encodingOverrides = map[string]encoding.Encoding{
+	"utf-16":   unicode.UTF16(unicode.LittleEndian, unicode.IgnoreBOM),
+	"utf16":    unicode.UTF16(unicode.LittleEndian, unicode.IgnoreBOM),
+	"utf8":     unicode.UTF8,
+	"ascii":    unicode.UTF8,
+	"us-ascii": unicode.UTF8,
+	"nop":      encoding.Nop,
+	"":         encoding.Nop,
+}
+
+func lookupEncoding(enc string) (encoding.Encoding, error) {
+	if encoding, ok := encodingOverrides[strings.ToLower(enc)]; ok {
+		return encoding, nil
+	}
+	encoding, err := ianaindex.IANA.Encoding(enc)
+	if err != nil {
+		return nil, fmt.Errorf("unsupported encoding '%s'", enc)
+	}
+	if encoding == nil {
+		return nil, fmt.Errorf("no charmap defined for encoding '%s'", enc)
+	}
+	return encoding, nil
+}
