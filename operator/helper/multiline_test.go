@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package file
+package helper
 
 import (
 	"bufio"
@@ -137,8 +137,7 @@ func TestLineStartSplitFunc(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		cfg := NewInputConfig("")
-		cfg.Multiline = &MultilineConfig{
+		cfg := &MultilineConfig{
 			LineStartPattern: tc.Pattern,
 		}
 		splitFunc, err := cfg.getSplitFunc(unicode.UTF8)
@@ -246,8 +245,7 @@ func TestLineEndSplitFunc(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		cfg := NewInputConfig("")
-		cfg.Multiline = &MultilineConfig{
+		cfg := &MultilineConfig{
 			LineEndPattern: tc.Pattern,
 		}
 		splitFunc, err := cfg.getSplitFunc(unicode.UTF8)

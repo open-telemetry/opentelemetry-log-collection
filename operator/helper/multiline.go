@@ -12,15 +12,78 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package file
+package helper
 
 import (
 	"bufio"
 	"bytes"
+	"fmt"
 	"regexp"
 
+	"github.com/open-telemetry/opentelemetry-log-collection/operator"
 	"golang.org/x/text/encoding"
 )
+
+// NewBasicConfig creates a new Multiline config
+func NewMultilineConfig() MultilineConfig {
+	return MultilineConfig{
+		LineStartPattern: "",
+		LineEndPattern:   "",
+	}
+}
+
+// MultilineConfig is the configuration of a multiline helper
+type MultilineConfig struct {
+	LineStartPattern string `mapstructure:"line_start_pattern"  json:"line_start_pattern" yaml:"line_start_pattern"`
+	LineEndPattern   string `mapstructure:"line_end_pattern"    json:"line_end_pattern"   yaml:"line_end_pattern"`
+}
+
+// Build will build a Multiline operator.
+func (c MultilineConfig) Build(context operator.BuildContext, encoding encoding.Encoding) (MultilineOperator, error) {
+
+	splitFunc, err := c.getSplitFunc(encoding)
+	if err != nil {
+		return MultilineOperator{}, err
+	}
+
+	operator := MultilineOperator{
+		SplitFunc: splitFunc,
+	}
+
+	return operator, nil
+}
+
+// MultilineOperator is an operator which handle SplitFunc for bufio.Scanner
+type MultilineOperator struct {
+	SplitFunc bufio.SplitFunc
+}
+
+// getSplitFunc returns split function for bufio.Scanner basing on configured pattern
+func (c MultilineConfig) getSplitFunc(encoding encoding.Encoding) (bufio.SplitFunc, error) {
+	endPattern := c.LineEndPattern
+	startPattern := c.LineStartPattern
+
+	switch {
+	case endPattern != "" && startPattern != "":
+		return nil, fmt.Errorf("only one of line_start_pattern or line_end_pattern can be set")
+	case endPattern == "" && startPattern == "":
+		return NewNewlineSplitFunc(encoding)
+	case endPattern != "":
+		re, err := regexp.Compile("(?m)" + c.LineEndPattern)
+		if err != nil {
+			return nil, fmt.Errorf("compile line end regex: %s", err)
+		}
+		return NewLineEndSplitFunc(re), nil
+	case startPattern != "":
+		re, err := regexp.Compile("(?m)" + c.LineStartPattern)
+		if err != nil {
+			return nil, fmt.Errorf("compile line start regex: %s", err)
+		}
+		return NewLineStartSplitFunc(re), nil
+	default:
+		return nil, fmt.Errorf("unreachable")
+	}
+}
 
 // NewLineStartSplitFunc creates a bufio.SplitFunc that splits an incoming stream into
 // tokens that start with a match to the regex pattern provided

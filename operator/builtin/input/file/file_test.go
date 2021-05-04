@@ -164,7 +164,7 @@ func TestBuild(t *testing.T) {
 		{
 			"MultilineConfiguredStartAndEndPatterns",
 			func(f *InputConfig) {
-				f.Multiline = &MultilineConfig{
+				f.Multiline = helper.MultilineConfig{
 					LineEndPattern:   "Exists",
 					LineStartPattern: "Exists",
 				}
@@ -175,7 +175,7 @@ func TestBuild(t *testing.T) {
 		{
 			"MultilineConfiguredStartPattern",
 			func(f *InputConfig) {
-				f.Multiline = &MultilineConfig{
+				f.Multiline = helper.MultilineConfig{
 					LineStartPattern: "START.*",
 				}
 			},
@@ -185,7 +185,7 @@ func TestBuild(t *testing.T) {
 		{
 			"MultilineConfiguredEndPattern",
 			func(f *InputConfig) {
-				f.Multiline = &MultilineConfig{
+				f.Multiline = helper.MultilineConfig{
 					LineEndPattern: "END.*",
 				}
 			},
@@ -203,7 +203,7 @@ func TestBuild(t *testing.T) {
 		{
 			"LineStartAndEnd",
 			func(f *InputConfig) {
-				f.Multiline = &MultilineConfig{
+				f.Multiline = helper.MultilineConfig{
 					LineStartPattern: ".*",
 					LineEndPattern:   ".*",
 				}
@@ -214,15 +214,15 @@ func TestBuild(t *testing.T) {
 		{
 			"NoLineStartOrEnd",
 			func(f *InputConfig) {
-				f.Multiline = &MultilineConfig{}
+				f.Multiline = helper.MultilineConfig{}
 			},
-			require.Error,
-			nil,
+			require.NoError,
+			func(t *testing.T, f *InputOperator) {},
 		},
 		{
 			"InvalidLineStartRegex",
 			func(f *InputConfig) {
-				f.Multiline = &MultilineConfig{
+				f.Multiline = helper.MultilineConfig{
 					LineStartPattern: "(",
 				}
 			},
@@ -232,7 +232,7 @@ func TestBuild(t *testing.T) {
 		{
 			"InvalidLineEndRegex",
 			func(f *InputConfig) {
-				f.Multiline = &MultilineConfig{
+				f.Multiline = helper.MultilineConfig{
 					LineEndPattern: "(",
 				}
 			},

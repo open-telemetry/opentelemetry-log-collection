@@ -15,9 +15,7 @@
 package file
 
 import (
-	"bufio"
 	"fmt"
-	"regexp"
 	"strings"
 	"time"
 
@@ -61,21 +59,15 @@ type InputConfig struct {
 	Include []string `mapstructure:"include,omitempty" json:"include,omitempty" yaml:"include,omitempty"`
 	Exclude []string `mapstructure:"exclude,omitempty" json:"exclude,omitempty" yaml:"exclude,omitempty"`
 
-	PollInterval       helper.Duration  `mapstructure:"poll_interval,omitempty"         json:"poll_interval,omitempty"        yaml:"poll_interval,omitempty"`
-	Multiline          *MultilineConfig `mapstructure:"multiline,omitempty"             json:"multiline,omitempty"            yaml:"multiline,omitempty"`
-	IncludeFileName    bool             `mapstructure:"include_file_name,omitempty"     json:"include_file_name,omitempty"    yaml:"include_file_name,omitempty"`
-	IncludeFilePath    bool             `mapstructure:"include_file_path,omitempty"     json:"include_file_path,omitempty"    yaml:"include_file_path,omitempty"`
-	StartAt            string           `mapstructure:"start_at,omitempty"              json:"start_at,omitempty"             yaml:"start_at,omitempty"`
-	FingerprintSize    helper.ByteSize  `mapstructure:"fingerprint_size,omitempty"      json:"fingerprint_size,omitempty"     yaml:"fingerprint_size,omitempty"`
-	MaxLogSize         helper.ByteSize  `mapstructure:"max_log_size,omitempty"          json:"max_log_size,omitempty"         yaml:"max_log_size,omitempty"`
-	MaxConcurrentFiles int              `mapstructure:"max_concurrent_files,omitempty"  json:"max_concurrent_files,omitempty" yaml:"max_concurrent_files,omitempty"`
-	Encoding           string           `mapstructure:"encoding,omitempty"              json:"encoding,omitempty"             yaml:"encoding,omitempty"`
-}
-
-// MultilineConfig is the configuration a multiline operation
-type MultilineConfig struct {
-	LineStartPattern string `mapstructure:"line_start_pattern"  json:"line_start_pattern" yaml:"line_start_pattern"`
-	LineEndPattern   string `mapstructure:"line_end_pattern"    json:"line_end_pattern"   yaml:"line_end_pattern"`
+	PollInterval       helper.Duration        `mapstructure:"poll_interval,omitempty"         json:"poll_interval,omitempty"        yaml:"poll_interval,omitempty"`
+	Multiline          helper.MultilineConfig `mapstructure:"multiline,omitempty"             json:"multiline,omitempty"            yaml:"multiline,omitempty"`
+	IncludeFileName    bool                   `mapstructure:"include_file_name,omitempty"     json:"include_file_name,omitempty"    yaml:"include_file_name,omitempty"`
+	IncludeFilePath    bool                   `mapstructure:"include_file_path,omitempty"     json:"include_file_path,omitempty"    yaml:"include_file_path,omitempty"`
+	StartAt            string                 `mapstructure:"start_at,omitempty"              json:"start_at,omitempty"             yaml:"start_at,omitempty"`
+	FingerprintSize    helper.ByteSize        `mapstructure:"fingerprint_size,omitempty"      json:"fingerprint_size,omitempty"     yaml:"fingerprint_size,omitempty"`
+	MaxLogSize         helper.ByteSize        `mapstructure:"max_log_size,omitempty"          json:"max_log_size,omitempty"         yaml:"max_log_size,omitempty"`
+	MaxConcurrentFiles int                    `mapstructure:"max_concurrent_files,omitempty"  json:"max_concurrent_files,omitempty" yaml:"max_concurrent_files,omitempty"`
+	Encoding           string                 `mapstructure:"encoding,omitempty"              json:"encoding,omitempty"             yaml:"encoding,omitempty"`
 }
 
 // Build will build a file input operator from the supplied configuration
@@ -124,7 +116,7 @@ func (c InputConfig) Build(context operator.BuildContext) ([]operator.Operator, 
 		return nil, err
 	}
 
-	splitFunc, err := c.getSplitFunc(encoding)
+	multiline, err := c.Multiline.Build(context, encoding)
 	if err != nil {
 		return nil, err
 	}
@@ -153,7 +145,7 @@ func (c InputConfig) Build(context operator.BuildContext) ([]operator.Operator, 
 		InputOperator:      inputOperator,
 		Include:            c.Include,
 		Exclude:            c.Exclude,
-		SplitFunc:          splitFunc,
+		SplitFunc:          multiline.SplitFunc,
 		PollInterval:       c.PollInterval.Raw(),
 		FilePathField:      filePathField,
 		FileNameField:      fileNameField,
@@ -194,34 +186,4 @@ func lookupEncoding(enc string) (encoding.Encoding, error) {
 		return nil, fmt.Errorf("no charmap defined for encoding '%s'", enc)
 	}
 	return encoding, nil
-}
-
-// getSplitFunc will return the split function associated the configured mode.
-func (c InputConfig) getSplitFunc(encoding encoding.Encoding) (bufio.SplitFunc, error) {
-	if c.Multiline == nil {
-		return NewNewlineSplitFunc(encoding)
-	}
-	endPattern := c.Multiline.LineEndPattern
-	startPattern := c.Multiline.LineStartPattern
-
-	switch {
-	case endPattern != "" && startPattern != "":
-		return nil, fmt.Errorf("only one of line_start_pattern or line_end_pattern can be set")
-	case endPattern == "" && startPattern == "":
-		return nil, fmt.Errorf("one of line_start_pattern or line_end_pattern must be set")
-	case endPattern != "":
-		re, err := regexp.Compile("(?m)" + c.Multiline.LineEndPattern)
-		if err != nil {
-			return nil, fmt.Errorf("compile line end regex: %s", err)
-		}
-		return NewLineEndSplitFunc(re), nil
-	case startPattern != "":
-		re, err := regexp.Compile("(?m)" + c.Multiline.LineStartPattern)
-		if err != nil {
-			return nil, fmt.Errorf("compile line start regex: %s", err)
-		}
-		return NewLineStartSplitFunc(re), nil
-	default:
-		return nil, fmt.Errorf("unreachable")
-	}
 }
