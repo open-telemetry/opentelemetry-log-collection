@@ -195,7 +195,7 @@ func TestBuild(t *testing.T) {
 		{
 			"InvalidEncoding",
 			func(f *InputConfig) {
-				f.Encoding = helper.EncodingConfig{"UTF-3233"}
+				f.Encoding = helper.EncodingConfig{Encoding: "UTF-3233"}
 			},
 			require.Error,
 			nil,
@@ -1288,7 +1288,7 @@ func TestEncodings(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			operator, receivedEntries, tempDir := newTestFileOperator(t, func(cfg *InputConfig) {
-				cfg.Encoding = helper.EncodingConfig{tc.encoding}
+				cfg.Encoding = helper.EncodingConfig{Encoding: tc.encoding}
 			}, nil)
 
 			// Popualte the file

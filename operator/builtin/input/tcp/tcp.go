@@ -26,6 +26,7 @@ import (
 	"time"
 
 	"go.uber.org/zap"
+	"golang.org/x/text/encoding"
 
 	"github.com/open-telemetry/opentelemetry-log-collection/operator"
 	"github.com/open-telemetry/opentelemetry-log-collection/operator/helper"
@@ -49,6 +50,8 @@ func init() {
 func NewTCPInputConfig(operatorID string) *TCPInputConfig {
 	return &TCPInputConfig{
 		InputConfig: helper.NewInputConfig(operatorID, "tcp_input"),
+		Multiline:   helper.NewMultilineConfig(),
+		Encoding:    helper.NewEncodingConfig(),
 	}
 }
 
@@ -60,6 +63,8 @@ type TCPInputConfig struct {
 	ListenAddress string                  `json:"listen_address,omitempty" yaml:"listen_address,omitempty"`
 	TLS           *helper.TLSServerConfig `json:"tls,omitempty" yaml:"tls,omitempty"`
 	AddAttributes bool                    `json:"add_attributes,omitempty" yaml:"add_attributes,omitempty"`
+	Encoding      helper.EncodingConfig   `mapstructure:",squash,omitempty"               json:",inline,omitempty"              yaml:",inline,omitempty"`
+	Multiline     helper.MultilineConfig  `mapstructure:"multiline,omitempty"             json:"multiline,omitempty"            yaml:"multiline,omitempty"`
 }
 
 // Build will build a tcp input operator.
@@ -88,11 +93,23 @@ func (c TCPInputConfig) Build(context operator.BuildContext) ([]operator.Operato
 		return nil, fmt.Errorf("failed to resolve listen_address: %s", err)
 	}
 
+	encoding, err := c.Encoding.Build(context)
+	if err != nil {
+		return nil, err
+	}
+
+	multiline, err := c.Multiline.Build(context, encoding)
+	if err != nil {
+		return nil, err
+	}
+
 	tcpInput := &TCPInput{
 		InputOperator: inputOperator,
 		address:       c.ListenAddress,
 		maxBufferSize: int(c.MaxBufferSize),
 		addAttributes: c.AddAttributes,
+		encoding:      encoding,
+		splitFunc:     multiline.SplitFunc,
 	}
 
 	if c.TLS != nil {
@@ -116,6 +133,9 @@ type TCPInput struct {
 	cancel   context.CancelFunc
 	wg       sync.WaitGroup
 	tls      *tls.Config
+
+	encoding  encoding.Encoding
+	splitFunc bufio.SplitFunc
 }
 
 // Start will start listening for log entries over tcp.
@@ -204,6 +224,9 @@ func (t *TCPInput) goHandleMessages(ctx context.Context, conn net.Conn, cancel c
 		buf := make([]byte, 0, 64*1024)
 		scanner := bufio.NewScanner(conn)
 		scanner.Buffer(buf, t.maxBufferSize*1024)
+
+		scanner.Split(t.splitFunc)
+
 		for scanner.Scan() {
 			entry, err := t.NewEntry(scanner.Text())
 			if err != nil {

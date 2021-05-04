@@ -490,7 +490,7 @@ func TestConfig(t *testing.T) {
 			ExpectErr: false,
 			Expect: func() *InputConfig {
 				cfg := defaultCfg()
-				cfg.Encoding = helper.EncodingConfig{"utf-16le"}
+				cfg.Encoding = helper.EncodingConfig{Encoding: "utf-16le"}
 				return cfg
 			}(),
 		},
@@ -499,7 +499,7 @@ func TestConfig(t *testing.T) {
 			ExpectErr: false,
 			Expect: func() *InputConfig {
 				cfg := defaultCfg()
-				cfg.Encoding = helper.EncodingConfig{"UTF-16lE"}
+				cfg.Encoding = helper.EncodingConfig{Encoding: "UTF-16lE"}
 				return cfg
 			}(),
 		},
@@ -521,9 +521,12 @@ func NewTestInputConfig() *InputConfig {
 	cfg.WriteTo = entry.NewBodyField([]string{}...)
 	cfg.Include = []string{"i1", "i2"}
 	cfg.Exclude = []string{"e1", "e2"}
-	cfg.Multiline = helper.MultilineConfig{"start", "end"}
+	cfg.Multiline = helper.MultilineConfig{
+		LineStartPattern: "start",
+		LineEndPattern:   "end",
+	}
 	cfg.FingerprintSize = 1024
-	cfg.Encoding = helper.EncodingConfig{"utf16"}
+	cfg.Encoding = helper.EncodingConfig{Encoding: "utf16"}
 	return cfg
 }
 
