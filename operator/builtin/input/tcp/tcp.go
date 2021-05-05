@@ -59,10 +59,10 @@ func NewTCPInputConfig(operatorID string) *TCPInputConfig {
 type TCPInputConfig struct {
 	helper.InputConfig `yaml:",inline"`
 
-	MaxBufferSize helper.ByteSize         `json:"max_buffer_size,omitempty" yaml:"max_buffer_size,omitempty"`
-	ListenAddress string                  `json:"listen_address,omitempty" yaml:"listen_address,omitempty"`
-	TLS           *helper.TLSServerConfig `json:"tls,omitempty" yaml:"tls,omitempty"`
-	AddAttributes bool                    `json:"add_attributes,omitempty" yaml:"add_attributes,omitempty"`
+	MaxBufferSize helper.ByteSize         `mapstructure:"max_log_size,omitempty"          json:"max_log_size,omitempty"         yaml:"max_log_size,omitempty"`
+	ListenAddress string                  `mapstructure:"listen_address,omitempty"        json:"listen_address,omitempty"       yaml:"listen_address,omitempty"`
+	TLS           *helper.TLSServerConfig `mapstructure:"tls,omitempty"                   json:"tls,omitempty"                  yaml:"tls,omitempty"`
+	AddAttributes bool                    `mapstructure:"add_attributes,omitempty"        json:"add_attributes,omitempty"       yaml:"add_attributes,omitempty"`
 	Encoding      helper.EncodingConfig   `mapstructure:",squash,omitempty"               json:",inline,omitempty"              yaml:",inline,omitempty"`
 	Multiline     helper.MultilineConfig  `mapstructure:"multiline,omitempty"             json:"multiline,omitempty"            yaml:"multiline,omitempty"`
 }
@@ -81,7 +81,7 @@ func (c TCPInputConfig) Build(context operator.BuildContext) ([]operator.Operato
 	}
 
 	if c.MaxBufferSize < minBufferSize {
-		return nil, fmt.Errorf("invalid value for parameter 'max_buffer_size', must be equal to or greater than %d bytes", minBufferSize)
+		return nil, fmt.Errorf("invalid value for parameter 'max_log_size', must be equal to or greater than %d bytes", minBufferSize)
 	}
 
 	if c.ListenAddress == "" {
