@@ -167,6 +167,10 @@ func NewNewlineSplitFunc(encoding encoding.Encoding) (bufio.SplitFunc, error) {
 			return i + len(newline), bytes.TrimSuffix(data[:i], carriageReturn), nil
 		}
 
+		if atEOF {
+			return len(data), data, nil
+		}
+
 		// Request more data.
 		return 0, nil, nil
 	}, nil
