@@ -112,7 +112,7 @@ func (c InputConfig) Build(context operator.BuildContext) ([]operator.Operator, 
 		return nil, err
 	}
 
-	multiline, err := c.Multiline.Build(context, encoding)
+	multiline, err := c.Multiline.Build(context, encoding, false)
 	if err != nil {
 		return nil, err
 	}

@@ -140,13 +140,13 @@ func TestLineStartSplitFunc(t *testing.T) {
 		cfg := &MultilineConfig{
 			LineStartPattern: tc.Pattern,
 		}
-		splitFunc, err := cfg.getSplitFunc(unicode.UTF8)
+		splitFunc, err := cfg.getSplitFunc(unicode.UTF8, false)
 		require.NoError(t, err)
 		t.Run(tc.Name, tc.RunFunc(splitFunc))
 	}
 
 	t.Run("FirstMatchHitsEndOfBuffer", func(t *testing.T) {
-		splitFunc := NewLineStartSplitFunc(regexp.MustCompile("LOGSTART"))
+		splitFunc := NewLineStartSplitFunc(regexp.MustCompile("LOGSTART"), false)
 		data := []byte(`LOGSTART`)
 
 		t.Run("NotAtEOF", func(t *testing.T) {
@@ -248,7 +248,7 @@ func TestLineEndSplitFunc(t *testing.T) {
 		cfg := &MultilineConfig{
 			LineEndPattern: tc.Pattern,
 		}
-		splitFunc, err := cfg.getSplitFunc(unicode.UTF8)
+		splitFunc, err := cfg.getSplitFunc(unicode.UTF8, false)
 		require.NoError(t, err)
 		t.Run(tc.Name, tc.RunFunc(splitFunc))
 	}
@@ -326,7 +326,7 @@ func TestNewlineSplitFunc(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		splitFunc, err := NewNewlineSplitFunc(unicode.UTF8)
+		splitFunc, err := NewNewlineSplitFunc(unicode.UTF8, false)
 		require.NoError(t, err)
 		t.Run(tc.Name, tc.RunFunc(splitFunc))
 	}
@@ -379,7 +379,7 @@ func TestNewlineSplitFunc_Encodings(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			splitFunc, err := NewNewlineSplitFunc(tc.encoding)
+			splitFunc, err := NewNewlineSplitFunc(tc.encoding, false)
 			require.NoError(t, err)
 			scanner := bufio.NewScanner(bytes.NewReader(tc.input))
 			scanner.Split(splitFunc)

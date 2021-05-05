@@ -98,7 +98,7 @@ func (c TCPInputConfig) Build(context operator.BuildContext) ([]operator.Operato
 		return nil, err
 	}
 
-	multiline, err := c.Multiline.Build(context, encoding)
+	multiline, err := c.Multiline.Build(context, encoding, true)
 	if err != nil {
 		return nil, err
 	}

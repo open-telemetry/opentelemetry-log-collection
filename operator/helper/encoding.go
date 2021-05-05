@@ -37,7 +37,7 @@ type EncodingConfig struct {
 	Encoding string `mapstructure:"encoding,omitempty"              json:"encoding,omitempty"             yaml:"encoding,omitempty"`
 }
 
-// Build will build a Multiline operator.
+// Build will build an Encoding operator.
 func (c EncodingConfig) Build(context operator.BuildContext) (encoding.Encoding, error) {
 	return lookupEncoding(c.Encoding)
 }
