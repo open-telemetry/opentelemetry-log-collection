@@ -18,10 +18,11 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/open-telemetry/opentelemetry-log-collection/operator"
 	"golang.org/x/text/encoding"
 	"golang.org/x/text/encoding/ianaindex"
 	"golang.org/x/text/encoding/unicode"
+
+	"github.com/open-telemetry/opentelemetry-log-collection/operator"
 )
 
 // NewBasicConfig creates a new Encoding config

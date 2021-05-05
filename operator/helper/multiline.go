@@ -20,8 +20,9 @@ import (
 	"fmt"
 	"regexp"
 
-	"github.com/open-telemetry/opentelemetry-log-collection/operator"
 	"golang.org/x/text/encoding"
+
+	"github.com/open-telemetry/opentelemetry-log-collection/operator"
 )
 
 // NewBasicConfig creates a new Multiline config
@@ -40,7 +41,6 @@ type MultilineConfig struct {
 
 // Build will build a Multiline operator.
 func (c MultilineConfig) Build(context operator.BuildContext, encoding encoding.Encoding) (MultilineOperator, error) {
-
 	splitFunc, err := c.getSplitFunc(encoding)
 	if err != nil {
 		return MultilineOperator{}, err
