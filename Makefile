@@ -15,6 +15,7 @@ install-tools:
 	cd $(TOOLS_MOD_DIR) && go install github.com/golangci/golangci-lint/cmd/golangci-lint
 	cd $(TOOLS_MOD_DIR) && go install github.com/vektra/mockery/cmd/mockery
 	cd $(TOOLS_MOD_DIR) && go install github.com/google/addlicense
+	cd $(TOOLS_MOD_DIR) && go install golang.org/x/tools/go/analysis/passes/fieldalignment
 
 .PHONY: test
 test: vet test-only
@@ -56,6 +57,10 @@ vet:
 	GOOS=darwin $(MAKE) for-all CMD="go vet ./..."
 	GOOS=linux $(MAKE) for-all CMD="go vet ./..."
 	GOOS=windows $(MAKE) for-all CMD="go vet ./..."
+
+.PHONY: fieldalignment
+fieldalignment:
+	fieldalignment ./...
 
 .PHONY: generate
 generate:
