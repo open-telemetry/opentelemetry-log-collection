@@ -37,9 +37,9 @@ const (
 	// TCP input
 	minBufferSize = 64 * 1024
 
-	// DefaultMaxBufferSize is the max buffer sized used
-	// if MaxBufferSize is not set
-	DefaultMaxBufferSize = 1024 * 1024
+	// DefaultMaxLogSize is the max buffer sized used
+	// if MaxLogSize is not set
+	DefaultMaxLogSize = 1024 * 1024
 )
 
 func init() {
@@ -59,7 +59,7 @@ func NewTCPInputConfig(operatorID string) *TCPInputConfig {
 type TCPInputConfig struct {
 	helper.InputConfig `yaml:",inline"`
 
-	MaxBufferSize helper.ByteSize         `mapstructure:"max_log_size,omitempty"          json:"max_log_size,omitempty"         yaml:"max_log_size,omitempty"`
+	MaxLogSize    helper.ByteSize         `mapstructure:"max_log_size,omitempty"          json:"max_log_size,omitempty"         yaml:"max_log_size,omitempty"`
 	ListenAddress string                  `mapstructure:"listen_address,omitempty"        json:"listen_address,omitempty"       yaml:"listen_address,omitempty"`
 	TLS           *helper.TLSServerConfig `mapstructure:"tls,omitempty"                   json:"tls,omitempty"                  yaml:"tls,omitempty"`
 	AddAttributes bool                    `mapstructure:"add_attributes,omitempty"        json:"add_attributes,omitempty"       yaml:"add_attributes,omitempty"`
@@ -74,13 +74,13 @@ func (c TCPInputConfig) Build(context operator.BuildContext) ([]operator.Operato
 		return nil, err
 	}
 
-	// If MaxBufferSize not set, set sane default in order to remain
+	// If MaxLogSize not set, set sane default in order to remain
 	// backwards compatible with existing plugins and configurations
-	if c.MaxBufferSize == 0 {
-		c.MaxBufferSize = DefaultMaxBufferSize
+	if c.MaxLogSize == 0 {
+		c.MaxLogSize = DefaultMaxLogSize
 	}
 
-	if c.MaxBufferSize < minBufferSize {
+	if c.MaxLogSize < minBufferSize {
 		return nil, fmt.Errorf("invalid value for parameter 'max_log_size', must be equal to or greater than %d bytes", minBufferSize)
 	}
 
@@ -106,7 +106,7 @@ func (c TCPInputConfig) Build(context operator.BuildContext) ([]operator.Operato
 	tcpInput := &TCPInput{
 		InputOperator: inputOperator,
 		address:       c.ListenAddress,
-		maxBufferSize: int(c.MaxBufferSize),
+		MaxLogSize:    int(c.MaxLogSize),
 		addAttributes: c.AddAttributes,
 		encoding:      encoding,
 		splitFunc:     splitFunc,
@@ -126,7 +126,7 @@ func (c TCPInputConfig) Build(context operator.BuildContext) ([]operator.Operato
 type TCPInput struct {
 	helper.InputOperator
 	address       string
-	maxBufferSize int
+	MaxLogSize    int
 	addAttributes bool
 
 	listener net.Listener
@@ -223,7 +223,7 @@ func (t *TCPInput) goHandleMessages(ctx context.Context, conn net.Conn, cancel c
 		// Initial buffer size is 64k
 		buf := make([]byte, 0, 64*1024)
 		scanner := bufio.NewScanner(conn)
-		scanner.Buffer(buf, t.maxBufferSize*1024)
+		scanner.Buffer(buf, t.MaxLogSize*1024)
 
 		scanner.Split(t.splitFunc)
 
