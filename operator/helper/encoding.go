@@ -62,13 +62,14 @@ func (e *Encoding) Decode(msgBuf []byte) (string, error) {
 	for {
 		decoder.Reset()
 		nDst, _, err := decoder.Transform(decodeBuffer, msgBuf, true)
-		if err != nil && err == transform.ErrShortDst {
+		if err == nil {
+			return string(decodeBuffer[:nDst]), nil
+		}
+		if err == transform.ErrShortDst {
 			decodeBuffer = make([]byte, len(decodeBuffer)*2)
 			continue
-		} else if err != nil {
-			return "", fmt.Errorf("transform encoding: %s", err)
 		}
-		return string(decodeBuffer[:nDst]), nil
+		return "", fmt.Errorf("transform encoding: %s", err)
 	}
 }
 
