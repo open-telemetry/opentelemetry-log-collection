@@ -26,7 +26,6 @@ import (
 	"time"
 
 	"go.uber.org/zap"
-	"golang.org/x/text/encoding"
 
 	"github.com/open-telemetry/opentelemetry-log-collection/operator"
 	"github.com/open-telemetry/opentelemetry-log-collection/operator/helper"
@@ -98,7 +97,7 @@ func (c TCPInputConfig) Build(context operator.BuildContext) ([]operator.Operato
 		return nil, err
 	}
 
-	splitFunc, err := c.Multiline.Build(context, encoding, true)
+	splitFunc, err := c.Multiline.Build(context, encoding.Encoding, true)
 	if err != nil {
 		return nil, err
 	}
@@ -134,7 +133,7 @@ type TCPInput struct {
 	wg       sync.WaitGroup
 	tls      *tls.Config
 
-	encoding  encoding.Encoding
+	encoding  helper.Encoding
 	splitFunc bufio.SplitFunc
 }
 
@@ -228,7 +227,13 @@ func (t *TCPInput) goHandleMessages(ctx context.Context, conn net.Conn, cancel c
 		scanner.Split(t.splitFunc)
 
 		for scanner.Scan() {
-			entry, err := t.NewEntry(scanner.Text())
+			decoded, err := t.encoding.Decode(scanner.Bytes())
+			if err != nil {
+				t.Errorw("Failed to decode data", zap.Error(err))
+				continue
+			}
+
+			entry, err := t.NewEntry(decoded)
 			if err != nil {
 				t.Errorw("Failed to create entry", zap.Error(err))
 				continue

@@ -21,6 +21,7 @@ import (
 	"golang.org/x/text/encoding"
 	"golang.org/x/text/encoding/ianaindex"
 	"golang.org/x/text/encoding/unicode"
+	"golang.org/x/text/transform"
 
 	"github.com/open-telemetry/opentelemetry-log-collection/operator"
 )
@@ -38,8 +39,37 @@ type EncodingConfig struct {
 }
 
 // Build will build an Encoding operator.
-func (c EncodingConfig) Build(context operator.BuildContext) (encoding.Encoding, error) {
-	return lookupEncoding(c.Encoding)
+func (c EncodingConfig) Build(context operator.BuildContext) (Encoding, error) {
+	enc, err := lookupEncoding(c.Encoding)
+	if err != nil {
+		return Encoding{}, err
+	}
+
+	return Encoding{
+		Encoding: enc,
+	}, nil
+}
+
+type Encoding struct {
+	Encoding encoding.Encoding
+}
+
+// decode converts the bytes in msgBuf to utf-8 from the configured encoding
+func (e *Encoding) Decode(msgBuf []byte) (string, error) {
+	decodeBuffer := make([]byte, 1<<12)
+	decoder := e.Encoding.NewDecoder()
+
+	for {
+		decoder.Reset()
+		nDst, _, err := decoder.Transform(decodeBuffer, msgBuf, true)
+		if err != nil && err == transform.ErrShortDst {
+			decodeBuffer = make([]byte, len(decodeBuffer)*2)
+			continue
+		} else if err != nil {
+			return "", fmt.Errorf("transform encoding: %s", err)
+		}
+		return string(decodeBuffer[:nDst]), nil
+	}
 }
 
 var encodingOverrides = map[string]encoding.Encoding{
