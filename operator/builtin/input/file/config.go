@@ -112,7 +112,7 @@ func (c InputConfig) Build(context operator.BuildContext) ([]operator.Operator, 
 		return nil, err
 	}
 
-	multiline, err := c.Multiline.Build(context, encoding, false)
+	splitFunc, err := c.Multiline.Build(context, encoding, false)
 	if err != nil {
 		return nil, err
 	}
@@ -141,7 +141,7 @@ func (c InputConfig) Build(context operator.BuildContext) ([]operator.Operator, 
 		InputOperator:      inputOperator,
 		Include:            c.Include,
 		Exclude:            c.Exclude,
-		SplitFunc:          multiline.SplitFunc,
+		SplitFunc:          splitFunc,
 		PollInterval:       c.PollInterval.Raw(),
 		FilePathField:      filePathField,
 		FileNameField:      fileNameField,

@@ -40,22 +40,8 @@ type MultilineConfig struct {
 }
 
 // Build will build a Multiline operator.
-func (c MultilineConfig) Build(context operator.BuildContext, encoding encoding.Encoding, flushAtEOF bool) (MultilineOperator, error) {
-	splitFunc, err := c.getSplitFunc(encoding, flushAtEOF)
-	if err != nil {
-		return MultilineOperator{}, err
-	}
-
-	operator := MultilineOperator{
-		SplitFunc: splitFunc,
-	}
-
-	return operator, nil
-}
-
-// MultilineOperator is an operator which handle SplitFunc for bufio.Scanner
-type MultilineOperator struct {
-	SplitFunc bufio.SplitFunc
+func (c MultilineConfig) Build(context operator.BuildContext, encoding encoding.Encoding, flushAtEOF bool) (bufio.SplitFunc, error) {
+	return c.getSplitFunc(encoding, flushAtEOF)
 }
 
 // getSplitFunc returns split function for bufio.Scanner basing on configured pattern

@@ -98,7 +98,7 @@ func (c TCPInputConfig) Build(context operator.BuildContext) ([]operator.Operato
 		return nil, err
 	}
 
-	multiline, err := c.Multiline.Build(context, encoding, true)
+	splitFunc, err := c.Multiline.Build(context, encoding, true)
 	if err != nil {
 		return nil, err
 	}
@@ -109,7 +109,7 @@ func (c TCPInputConfig) Build(context operator.BuildContext) ([]operator.Operato
 		maxBufferSize: int(c.MaxBufferSize),
 		addAttributes: c.AddAttributes,
 		encoding:      encoding,
-		splitFunc:     multiline.SplitFunc,
+		splitFunc:     splitFunc,
 	}
 
 	if c.TLS != nil {
