@@ -33,6 +33,8 @@ func NewMockOperator(id string) *Operator {
 	mockOutput.On("ID").Return(id)
 	mockOutput.On("CanProcess").Return(true)
 	mockOutput.On("CanOutput").Return(true)
+	mockOutput.On("Type").Return("fake_output")
+	mockOutput.On("SetID").Return(id)
 	return mockOutput
 }
 
