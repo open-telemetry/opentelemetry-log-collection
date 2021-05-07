@@ -148,7 +148,7 @@ func TestProcessAndBuild(t *testing.T) {
 			"remove_body",
 			func() *RemoveOperatorConfig {
 				cfg := defaultCfg()
-				cfg.Field.allBody = true
+				cfg.Field.Field = entry.NewBodyField()
 				return cfg
 			}(),
 			newTestEntry,

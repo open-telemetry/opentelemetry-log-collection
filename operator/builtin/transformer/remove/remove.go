@@ -38,7 +38,7 @@ func NewRemoveOperatorConfig(operatorID string) *RemoveOperatorConfig {
 type RemoveOperatorConfig struct {
 	helper.TransformerConfig `mapstructure:",squash" yaml:",inline"`
 
-	Field RootableField `mapstructure:"field"  json:"field" yaml:"field"`
+	Field rootableField `mapstructure:"field"  json:"field" yaml:"field"`
 }
 
 // Build will build a Remove operator from the supplied configuration
@@ -63,7 +63,7 @@ func (c RemoveOperatorConfig) Build(context operator.BuildContext) ([]operator.O
 // RemoveOperator is an operator that deletes a field
 type RemoveOperator struct {
 	helper.TransformerOperator
-	Field RootableField
+	Field rootableField
 }
 
 // Process will process an entry with a remove transformation.
@@ -80,11 +80,6 @@ func (p *RemoveOperator) Transform(entry *entry.Entry) error {
 
 	if p.Field.allResource {
 		entry.Resource = nil
-		return nil
-	}
-
-	if p.Field.allBody {
-		entry.Body = nil
 		return nil
 	}
 

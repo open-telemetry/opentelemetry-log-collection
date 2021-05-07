@@ -59,7 +59,7 @@ func TestGoldenConfig(t *testing.T) {
 			Name: "remove_entire_body",
 			Expect: func() *RemoveOperatorConfig {
 				cfg := defaultCfg()
-				cfg.Field.allBody = true
+				cfg.Field.Field = entry.NewBodyField()
 				return cfg
 			}(),
 		},
@@ -83,17 +83,17 @@ func defaultCfg() *RemoveOperatorConfig {
 	return NewRemoveOperatorConfig("move")
 }
 
-func newBodyField(keys ...string) RootableField {
+func newBodyField(keys ...string) rootableField {
 	field := entry.NewBodyField(keys...)
-	return RootableField{Field: field}
+	return rootableField{Field: field}
 }
 
-func newResourceField(key string) RootableField {
+func newResourceField(key string) rootableField {
 	field := entry.NewResourceField(key)
-	return RootableField{Field: field}
+	return rootableField{Field: field}
 }
 
-func newAttributeField(key string) RootableField {
+func newAttributeField(key string) rootableField {
 	field := entry.NewAttributeField(key)
-	return RootableField{Field: field}
+	return rootableField{Field: field}
 }

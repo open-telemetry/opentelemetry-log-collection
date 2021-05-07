@@ -26,15 +26,14 @@ import (
 // of referring to "all" fields within those groups.
 // It is used to get, set, and delete values at this field.
 // It is deserialized from JSON dot notation.
-type RootableField struct {
+type rootableField struct {
 	entry.Field
 	allResource   bool
 	allAttributes bool
-	allBody       bool
 }
 
 // UnmarshalJSON will unmarshal a field from JSON
-func (f *RootableField) UnmarshalJSON(raw []byte) error {
+func (f *rootableField) UnmarshalJSON(raw []byte) error {
 	var s string
 	err := json.Unmarshal(raw, &s)
 	if err != nil {
@@ -44,7 +43,7 @@ func (f *RootableField) UnmarshalJSON(raw []byte) error {
 }
 
 // UnmarshalYAML will unmarshal a field from YAML
-func (f *RootableField) UnmarshalYAML(unmarshal func(interface{}) error) error {
+func (f *rootableField) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	var s string
 	err := unmarshal(&s)
 	if err != nil {
@@ -53,19 +52,14 @@ func (f *RootableField) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	return f.unmarshalCheckString(s)
 }
 
-func (f *RootableField) unmarshalCheckString(s string) error {
+func (f *rootableField) unmarshalCheckString(s string) error {
 	if s == entry.ResourcePrefix {
-		*f = RootableField{allResource: true}
+		*f = rootableField{allResource: true}
 		return nil
 	}
 
 	if s == entry.AttributesPrefix {
-		*f = RootableField{allAttributes: true}
-		return nil
-	}
-
-	if s == entry.BodyPrefix {
-		*f = RootableField{allBody: true}
+		*f = rootableField{allAttributes: true}
 		return nil
 	}
 
@@ -73,12 +67,12 @@ func (f *RootableField) unmarshalCheckString(s string) error {
 	if err != nil {
 		return err
 	}
-	*f = RootableField{Field: field}
+	*f = rootableField{Field: field}
 	return nil
 }
 
 // Get gets the value of the field if the flags for 'allAttributes' or 'allResource' isn't set
-func (f *RootableField) Get(entry *entry.Entry) (interface{}, bool) {
+func (f *rootableField) Get(entry *entry.Entry) (interface{}, bool) {
 	if f.allAttributes || f.allResource {
 		return nil, false
 	}
