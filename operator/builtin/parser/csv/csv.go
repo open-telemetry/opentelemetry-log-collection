@@ -71,10 +71,13 @@ func (c CSVParserConfig) Build(context operator.BuildContext) ([]operator.Operat
 
 	numFields := len(strings.Split(c.Header, c.FieldDelimiter))
 
+	delimiterStr := string([]rune{fieldDelimiter})
+
 	csvParser := &CSVParser{
 		ParserOperator: parserOperator,
 		header:         c.Header,
-		fieldDelimiter: fieldDelimiter,
+		fieldDelimiter: delimiterStr,
+		runeDelimiter:  fieldDelimiter,
 		numFields:      numFields,
 	}
 
@@ -85,7 +88,8 @@ func (c CSVParserConfig) Build(context operator.BuildContext) ([]operator.Operat
 type CSVParser struct {
 	helper.ParserOperator
 	header         string
-	fieldDelimiter rune
+	fieldDelimiter string
+	runeDelimiter  rune
 	numFields      int
 }
 
@@ -99,17 +103,15 @@ func (r *CSVParser) parse(value interface{}) (interface{}, error) {
 	var csvLine string
 	switch val := value.(type) {
 	case string:
-		csvLine += val
+		csvLine = val
 	case []byte:
-		csvLine += string(val)
+		csvLine = string(val)
 	default:
 		return nil, fmt.Errorf("type '%T' cannot be parsed as csv", value)
 	}
 
-	delimiterStr := string([]rune{r.fieldDelimiter})
-
 	reader := csvparser.NewReader(strings.NewReader(csvLine))
-	reader.Comma = r.fieldDelimiter
+	reader.Comma = r.runeDelimiter
 	reader.FieldsPerRecord = r.numFields
 	parsedValues := make(map[string]interface{})
 
@@ -123,7 +125,11 @@ func (r *CSVParser) parse(value interface{}) (interface{}, error) {
 			return nil, err
 		}
 
-		for i, key := range strings.Split(r.header, delimiterStr) {
+		// saves the parsed values to the corresponding header in the map.
+		// where the key is the header name and the value is whatever data type that was pulled from the csvparser.
+		// EX: parsedvalues["headername"] = "header value"
+		// or parsedvalues["headername"] = 1
+		for i, key := range strings.Split(r.header, r.fieldDelimiter) {
 			parsedValues[key] = record[i]
 		}
 	}

@@ -26,7 +26,7 @@ Configuration:
 ```yaml
 - type: csv_parser
   parse_from: message
-  header: 'id,severity,message'
+  header: id,severity,message
 ```
 
 <table>
@@ -36,14 +36,9 @@ Configuration:
 
 ```json
 {
+  "timestamp": "",
   "resource": { },
   "attributes": { },  
-  "body": {
-    "key1": "val1",
-  }
-}
-{
-  "timestamp": "",
   "body": {
     "message": "1,debug,\"\"Debug Message\"\""
   }
@@ -55,14 +50,9 @@ Configuration:
 
 ```json
 {
+  "timestamp": "",
   "resource": { },
   "attributes": { },  
-  "body": {
-    "key1": "val1",
-  }
-}
-{
-  "timestamp": "",
   "body": {
     "id": "1",
     "severity": "debug",
@@ -82,7 +72,7 @@ Configuration:
 ```yaml
 - type: csv_parser
   parse_from: message
-  header: 'id,severity,message'
+  header: id,severity,message
   delimiter: "\t"
 ```
 
@@ -93,14 +83,9 @@ Configuration:
 
 ```json
 {
-  {
+  "timestamp": "",
   "resource": { },
   "attributes": { },  
-  "body": {
-    "key1": "val1",
-  }
-}
-  "timestamp": "",
   "body": {
     "message": "1 debug \"Debug Message\""
   }
@@ -112,14 +97,9 @@ Configuration:
 
 ```json
 {
-  {
+  "timestamp": "",
   "resource": { },
   "attributes": { },  
-  "body": {
-    "key1": "val1",
-  }
-}
-  "timestamp": "",
   "body": {
     "id": "1",
     "severity": "debug",
@@ -152,14 +132,9 @@ Configuration:
 
 ```json
 {
-  {
+  "timestamp": "",
   "resource": { },
   "attributes": { },  
-  "body": {
-    "key1": "val1",
-  }
-}
-  "timestamp": "",
   "body": {
     "message": "2021-03-17,debug,Debug Message"
   }
@@ -171,13 +146,8 @@ Configuration:
 
 ```json
 {
-  {
   "resource": { },
   "attributes": { },  
-  "body": {
-    "key1": "val1",
-  }
-}
   "timestamp": "2021-03-17T00:00:00-00:00",
   "body": {
     "severity": "debug",
