@@ -35,6 +35,7 @@ func init() {
 func NewUDPInputConfig(operatorID string) *UDPInputConfig {
 	return &UDPInputConfig{
 		InputConfig: helper.NewInputConfig(operatorID, "udp_input"),
+		Encoding:    helper.NewEncodingConfig(),
 	}
 }
 
@@ -42,8 +43,9 @@ func NewUDPInputConfig(operatorID string) *UDPInputConfig {
 type UDPInputConfig struct {
 	helper.InputConfig `yaml:",inline"`
 
-	ListenAddress string `json:"listen_address,omitempty" yaml:"listen_address,omitempty"`
-	AddAttributes bool   `json:"add_attributes,omitempty" yaml:"add_attributes,omitempty"`
+	ListenAddress string                `mapstructure:"listen_address,omitempty"        json:"listen_address,omitempty"       yaml:"listen_address,omitempty"`
+	AddAttributes bool                  `mapstructure:"add_attributes,omitempty"        json:"add_attributes,omitempty"       yaml:"add_attributes,omitempty"`
+	Encoding      helper.EncodingConfig `mapstructure:",squash,omitempty"               json:",inline,omitempty"              yaml:",inline,omitempty"`
 }
 
 // Build will build a udp input operator.
@@ -62,11 +64,17 @@ func (c UDPInputConfig) Build(context operator.BuildContext) ([]operator.Operato
 		return nil, fmt.Errorf("failed to resolve listen_address: %s", err)
 	}
 
+	encoding, err := c.Encoding.Build(context)
+	if err != nil {
+		return nil, err
+	}
+
 	udpInput := &UDPInput{
 		InputOperator: inputOperator,
 		address:       address,
 		buffer:        make([]byte, 8192),
 		addAttributes: c.AddAttributes,
+		encoding:      encoding,
 	}
 	return []operator.Operator{udpInput}, nil
 }
@@ -81,6 +89,8 @@ type UDPInput struct {
 	connection net.PacketConn
 	cancel     context.CancelFunc
 	wg         sync.WaitGroup
+
+	encoding helper.Encoding
 }
 
 // Start will start listening for messages on a socket.
@@ -152,7 +162,13 @@ func (u *UDPInput) readMessage() (string, net.Addr, error) {
 	for ; (n > 0) && (u.buffer[n-1] < 32); n-- {
 	}
 
-	return string(u.buffer[:n]), addr, nil
+	decoded, err := u.encoding.Decode(u.buffer[:n])
+	if err != nil {
+		u.Errorw("Failed to decode data", zap.Error(err))
+		return "", nil, err
+	}
+
+	return decoded, addr, nil
 }
 
 // Stop will stop listening for udp messages.
