@@ -44,7 +44,10 @@ func NewUDPInputConfig(operatorID string) *UDPInputConfig {
 	return &UDPInputConfig{
 		InputConfig: helper.NewInputConfig(operatorID, "udp_input"),
 		Encoding:    helper.NewEncodingConfig(),
-		Multiline:   helper.NewMultilineConfig(),
+		Multiline: helper.MultilineConfig{
+			LineStartPattern: "",
+			LineEndPattern:   ".^", // Use never matching regex to not split data by default
+		},
 	}
 }
 
@@ -197,6 +200,10 @@ func (u *UDPInput) readMessage() ([]byte, net.Addr, error) {
 	n, addr, err := u.connection.ReadFrom(u.buffer)
 	if err != nil {
 		return nil, nil, err
+	}
+
+	// Remove trailing characters and NULs
+	for ; (n > 0) && (u.buffer[n-1] < 32); n-- {
 	}
 
 	return u.buffer[:n], addr, nil

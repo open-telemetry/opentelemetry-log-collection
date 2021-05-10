@@ -21,6 +21,8 @@ The `udp_input` operator listens for logs from UDP packets.
 
 If set, the `multiline` configuration block instructs the `udp_input` operator to split log entries on a pattern other than newlines.
 
+**note** If `multiline` is not set at all, it wont't split log entries at all. Every UDP packet is going to be treated as log.
+
 The `multiline` configuration block must contain exactly one of `line_start_pattern` or `line_end_pattern`. These are regex patterns that
 match either the beginning of a new log entry, or the end of a log entry.
 
