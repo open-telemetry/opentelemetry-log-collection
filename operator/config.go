@@ -29,6 +29,7 @@ type Config struct {
 // Builder is an entity that can build a single operator
 type Builder interface {
 	ID() string
+	SetID(string) error
 	Type() string
 	Build(BuildContext) ([]Operator, error)
 }
