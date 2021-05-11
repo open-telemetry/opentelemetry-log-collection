@@ -80,17 +80,13 @@ func (p *DirectedPipeline) Operators() []operator.Operator {
 
 // addNodes will add operators as nodes to the supplied graph.
 func addNodes(graph *simple.DirectedGraph, operators []operator.Operator) error {
-	typeMap := make(map[string]int)
 	for _, operator := range operators {
 		operatorNode := createOperatorNode(operator)
 		for graph.Node(operatorNode.ID()) != nil {
-			typeMap[operator.Type()]++
-			operator.SetID(fmt.Sprintf("%s%d", operator.Type(), typeMap[operator.Type()]))
-			operatorNode = createOperatorNode(operator)
-			// return errors.NewError(
-			// 	fmt.Sprintf("operator with id '%s' already exists in pipeline", operatorNode.Operator().ID()),
-			// 	"ensure that each operator has a unique `type` or `id`",
-			// )
+			return errors.NewError(
+				fmt.Sprintf("operator with id '%s' already exists in pipeline", operatorNode.Operator().ID()),
+				"ensure that each operator has a unique `type` or `id`",
+			)
 		}
 
 		graph.AddNode(operatorNode)

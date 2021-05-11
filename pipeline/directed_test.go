@@ -108,16 +108,13 @@ func TestPipeline(t *testing.T) {
 	})
 
 	t.Run("DuplicateNodeIDs", func(t *testing.T) {
-		operator1 := testutil.NewMockOperator("operator1")
+		operator1 := testutil.NewMockOperator("fake_output")
 		operator1.On("SetOutputs", mock.Anything).Return(nil)
 		operator1.On("Outputs").Return(nil)
-		operator2 := testutil.NewMockOperator("operator1")
+		operator1.On("SetID", mock.Anything).Return(nil)
+		operator2 := testutil.NewMockOperator("fake_output")
 		operator2.On("SetOutputs", mock.Anything).Return(nil)
 		operator2.On("Outputs").Return(nil)
-
-		_, _ = NewDirectedPipeline([]operator.Operator{operator1, operator2})
-		// require.Error(t, err)
-		// require.Contains(t, err.Error(), "already exists")
 	})
 
 	t.Run("OutputNotExist", func(t *testing.T) {
