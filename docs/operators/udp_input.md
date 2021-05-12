@@ -13,7 +13,6 @@ The `udp_input` operator listens for logs from UDP packets.
 | `attributes`      | {}               | A map of `key: value` pairs to add to the entry's attributes                                                       |
 | `resource`        | {}               | A map of `key: value` pairs to add to the entry's resource                                                         |
 | `add_attributes`  | false            | Adds `net.transport`, `net.peer.ip`, `net.peer.port`, `net.host.ip` and `net.host.port` attributes                 |
-| `max_log_size`    | `1MiB`           | The maximum size of a log entry to read before failing. Protects against reading large amounts of data into memory |
 | `multiline`       |                  | A `multiline` configuration block. See below for details                                                           |
 | `encoding`        | `nop`            | The encoding of the file being read. See the list of supported encodings below for available options               |
 
@@ -22,6 +21,7 @@ The `udp_input` operator listens for logs from UDP packets.
 If set, the `multiline` configuration block instructs the `udp_input` operator to split log entries on a pattern other than newlines.
 
 **note** If `multiline` is not set at all, it wont't split log entries at all. Every UDP packet is going to be treated as log.
+**note** `multiline` detection works per UDP packet due to protocol limitations.
 
 The `multiline` configuration block must contain exactly one of `line_start_pattern` or `line_end_pattern`. These are regex patterns that
 match either the beginning of a new log entry, or the end of a log entry.
