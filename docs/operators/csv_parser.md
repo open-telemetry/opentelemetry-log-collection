@@ -146,9 +146,9 @@ Configuration:
 
 ```json
 {
+  "timestamp": "2021-03-17T00:00:00-00:00",
   "resource": { },
   "attributes": { },  
-  "timestamp": "2021-03-17T00:00:00-00:00",
   "body": {
     "severity": "debug",
     "message": "Debug Message"

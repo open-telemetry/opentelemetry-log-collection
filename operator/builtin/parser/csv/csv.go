@@ -122,10 +122,6 @@ func (r *CSVParser) parse(value interface{}) (interface{}, error) {
 			return nil, err
 		}
 
-		// saves the parsed values to the corresponding header in the map.
-		// where the key is the header name and the value is whatever data type that was pulled from the csvparser.
-		// EX: parsedvalues["headername"] = "header value"
-		// or parsedvalues["headername"] = 1
 		for i, key := range r.header {
 			parsedValues[key] = record[i]
 		}
