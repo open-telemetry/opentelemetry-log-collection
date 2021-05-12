@@ -168,13 +168,17 @@ func (u *UDPInput) goHandleMessages(ctx context.Context) {
 				if u.addAttributes {
 					entry.AddAttribute("net.transport", "IP.UDP")
 					if addr, ok := u.connection.LocalAddr().(*net.UDPAddr); ok {
+						ip := addr.IP.String()
 						entry.AddAttribute("net.host.ip", addr.IP.String())
 						entry.AddAttribute("net.host.port", strconv.FormatInt(int64(addr.Port), 10))
+						entry.AddAttribute("net.host.name", helper.LookupIpAddr(ip))
 					}
 
 					if addr, ok := remoteAddr.(*net.UDPAddr); ok {
-						entry.AddAttribute("net.peer.ip", addr.IP.String())
+						ip := addr.IP.String()
+						entry.AddAttribute("net.peer.ip", ip)
 						entry.AddAttribute("net.peer.port", strconv.FormatInt(int64(addr.Port), 10))
+						entry.AddAttribute("net.peer.name", helper.LookupIpAddr(ip))
 					}
 				}
 
