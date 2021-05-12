@@ -32,15 +32,6 @@ import (
 const (
 	// Maximum UDP packet size
 	MaxUDPSize = 64 * 1024
-
-	// minMaxLogSize is the minimal size which can be used for buffering
-	// UDP input
-	minMaxLogSize = 1024
-
-	// DefaultMaxLogSize is the max buffer sized used
-	// if MaxLogSize is not set
-	// This is set to MaxUDPSize as there is no way to have bigger log than full packet
-	DefaultMaxLogSize = MaxUDPSize
 )
 
 func init() {
@@ -77,16 +68,6 @@ func (c UDPInputConfig) Build(context operator.BuildContext) ([]operator.Operato
 		return nil, err
 	}
 
-	// If MaxLogSize not set, set sane default in order to remain
-	// backwards compatible with existing plugins and configurations
-	if c.MaxLogSize == 0 {
-		c.MaxLogSize = DefaultMaxLogSize
-	}
-
-	if c.MaxLogSize < minMaxLogSize {
-		return nil, fmt.Errorf("invalid value for parameter 'max_log_size', must be equal to or greater than %d bytes", minMaxLogSize)
-	}
-
 	if c.ListenAddress == "" {
 		return nil, fmt.Errorf("missing required parameter 'listen_address'")
 	}
@@ -111,7 +92,6 @@ func (c UDPInputConfig) Build(context operator.BuildContext) ([]operator.Operato
 		address:       address,
 		buffer:        make([]byte, MaxUDPSize),
 		addAttributes: c.AddAttributes,
-		MaxLogSize:    int(c.MaxLogSize),
 		encoding:      encoding,
 		splitFunc:     splitFunc,
 	}
@@ -129,9 +109,8 @@ type UDPInput struct {
 	cancel     context.CancelFunc
 	wg         sync.WaitGroup
 
-	MaxLogSize int
-	encoding   helper.Encoding
-	splitFunc  bufio.SplitFunc
+	encoding  helper.Encoding
+	splitFunc bufio.SplitFunc
 }
 
 // Start will start listening for messages on a socket.
@@ -168,9 +147,9 @@ func (u *UDPInput) goHandleMessages(ctx context.Context) {
 				break
 			}
 
-			buf := make([]byte, 0, u.MaxLogSize)
+			buf := make([]byte, 0, MaxUDPSize)
 			scanner := bufio.NewScanner(bytes.NewReader(message))
-			scanner.Buffer(buf, u.MaxLogSize)
+			scanner.Buffer(buf, MaxUDPSize)
 
 			scanner.Split(u.splitFunc)
 
