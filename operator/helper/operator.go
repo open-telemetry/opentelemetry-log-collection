@@ -43,7 +43,7 @@ func (c BasicConfig) ID() string {
 	return c.OperatorID
 }
 
-// ID will return the operator id.
+// SetID will Update the operator id.
 func (c BasicConfig) SetID(id string) error {
 	c.OperatorID = id
 	return nil
@@ -96,11 +96,6 @@ func (p *BasicOperator) ID() string {
 		return p.OperatorType
 	}
 	return p.OperatorID
-}
-
-// SetID sets a new ID on the operator.
-func (p *BasicOperator) SetID(id string) {
-	p.OperatorID = id
 }
 
 // Type will return the operator type.
