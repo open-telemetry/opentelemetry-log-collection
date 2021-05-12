@@ -26,7 +26,12 @@ type Config []operator.Config
 // BuildOperators builds the operators from the list of configs into operators
 func (c Config) BuildOperators(bc operator.BuildContext) ([]operator.Operator, error) {
 	operators := make([]operator.Operator, 0, len(c))
-	dedeplucateIDs(c)
+
+	err := dedeplucateIDs(c)
+	if err != nil {
+		return nil, err
+	}
+
 	for i, builder := range c {
 		nbc := getBuildContextWithDefaultOutput(c, i, bc)
 		op, err := builder.Build(nbc)
@@ -59,7 +64,10 @@ func dedeplucateIDs(ops []operator.Config) error {
 			}
 		}
 
-		op.SetID(newID)
+		err := op.SetID(newID)
+		if err != nil {
+			return err
+		}
 		typeMap[op.Type()]++
 	}
 	return nil
