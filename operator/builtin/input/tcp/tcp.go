@@ -249,13 +249,17 @@ func (t *TCPInput) goHandleMessages(ctx context.Context, conn net.Conn, cancel c
 			if t.addAttributes {
 				entry.AddAttribute("net.transport", "IP.TCP")
 				if addr, ok := conn.RemoteAddr().(*net.TCPAddr); ok {
-					entry.AddAttribute("net.peer.ip", addr.IP.String())
+					ip := addr.IP.String()
+					entry.AddAttribute("net.peer.ip", ip)
 					entry.AddAttribute("net.peer.port", strconv.FormatInt(int64(addr.Port), 10))
+					entry.AddAttribute("net.peer.name", helper.LookupIpAddr(ip))
 				}
 
 				if addr, ok := conn.LocalAddr().(*net.TCPAddr); ok {
+					ip := addr.IP.String()
 					entry.AddAttribute("net.host.ip", addr.IP.String())
 					entry.AddAttribute("net.host.port", strconv.FormatInt(int64(addr.Port), 10))
+					entry.AddAttribute("net.host.name", helper.LookupIpAddr(ip))
 				}
 			}
 
