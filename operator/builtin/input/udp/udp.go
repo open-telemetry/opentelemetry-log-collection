@@ -171,14 +171,14 @@ func (u *UDPInput) goHandleMessages(ctx context.Context) {
 						ip := addr.IP.String()
 						entry.AddAttribute("net.host.ip", addr.IP.String())
 						entry.AddAttribute("net.host.port", strconv.FormatInt(int64(addr.Port), 10))
-						entry.AddAttribute("net.host.name", helper.LookupIpAddr(ip))
+						entry.AddAttribute("net.host.name", helper.IPResolver.GetHostFromIp(ip))
 					}
 
 					if addr, ok := remoteAddr.(*net.UDPAddr); ok {
 						ip := addr.IP.String()
 						entry.AddAttribute("net.peer.ip", ip)
 						entry.AddAttribute("net.peer.port", strconv.FormatInt(int64(addr.Port), 10))
-						entry.AddAttribute("net.peer.name", helper.LookupIpAddr(ip))
+						entry.AddAttribute("net.peer.name", helper.IPResolver.GetHostFromIp(ip))
 					}
 				}
 
@@ -210,5 +210,6 @@ func (u *UDPInput) Stop() error {
 	u.cancel()
 	u.connection.Close()
 	u.wg.Wait()
+	helper.IPResolver.Stop()
 	return nil
 }

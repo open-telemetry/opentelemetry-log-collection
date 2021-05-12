@@ -14,9 +14,104 @@
 
 package helper
 
-import "net"
+import (
+	"net"
+	"sync"
+	"time"
+)
 
-func LookupIpAddr(ip string) (host string) {
+// IPResolver is global handler for resolving hostname from ip address
+var (
+	IPResolver *_IPResolver = NewIpResolver()
+)
+
+// cacheEntry keeps information about host and expiration time
+type cacheEntry struct {
+	hostname   string
+	expireTime time.Time
+}
+
+type _IPResolver struct {
+	cache   map[string]cacheEntry
+	mutex   sync.RWMutex
+	done    chan bool
+	stopped bool
+}
+
+// Create new resolver
+func NewIpResolver() *_IPResolver {
+	r := &_IPResolver{
+		cache:   make(map[string]cacheEntry),
+		stopped: false,
+		done:    make(chan bool),
+	}
+	r.start()
+	return r
+}
+
+// Stop cache invalidation
+func (r *_IPResolver) Stop() {
+	r.mutex.Lock()
+	if r.stopped {
+		r.mutex.Unlock()
+		return
+	}
+
+	r.stopped = true
+	r.mutex.Unlock()
+	r.done <- true
+}
+
+// start runs cached invalidation every 5 minutes
+func (r *_IPResolver) start() {
+	ticker := time.NewTicker(5 * time.Minute)
+	go func() {
+		for {
+			select {
+			case <-r.done:
+				ticker.Stop()
+				return
+			case <-ticker.C:
+				now := time.Now()
+				r.mutex.Lock()
+				for key, entry := range r.cache {
+					if entry.expireTime.Before(now) {
+						delete(r.cache, key)
+					}
+				}
+				r.mutex.Unlock()
+			}
+		}
+	}()
+}
+
+// GetHostFromIp returns hostname for given ip
+// It is taken from cache if exists,
+// otherwise lookup is performed and result is put into cache
+func (r *_IPResolver) GetHostFromIp(ip string) (host string) {
+	r.mutex.RLock()
+	entry, ok := r.cache[ip]
+	if ok {
+		host = entry.hostname
+		defer r.mutex.RUnlock()
+		return host
+	}
+	r.mutex.RUnlock()
+
+	host = r.lookupIpAddr(ip)
+
+	r.mutex.Lock()
+	r.cache[ip] = cacheEntry{
+		hostname:   host,
+		expireTime: time.Now().Add(5 * time.Minute),
+	}
+	r.mutex.Unlock()
+
+	return host
+}
+
+// lookupIpAddr resturns hostname based on ip address
+func (r *_IPResolver) lookupIpAddr(ip string) (host string) {
 	res, err := net.LookupAddr(ip)
 	if err != nil || len(res) == 0 {
 		return ip
