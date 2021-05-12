@@ -82,7 +82,7 @@ func (p *DirectedPipeline) Operators() []operator.Operator {
 func addNodes(graph *simple.DirectedGraph, operators []operator.Operator) error {
 	for _, operator := range operators {
 		operatorNode := createOperatorNode(operator)
-		for graph.Node(operatorNode.ID()) != nil {
+		if graph.Node(operatorNode.ID()) != nil {
 			return errors.NewError(
 				fmt.Sprintf("operator with id '%s' already exists in pipeline", operatorNode.Operator().ID()),
 				"ensure that each operator has a unique `type` or `id`",

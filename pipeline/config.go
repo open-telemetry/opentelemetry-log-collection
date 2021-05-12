@@ -67,7 +67,6 @@ func dedeplucateIDs(ops []operator.Config) error {
 
 // BuildPipeline will build a pipeline from the config.
 func (c Config) BuildPipeline(bc operator.BuildContext, defaultOperator operator.Operator) (*DirectedPipeline, error) {
-
 	if defaultOperator != nil {
 		bc.DefaultOutputIDs = []string{defaultOperator.ID()}
 	}

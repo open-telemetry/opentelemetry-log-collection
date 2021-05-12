@@ -33,7 +33,6 @@ func NewMockOperator(id string) *Operator {
 	mockOutput.On("ID").Return(id)
 	mockOutput.On("CanProcess").Return(true)
 	mockOutput.On("CanOutput").Return(true)
-	mockOutput.On("Type").Return("fake_output")
 	return mockOutput
 }
 
@@ -59,9 +58,6 @@ func (f *FakeOutput) CanProcess() bool { return true }
 
 // ID always returns `fake` as the ID of a fake output operator
 func (f *FakeOutput) ID() string { return "$.fake" }
-
-// SetID returns nothing
-func (f *FakeOutput) SetID(string) {}
 
 // Logger returns the logger of a fake output
 func (f *FakeOutput) Logger() *zap.SugaredLogger { return f.SugaredLogger }
