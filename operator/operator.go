@@ -28,8 +28,6 @@ import (
 type Operator interface {
 	// ID returns the id of the operator.
 	ID() string
-	// SetID sets the id of the operator.
-	SetID(string)
 
 	// Type returns the type of the operator.
 	Type() string
