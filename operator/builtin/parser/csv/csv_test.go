@@ -16,11 +16,13 @@ package csv
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 
 	"github.com/open-telemetry/opentelemetry-log-collection/entry"
 	"github.com/open-telemetry/opentelemetry-log-collection/operator"
+	"github.com/open-telemetry/opentelemetry-log-collection/operator/helper"
 	"github.com/open-telemetry/opentelemetry-log-collection/testutil"
 )
 
@@ -111,10 +113,15 @@ func TestParserCSV(t *testing.T) {
 			"mariadb-audit-log",
 			func(p *CSVParserConfig) {
 				p.Header = "timestamp,serverhost,username,host,connectionid,queryid,operation,database,object,retcode"
+				tp := helper.NewTimeParser()
+				field := entry.NewBodyField("timestamp")
+				tp.ParseFrom = &field
+				tp.LayoutType = "strptime"
+				tp.Layout = "%Y%m%d"
+				p.TimeParser = &tp
 			},
-			"20210316 17:08:01,oiq-int-mysql,load,oiq-int-mysql.bluemedora.localnet,5,0,DISCONNECT,,,0",
+			"20210316,oiq-int-mysql,load,oiq-int-mysql.bluemedora.localnet,5,0,DISCONNECT,,,0",
 			map[string]interface{}{
-				"timestamp":    "20210316 17:08:01",
 				"serverhost":   "oiq-int-mysql",
 				"username":     "load",
 				"host":         "oiq-int-mysql.bluemedora.localnet",
@@ -202,7 +209,10 @@ func TestParserCSV(t *testing.T) {
 			entry.Body = tc.inputBody
 			err = op.Process(context.Background(), entry)
 			require.NoError(t, err)
-
+			if cfg.TimeParser != nil {
+				newTime, _ := time.ParseInLocation("20060102", "20210316", time.Local)
+				require.Equal(t, newTime, entry.Timestamp)
+			}
 			fake.ExpectBody(t, tc.outputBody)
 		})
 	}
@@ -226,10 +236,9 @@ func TestParserCSVMultipleBodys(t *testing.T) {
 		err = op.Process(context.Background(), entry)
 		require.Nil(t, err, "Expected to parse a single csv record, got '2'")
 		require.NoError(t, err)
-
 		fake.ExpectBody(t, map[string]interface{}{
 			"name": "stanza",
-			"sev":  "DEBUG",
+			"sev":  "INFO",
 			"msg":  "started agent",
 		})
 	})

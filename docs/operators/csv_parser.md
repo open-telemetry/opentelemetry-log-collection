@@ -36,9 +36,6 @@ Configuration:
 
 ```json
 {
-  "timestamp": "",
-  "resource": { },
-  "attributes": { },  
   "body": {
     "message": "1,debug,\"\"Debug Message\"\""
   }
@@ -50,9 +47,6 @@ Configuration:
 
 ```json
 {
-  "timestamp": "",
-  "resource": { },
-  "attributes": { },  
   "body": {
     "id": "1",
     "severity": "debug",
@@ -83,9 +77,6 @@ Configuration:
 
 ```json
 {
-  "timestamp": "",
-  "resource": { },
-  "attributes": { },  
   "body": {
     "message": "1 debug \"Debug Message\""
   }
@@ -97,9 +88,6 @@ Configuration:
 
 ```json
 {
-  "timestamp": "",
-  "resource": { },
-  "attributes": { },  
   "body": {
     "id": "1",
     "severity": "debug",
@@ -133,8 +121,6 @@ Configuration:
 ```json
 {
   "timestamp": "",
-  "resource": { },
-  "attributes": { },  
   "body": {
     "message": "2021-03-17,debug,Debug Message"
   }
@@ -147,8 +133,6 @@ Configuration:
 ```json
 {
   "timestamp": "2021-03-17T00:00:00-00:00",
-  "resource": { },
-  "attributes": { },  
   "body": {
     "severity": "debug",
     "message": "Debug Message"

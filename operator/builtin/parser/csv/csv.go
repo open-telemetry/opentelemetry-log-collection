@@ -17,7 +17,6 @@ import (
 	"context"
 	csvparser "encoding/csv"
 	"fmt"
-	"io"
 	"strings"
 
 	"github.com/open-telemetry/opentelemetry-log-collection/entry"
@@ -112,19 +111,14 @@ func (r *CSVParser) parse(value interface{}) (interface{}, error) {
 	reader.FieldsPerRecord = r.numFields
 	parsedValues := make(map[string]interface{})
 
-	for {
-		record, err := reader.Read()
-		if err == io.EOF {
-			break
-		}
+	record, err := reader.Read()
 
-		if err != nil {
-			return nil, err
-		}
+	if err != nil {
+		return nil, err
+	}
 
-		for i, key := range r.header {
-			parsedValues[key] = record[i]
-		}
+	for i, key := range r.header {
+		parsedValues[key] = record[i]
 	}
 
 	return parsedValues, nil
