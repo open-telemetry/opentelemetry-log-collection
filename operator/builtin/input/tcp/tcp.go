@@ -113,6 +113,7 @@ func (c TCPInputConfig) Build(context operator.BuildContext) ([]operator.Operato
 		backoff: backoff.Backoff{
 			Max: 3 * time.Second,
 		},
+		resolver: helper.NewIpResolver(),
 	}
 
 	if c.TLS != nil {
@@ -140,6 +141,7 @@ type TCPInput struct {
 
 	encoding  helper.Encoding
 	splitFunc bufio.SplitFunc
+	resolver  *helper.IPResolver
 }
 
 // Start will start listening for log entries over tcp.
@@ -252,14 +254,14 @@ func (t *TCPInput) goHandleMessages(ctx context.Context, conn net.Conn, cancel c
 					ip := addr.IP.String()
 					entry.AddAttribute("net.peer.ip", ip)
 					entry.AddAttribute("net.peer.port", strconv.FormatInt(int64(addr.Port), 10))
-					entry.AddAttribute("net.peer.name", helper.IPResolver.GetHostFromIp(ip))
+					entry.AddAttribute("net.peer.name", t.resolver.GetHostFromIp(ip))
 				}
 
 				if addr, ok := conn.LocalAddr().(*net.TCPAddr); ok {
 					ip := addr.IP.String()
 					entry.AddAttribute("net.host.ip", addr.IP.String())
 					entry.AddAttribute("net.host.port", strconv.FormatInt(int64(addr.Port), 10))
-					entry.AddAttribute("net.host.name", helper.IPResolver.GetHostFromIp(ip))
+					entry.AddAttribute("net.host.name", t.resolver.GetHostFromIp(ip))
 				}
 			}
 
@@ -280,6 +282,6 @@ func (t *TCPInput) Stop() error {
 	}
 
 	t.wg.Wait()
-	helper.IPResolver.Stop()
+	t.resolver.Stop()
 	return nil
 }

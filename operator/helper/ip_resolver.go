@@ -20,37 +20,38 @@ import (
 	"time"
 )
 
-// IPResolver is global handler for resolving hostname from ip address
-var (
-	IPResolver *_IPResolver = NewIpResolver()
-)
-
 // cacheEntry keeps information about host and expiration time
 type cacheEntry struct {
 	hostname   string
 	expireTime time.Time
 }
 
-type _IPResolver struct {
-	cache   map[string]cacheEntry
-	mutex   sync.RWMutex
-	done    chan bool
-	stopped bool
+const (
+	defaultInvalidationInterval time.Duration = 5 * time.Minute
+)
+
+type IPResolver struct {
+	cache                map[string]cacheEntry
+	mutex                sync.RWMutex
+	done                 chan bool
+	stopped              bool
+	invalidationInterval time.Duration
 }
 
 // Create new resolver
-func NewIpResolver() *_IPResolver {
-	r := &_IPResolver{
-		cache:   make(map[string]cacheEntry),
-		stopped: false,
-		done:    make(chan bool),
+func NewIpResolver() *IPResolver {
+	r := &IPResolver{
+		cache:                make(map[string]cacheEntry),
+		stopped:              false,
+		done:                 make(chan bool),
+		invalidationInterval: defaultInvalidationInterval,
 	}
 	r.start()
 	return r
 }
 
 // Stop cache invalidation
-func (r *_IPResolver) Stop() {
+func (r *IPResolver) Stop() {
 	r.mutex.Lock()
 	if r.stopped {
 		r.mutex.Unlock()
@@ -62,8 +63,8 @@ func (r *_IPResolver) Stop() {
 	r.done <- true
 }
 
-// start runs cached invalidation every 5 minutes
-func (r *_IPResolver) start() {
+// start runs cache invalidation every 5 minutes
+func (r *IPResolver) start() {
 	ticker := time.NewTicker(5 * time.Minute)
 	go func() {
 		for {
@@ -88,7 +89,7 @@ func (r *_IPResolver) start() {
 // GetHostFromIp returns hostname for given ip
 // It is taken from cache if exists,
 // otherwise lookup is performed and result is put into cache
-func (r *_IPResolver) GetHostFromIp(ip string) (host string) {
+func (r *IPResolver) GetHostFromIp(ip string) (host string) {
 	r.mutex.RLock()
 	entry, ok := r.cache[ip]
 	if ok {
@@ -111,7 +112,7 @@ func (r *_IPResolver) GetHostFromIp(ip string) (host string) {
 }
 
 // lookupIpAddr resturns hostname based on ip address
-func (r *_IPResolver) lookupIpAddr(ip string) (host string) {
+func (r *IPResolver) lookupIpAddr(ip string) (host string) {
 	res, err := net.LookupAddr(ip)
 	if err != nil || len(res) == 0 {
 		return ip
