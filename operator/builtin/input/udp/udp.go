@@ -86,6 +86,11 @@ func (c UDPInputConfig) Build(context operator.BuildContext) ([]operator.Operato
 		return nil, err
 	}
 
+	var resolver *helper.IPResolver = nil
+	if c.AddAttributes {
+		resolver = helper.NewIpResolver()
+	}
+
 	udpInput := &UDPInput{
 		InputOperator: inputOperator,
 		address:       address,
@@ -93,7 +98,7 @@ func (c UDPInputConfig) Build(context operator.BuildContext) ([]operator.Operato
 		addAttributes: c.AddAttributes,
 		encoding:      encoding,
 		splitFunc:     splitFunc,
-		resolver:      helper.NewIpResolver(),
+		resolver:      resolver,
 	}
 	return []operator.Operator{udpInput}, nil
 }
@@ -212,6 +217,8 @@ func (u *UDPInput) Stop() error {
 	u.cancel()
 	u.connection.Close()
 	u.wg.Wait()
-	u.resolver.Stop()
+	if u.resolver != nil {
+		u.resolver.Stop()
+	}
 	return nil
 }

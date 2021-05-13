@@ -103,6 +103,11 @@ func (c TCPInputConfig) Build(context operator.BuildContext) ([]operator.Operato
 		return nil, err
 	}
 
+	var resolver *helper.IPResolver = nil
+	if c.AddAttributes {
+		resolver = helper.NewIpResolver()
+	}
+
 	tcpInput := &TCPInput{
 		InputOperator: inputOperator,
 		address:       c.ListenAddress,
@@ -113,7 +118,7 @@ func (c TCPInputConfig) Build(context operator.BuildContext) ([]operator.Operato
 		backoff: backoff.Backoff{
 			Max: 3 * time.Second,
 		},
-		resolver: helper.NewIpResolver(),
+		resolver: resolver,
 	}
 
 	if c.TLS != nil {
@@ -282,6 +287,8 @@ func (t *TCPInput) Stop() error {
 	}
 
 	t.wg.Wait()
-	t.resolver.Stop()
+	if t.resolver != nil {
+		t.resolver.Stop()
+	}
 	return nil
 }
