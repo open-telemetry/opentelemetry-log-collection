@@ -65,7 +65,7 @@ func (r *IPResolver) Stop() {
 
 // start runs cache invalidation every 5 minutes
 func (r *IPResolver) start() {
-	ticker := time.NewTicker(5 * time.Minute)
+	ticker := time.NewTicker(r.invalidationInterval)
 	go func() {
 		for {
 			select {
