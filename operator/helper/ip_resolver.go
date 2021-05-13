@@ -73,17 +73,22 @@ func (r *IPResolver) start() {
 				ticker.Stop()
 				return
 			case <-ticker.C:
-				now := time.Now()
 				r.mutex.Lock()
-				for key, entry := range r.cache {
-					if entry.expireTime.Before(now) {
-						delete(r.cache, key)
-					}
-				}
+				r.invalidateCache()
 				r.mutex.Unlock()
 			}
 		}
 	}()
+}
+
+// invalidateCache removes not longer valid entries from cache
+func (r *IPResolver) invalidateCache() {
+	now := time.Now()
+	for key, entry := range r.cache {
+		if entry.expireTime.Before(now) {
+			delete(r.cache, key)
+		}
+	}
 }
 
 // GetHostFromIp returns hostname for given ip

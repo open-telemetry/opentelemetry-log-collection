@@ -15,8 +15,10 @@
 package helper
 
 import (
+	"fmt"
 	"testing"
 	"time"
+	"unsafe"
 
 	"github.com/stretchr/testify/require"
 )
@@ -34,19 +36,15 @@ func TestIPResolverCacheLookup(t *testing.T) {
 func TestIPResolverCacheInvalidation(t *testing.T) {
 	resolver := NewIpResolver()
 
-	resolver.Stop()
-	resolver.invalidationInterval = time.Millisecond
-	resolver.start()
-
-	time.Sleep(2 * time.Second)
-
 	resolver.cache["127.0.0.1"] = cacheEntry{
 		hostname:   "definitely invalid hostname",
 		expireTime: time.Now().Add(-1 * time.Hour),
 	}
 
-	hostname := resolver.lookupIpAddr("127.0.0.1")
+	resolver.Stop()
+	resolver.invalidateCache()
 
+	hostname := resolver.lookupIpAddr("127.0.0.1")
 	require.Equal(t, hostname, resolver.GetHostFromIp("127.0.0.1"))
 }
 
@@ -67,4 +65,11 @@ func TestIPResolverWithMultipleStops(t *testing.T) {
 
 	resolver.Stop()
 	resolver.Stop()
+}
+
+func TestSizes(t *testing.T) {
+	fmt.Printf("string %v \n", unsafe.Sizeof(""))
+	fmt.Printf("cache entry %v \n", unsafe.Sizeof(cacheEntry{}))
+	fmt.Printf("time %v \n", unsafe.Sizeof(time.Now()))
+	fmt.Printf("time %v \n", unsafe.Sizeof(time.Now()))
 }
