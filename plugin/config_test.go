@@ -133,3 +133,58 @@ pipeline:
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "reached max plugin depth")
 }
+
+func TestPluginIDs(t *testing.T) {
+	pluginContent := []byte(`
+parameters:
+pipeline:
+ - type: noop
+   output: {{ .output }}
+ - type: noop
+   output: {{ .output }}
+`)
+
+	configContent := []byte(`
+id: my_plugin
+type: my_plugin
+output: stdout
+`)
+
+	plugin, err := NewPlugin("my_plugin", pluginContent)
+	require.NoError(t, err)
+
+	operator.RegisterPlugin(plugin.ID, plugin.NewBuilder)
+
+	var cfg operator.Config
+	err = yaml.Unmarshal(configContent, &cfg)
+	require.NoError(t, err)
+
+	expected := operator.Config{
+		Builder: &Config{
+			WriterConfig: helper.WriterConfig{
+				OutputIDs: []string{"stdout"},
+				BasicConfig: helper.BasicConfig{
+					OperatorID:   "my_plugin",
+					OperatorType: "my_plugin",
+				},
+			},
+			Parameters: map[string]interface{}{},
+			Plugin:     plugin,
+		},
+	}
+
+	require.Equal(t, expected, cfg)
+
+	operators, err := cfg.Build(testutil.NewBuildContext(t))
+	require.NoError(t, err)
+	require.Len(t, operators, 2)
+	noop1, ok1 := operators[0].(*noop.NoopOperator)
+	noop2, ok2 := operators[1].(*noop.NoopOperator)
+	require.True(t, ok1)
+	require.True(t, ok2)
+	require.Equal(t, "$.my_plugin.noop", noop1.OperatorID)
+	require.Equal(t, "$.my_plugin.noop", noop2.OperatorID)
+	require.Equal(t, "noop", noop1.OperatorType)
+	require.Equal(t, "noop", noop2.OperatorType)
+
+}
