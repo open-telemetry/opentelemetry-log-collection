@@ -2,7 +2,7 @@
 
 The `csv_parser` operator parses the string-type field selected by `parse_from` with the given header values.
 
-### Configuration Fields
+### Configuration Fields 
 
 | Field         | Default          | Description                                                                                                                                                                                                                              |
 | ---           | ---              | ---                                                                                                                                                                                                                                      |
