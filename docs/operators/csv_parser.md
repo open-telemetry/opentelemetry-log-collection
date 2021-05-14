@@ -112,7 +112,7 @@ Configuration:
     layout_type: strptime
     layout: '%Y-%m-%d'
 ```
-
+ 
 <table>
 <tr><td> Input Entry </td> <td> Output Entry </td></tr>
 <tr>
