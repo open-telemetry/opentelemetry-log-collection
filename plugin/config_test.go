@@ -134,58 +134,62 @@ pipeline:
 	require.Contains(t, err.Error(), "reached max plugin depth")
 }
 
+type PluginIDTestCase struct {
+	name          string
+	pluginConfig  pipeline.Config
+	expectedOpIDs []string
+}
+
 func TestPluginIDs(t *testing.T) {
-	pluginContent := []byte(`
+	const pluginName = "my_plugin"
+
+	cases := []PluginIDTestCase{
+		{
+			name: "basic_plugin",
+			pluginConfig: func() []operator.Config {
+				// TODO: ids shouldn't need to be specified once autogen IDs are implemented
+				pluginContent := []byte(`
 parameters:
 pipeline:
  - type: noop
+   id: noop 
  - type: noop
+   id: noop1
 `)
 
-	configContent := []byte(`
-id: my_plugin
-type: my_plugin
-`)
+				pluginVar, err := NewPlugin(pluginName, pluginContent)
+				require.NoError(t, err)
 
-	pluginVar, err := NewPlugin("my_plugin", pluginContent)
-	require.NoError(t, err)
+				operator.RegisterPlugin(pluginVar.ID, pluginVar.NewBuilder)
 
-	operator.RegisterPlugin(pluginVar.ID, pluginVar.NewBuilder)
-
-	var cfg operator.Config
-	err = yaml.Unmarshal(configContent, &cfg)
-	require.NoError(t, err)
-
-	expected := operator.Config{
-		Builder: &Config{
-			WriterConfig: helper.WriterConfig{
-				BasicConfig: helper.BasicConfig{
-					OperatorID:   "my_plugin",
-					OperatorType: "my_plugin",
-				},
+				return pipeline.Config{
+					operator.Config{
+						Builder: &Config{
+							WriterConfig: helper.WriterConfig{
+								BasicConfig: helper.BasicConfig{
+									OperatorID:   pluginName,
+									OperatorType: pluginName,
+								},
+							},
+							Parameters: map[string]interface{}{},
+							Plugin:     pluginVar,
+						},
+					},
+				}
+			}(),
+			expectedOpIDs: []string{
+				"$." + pluginName + ".noop",
+				"$." + pluginName + ".noop1",
 			},
-			Parameters: map[string]interface{}{},
-			Plugin:     pluginVar,
 		},
 	}
 
-	require.Equal(t, expected, cfg)
-
-	cfgs := pipeline.Config{cfg}
-
-	_, err = cfgs.BuildPipeline(testutil.NewBuildContext(t), nil)
-	require.Error(t, err)
-
-	// Below implements testing for the IDs once the AutoID generation is implemented.
-
-	// operators := pipe.Operators()
-	// require.Len(t, operators, 2)
-	// noop1, ok1 := operators[0].(*noop.NoopOperator)
-	// noop2, ok2 := operators[1].(*noop.NoopOperator)
-	// require.True(t, ok1)
-	// require.True(t, ok2)
-	// require.Equal(t, "$.my_plugin.noop", noop1.OperatorID)
-	// require.Equal(t, "$.my_plugin.noop1", noop2.OperatorID)
-	// require.Equal(t, "noop", noop1.OperatorType)
-	// require.Equal(t, "noop", noop2.OperatorType)
+	for _, tc := range cases {
+		pipe, err := tc.pluginConfig.BuildPipeline(testutil.NewBuildContext(t), nil)
+		require.NoError(t, err)
+		operators := pipe.Operators()
+		for i, op := range operators {
+			require.Equal(t, tc.expectedOpIDs[i], op.ID())
+		}
+	}
 }
