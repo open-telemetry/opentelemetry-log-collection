@@ -210,7 +210,7 @@ func TestParserCSV(t *testing.T) {
 			err = op.Process(context.Background(), entry)
 			require.NoError(t, err)
 			if cfg.TimeParser != nil {
-				newTime, _ := time.ParseInLocation("20060102", "20210316", time.Local)
+				newTime, _ := time.ParseInLocation("20060102", "20210316", entry.Copy().Timestamp.Location())
 				require.Equal(t, newTime, entry.Timestamp)
 			}
 			fake.ExpectBody(t, tc.outputBody)
