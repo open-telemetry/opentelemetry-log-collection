@@ -10,8 +10,8 @@ The `csv_parser` operator parses the string-type field selected by `parse_from` 
 | `output`      | Next in pipeline | The connected operator(s) that will receive all outbound entries                                                                                                                                                                         |
 | `header`      | required         | A string of delimited field names. The values in the delimited header will be used as keys                                                                                                                                               |
 | `delimiter`   | `,`              | A character that will be used as a delimiter. Values `\r` and `\n` cannot be used as a delimiter                                                                                                                                         |
-| `parse_from`  | $                | A [field](/docs/types/field.md) that indicates the field to be parsed                                                                                                                                                                    |
-| `parse_to`    | $                | A [field](/docs/types/field.md) that indicates the field to be parsed                                                                                                                                                                    |
+| `parse_from`  | $body                | A [field](/docs/types/field.md) that indicates the field to be parsed                                                                                                                                                                    |
+| `parse_to`    | $body                | A [field](/docs/types/field.md) that indicates the field to be parsed                                                                                                                                                                    |
 | `preserve_to` |                  | Preserves the unparsed value at the specified [field](/docs/types/field.md)                                                                                                                                                              |
 | `on_error`    | `send`           | The behavior of the operator if it encounters an error. See [on_error](/docs/types/on_error.md)                                                                                                                                          |
 | `timestamp`   | `nil`            | An optional [timestamp](/docs/types/timestamp.md) block which will parse a timestamp field before passing the entry to the output operator                                                                                               |
@@ -25,7 +25,6 @@ Configuration:
 
 ```yaml
 - type: csv_parser
-  parse_from: message
   header: id,severity,message
 ```
 
@@ -36,9 +35,7 @@ Configuration:
 
 ```json
 {
-  "body": {
-    "message": "1,debug,\"\"Debug Message\"\""
-  }
+  "body": "1,debug,Debug Message"
 }
 ```
 
@@ -50,7 +47,7 @@ Configuration:
   "body": {
     "id": "1",
     "severity": "debug",
-    "message": "\"Debug Message\""
+    "message": "Debug Message"
   }
 }
 ```
@@ -78,7 +75,7 @@ Configuration:
 ```json
 {
   "body": {
-    "message": "1 debug \"Debug Message\""
+    "message": "1 debug Debug Message"
   }
 }
 ```
@@ -91,7 +88,7 @@ Configuration:
   "body": {
     "id": "1",
     "severity": "debug",
-    "message": "\"Debug Message\""
+    "message": "Debug Message"
   }
 }
 ```
@@ -108,7 +105,7 @@ Configuration:
 - type: csv_parser
   header: 'timestamp_field,severity,message'
   timestamp:
-    parse_from: timestamp_field
+    parse_from: timestamp
     layout_type: strptime
     layout: '%Y-%m-%d'
 ```
