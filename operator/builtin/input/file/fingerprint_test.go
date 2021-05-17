@@ -16,6 +16,9 @@ package file
 
 import (
 	"fmt"
+	"io/ioutil"
+	"math/rand"
+	"os"
 	"strings"
 	"testing"
 
@@ -209,6 +212,51 @@ func TestFingerprintStartsWith(t *testing.T) {
 			require.Equal(t, strings.HasPrefix(tc.a, tc.b), fa.StartsWith(fb))
 			require.Equal(t, strings.HasPrefix(tc.b, tc.a), fb.StartsWith(fa))
 		})
+	}
+}
+
+func TestFingerprintStartsWith_FromFile(t *testing.T) {
+	rand.Seed(112358)
+	maxTokenLength := 16
+	numTokens := 16
+
+	// Make a bunch of []byte we can write one at a time
+	tokens := [][]byte{}
+	for n := 0; n < numTokens; n++ {
+		for tk := 0; tk < numTokens; tk++ {
+			token := make([]byte, rand.Int()%maxTokenLength)
+			rand.Read(token)
+			tokens = append(tokens, token)
+		}
+	}
+
+	operator, _, tempDir := newTestFileOperator(t, nil, nil)
+
+	// Use the tokens to generate files
+	// Each file is a concatenation of the first i tokens
+	files := []*os.File{}
+	for i := 0; i < len(tokens); i++ {
+		tempFile, err := ioutil.TempFile(tempDir, "")
+		require.NoError(t, err)
+
+		for tk := 0; tk <= i; tk++ {
+			tempFile.Write(tokens[tk])
+		}
+		files = append(files, tempFile)
+	}
+
+	// Validate that the list is ordered
+	// such that fingerprint(n+1).StartsWith(fingerprint(n))
+	for i := 0; i < len(tokens); i++ {
+		for j := i + 1; j < len(tokens); j++ {
+			fi, err := operator.NewFingerprint(files[i])
+			require.NoError(t, err)
+
+			fj, err := operator.NewFingerprint(files[j])
+			require.NoError(t, err)
+
+			require.True(t, fj.StartsWith(fi))
+		}
 	}
 }
 
