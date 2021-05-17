@@ -65,8 +65,14 @@ func (f *FakeOutput) Logger() *zap.SugaredLogger { return f.SugaredLogger }
 // Outputs always returns nil for a fake output
 func (f *FakeOutput) Outputs() []operator.Operator { return nil }
 
+// Outputs always returns nil for a fake output
+func (f *FakeOutput) GetOutputIDs() []string { return nil }
+
 // SetOutputs immediately returns nil for a fake output
 func (f *FakeOutput) SetOutputs(outputs []operator.Operator) error { return nil }
+
+// SetOutputs immediately returns nil for a fake output
+func (f *FakeOutput) SetOutputIDs(s []string) error { return nil }
 
 // Start immediately returns nil for a fake output
 func (f *FakeOutput) Start(_ operator.Persister) error { return nil }

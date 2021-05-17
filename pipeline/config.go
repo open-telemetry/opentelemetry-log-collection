@@ -24,9 +24,8 @@ type Config []operator.Config
 // BuildOperators builds the operators from the list of configs into operators
 func (c Config) BuildOperators(bc operator.BuildContext) ([]operator.Operator, error) {
 	operators := make([]operator.Operator, 0, len(c))
-	for i, builder := range c {
-		nbc := getBuildContextWithDefaultOutput(c, i, bc)
-		op, err := builder.Build(nbc)
+	for _, builder := range c {
+		op, err := builder.Build(bc)
 		if err != nil {
 			return nil, err
 		}
@@ -44,6 +43,12 @@ func (c Config) BuildPipeline(bc operator.BuildContext, defaultOperator operator
 	operators, err := c.BuildOperators(bc)
 	if err != nil {
 		return nil, err
+	}
+
+	for i, op := range operators {
+		if len(op.GetOutputIDs()) == 0 && i+1 < len(operators) {
+			op.SetOutputIDs([]string{operators[i+1].ID()})
+		}
 	}
 
 	if defaultOperator != nil {

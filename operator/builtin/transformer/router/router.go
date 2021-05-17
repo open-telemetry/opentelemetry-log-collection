@@ -157,6 +157,15 @@ func (p *RouterOperator) Outputs() []operator.Operator {
 	return outputs
 }
 
+// Outputs will return all connected operators.
+func (p *RouterOperator) GetOutputIDs() []string {
+	outputs := make([]string, 0, len(p.routes))
+	for _, route := range p.routes {
+		outputs = append(outputs, route.OutputIDs...)
+	}
+	return outputs
+}
+
 // SetOutputs will set the outputs of the router operator.
 func (p *RouterOperator) SetOutputs(operators []operator.Operator) error {
 	for _, route := range p.routes {
@@ -167,6 +176,12 @@ func (p *RouterOperator) SetOutputs(operators []operator.Operator) error {
 		route.OutputOperators = outputOperators
 	}
 
+	return nil
+}
+
+// SetOutputs will set the outputs of the router operator.
+func (p *RouterOperator) SetOutputIDs(opIDs []string) error {
+	// TODO: determine proper way to set the IDs
 	return nil
 }
 

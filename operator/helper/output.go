@@ -65,8 +65,21 @@ func (o *OutputOperator) Outputs() []operator.Operator {
 	return []operator.Operator{}
 }
 
+// Outputs will always return an empty array for an output ID.
+func (o *OutputOperator) GetOutputIDs() []string {
+	return []string{}
+}
+
 // SetOutputs will return an error if called.
 func (o *OutputOperator) SetOutputs(operators []operator.Operator) error {
+	return errors.NewError(
+		"Operator can not output, but is attempting to set an output.",
+		"This is an unexpected internal error. Please submit a bug/issue.",
+	)
+}
+
+// SetOutputs will return an error if called.
+func (o *OutputOperator) SetOutputIDs(opIDs []string) error {
 	return errors.NewError(
 		"Operator can not output, but is attempting to set an output.",
 		"This is an unexpected internal error. Please submit a bug/issue.",

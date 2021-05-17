@@ -45,9 +45,6 @@ func (c WriterConfig) Build(bc operator.BuildContext) (WriterOperator, error) {
 
 	// Namespace all the output IDs
 	namespacedIDs := c.OutputIDs.WithNamespace(bc)
-	if len(namespacedIDs) == 0 {
-		namespacedIDs = bc.DefaultOutputIDs
-	}
 
 	writer := WriterOperator{
 		OutputIDs:     namespacedIDs,
@@ -84,6 +81,11 @@ func (w *WriterOperator) Outputs() []operator.Operator {
 	return w.OutputOperators
 }
 
+// Outputs returns the outputs of the writer operator.
+func (w *WriterOperator) GetOutputIDs() []string {
+	return w.OutputIDs
+}
+
 // SetOutputs will set the outputs of the operator.
 func (w *WriterOperator) SetOutputs(operators []operator.Operator) error {
 	outputOperators := make([]operator.Operator, 0)
@@ -102,6 +104,12 @@ func (w *WriterOperator) SetOutputs(operators []operator.Operator) error {
 	}
 
 	w.OutputOperators = outputOperators
+	return nil
+}
+
+// SetOutputs will set the outputs of the operator.
+func (w *WriterOperator) SetOutputIDs(opIds []string) error {
+	w.OutputIDs = opIds
 	return nil
 }
 

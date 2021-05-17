@@ -135,33 +135,95 @@ pipeline:
 }
 
 type PluginIDTestCase struct {
-	name          string
-	pluginConfig  pipeline.Config
-	expectedOpIDs []string
+	Name          string
+	PluginConfig  pipeline.Config
+	ExpectedOpIDs []string
 }
 
 func TestPluginIDs(t *testing.T) {
-	const pluginName = "my_plugin"
-
-	cases := []PluginIDTestCase{
-		{
-			name: "basic_plugin",
-			pluginConfig: func() []operator.Config {
-				// TODO: ids shouldn't need to be specified once autogen IDs are implemented
-				pluginContent := []byte(`
+	// TODO: ids shouldn't need to be specified once autogen IDs are implemented
+	pluginContent := []byte(`
 parameters:
 pipeline:
  - type: noop
-   id: noop 
+   id: noop
  - type: noop
    id: noop1
 `)
+	pluginName := "my_plugin"
+	pluginVar, err := NewPlugin(pluginName, pluginContent)
+	require.NoError(t, err)
+	operator.RegisterPlugin(pluginVar.ID, pluginVar.NewBuilder)
 
-				pluginVar, err := NewPlugin(pluginName, pluginContent)
-				require.NoError(t, err)
+	// TODO: remove ID assignment
+	pluginContent2 := []byte(`
+parameters:
+pipeline:
+ - type: noop
+   id: noop3
+ - type: noop
+   id: noop4
+`)
+	secondPlugin := "secondPlugin"
+	secondPluginVar, err := NewPlugin(secondPlugin, pluginContent2)
+	require.NoError(t, err)
+	operator.RegisterPlugin(secondPluginVar.ID, secondPluginVar.NewBuilder)
 
-				operator.RegisterPlugin(pluginVar.ID, pluginVar.NewBuilder)
-
+	cases := []PluginIDTestCase{
+		// {
+		// 	Name: "basic_plugin",
+		// 	PluginConfig: func() []operator.Config {
+		// 		return pipeline.Config{
+		// 			operator.Config{
+		// 				Builder: &Config{
+		// 					WriterConfig: helper.WriterConfig{
+		// 						BasicConfig: helper.BasicConfig{
+		// 							OperatorID:   pluginName,
+		// 							OperatorType: pluginName,
+		// 						},
+		// 					},
+		// 					Parameters: map[string]interface{}{},
+		// 					Plugin:     pluginVar,
+		// 				},
+		// 			},
+		// 		}
+		// 	}(),
+		// 	ExpectedOpIDs: []string{
+		// 		"$." + pluginName + ".noop",
+		// 		"$." + pluginName + ".noop1",
+		// 	},
+		// },
+		// {
+		// 	Name: "same_op_outside_plugin",
+		// 	PluginConfig: func() []operator.Config {
+		// 		return pipeline.Config{
+		// 			operator.Config{
+		// 				Builder: &Config{
+		// 					WriterConfig: helper.WriterConfig{
+		// 						BasicConfig: helper.BasicConfig{
+		// 							OperatorID:   pluginName,
+		// 							OperatorType: pluginName,
+		// 						},
+		// 					},
+		// 					Parameters: map[string]interface{}{},
+		// 					Plugin:     pluginVar,
+		// 				},
+		// 			},
+		// 			operator.Config{
+		// 				// TODO: ID should be noop to start then auto gened to noop2
+		// 				Builder: noop.NewNoopOperatorConfig("noop2"),
+		// 			},
+		// 		}
+		// 	}(),
+		// 	ExpectedOpIDs: []string{
+		// 		"$." + pluginName + ".noop",
+		// 		"$." + pluginName + ".noop1",
+		// 		"$.noop2",
+		// 	},
+		// },
+		{
+			Name: "two_plugins_with_same_ops",
+			PluginConfig: func() []operator.Config {
 				return pipeline.Config{
 					operator.Config{
 						Builder: &Config{
@@ -175,21 +237,38 @@ pipeline:
 							Plugin:     pluginVar,
 						},
 					},
+					operator.Config{
+						Builder: &Config{
+							WriterConfig: helper.WriterConfig{
+								BasicConfig: helper.BasicConfig{
+									OperatorID:   secondPlugin,
+									OperatorType: secondPlugin,
+								},
+							},
+							Parameters: map[string]interface{}{},
+							Plugin:     secondPluginVar,
+						},
+					},
 				}
 			}(),
-			expectedOpIDs: []string{
+			ExpectedOpIDs: []string{
 				"$." + pluginName + ".noop",
 				"$." + pluginName + ".noop1",
+				"$." + secondPlugin + ".noop3",
+				"$." + secondPlugin + ".noop4",
 			},
 		},
 	}
 
 	for _, tc := range cases {
-		pipe, err := tc.pluginConfig.BuildPipeline(testutil.NewBuildContext(t), nil)
-		require.NoError(t, err)
-		operators := pipe.Operators()
-		for i, op := range operators {
-			require.Equal(t, tc.expectedOpIDs[i], op.ID())
-		}
+		t.Run(tc.Name, func(t *testing.T) {
+			pipe, err := tc.PluginConfig.BuildPipeline(testutil.NewBuildContext(t), nil)
+			require.NoError(t, err)
+			operators := pipe.Operators()
+			require.Len(t, operators, len(tc.ExpectedOpIDs))
+			for i, op := range operators {
+				require.Equal(t, tc.ExpectedOpIDs[i], op.ID())
+			}
+		})
 	}
 }
