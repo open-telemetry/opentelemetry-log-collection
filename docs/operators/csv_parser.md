@@ -105,7 +105,7 @@ Configuration:
 - type: csv_parser
   header: 'timestamp_field,severity,message'
   timestamp:
-    parse_from: timestamp
+    parse_from: timestamp_field
     layout_type: strptime
     layout: '%Y-%m-%d'
 ```
