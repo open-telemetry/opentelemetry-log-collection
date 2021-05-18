@@ -65,13 +65,3 @@ func SetOutputIDs(operators []operator.Operator) error {
 	}
 	return nil
 }
-
-func getBuildContextWithDefaultOutput(configs []operator.Config, i int, bc operator.BuildContext) operator.BuildContext {
-	if i+1 >= len(configs) {
-		return bc
-	}
-
-	id := configs[i+1].ID()
-	id = bc.PrependNamespace(id)
-	return bc.WithDefaultOutputIDs([]string{id})
-}
