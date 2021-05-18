@@ -49,13 +49,6 @@ func TestURIParserStringFailure(t *testing.T) {
 	require.Contains(t, err.Error(), "parse \"invalid\": invalid URI for request")
 }
 
-func TestURIParserByteFailure(t *testing.T) {
-	parser := newTestParser(t)
-	_, err := parser.parse([]byte("invalid"))
-	require.Error(t, err)
-	require.Contains(t, err.Error(), "parse \"invalid\": invalid URI for request")
-}
-
 func TestRegexParserInvalidType(t *testing.T) {
 	parser := newTestParser(t)
 	_, err := parser.parse([]int{})
@@ -84,27 +77,6 @@ func TestURIParserParse(t *testing.T) {
 				},
 			},
 			false,
-		},
-		{
-			"byte",
-			[]byte("http://google.com/app?env=prod"),
-			map[string]interface{}{
-				"scheme": "http",
-				"host":   "google.com",
-				"path":   "/app",
-				"query": map[string]interface{}{
-					"env": []interface{}{
-						"prod",
-					},
-				},
-			},
-			false,
-		},
-		{
-			"byte",
-			[]int{},
-			map[string]interface{}{},
-			true,
 		},
 	}
 
