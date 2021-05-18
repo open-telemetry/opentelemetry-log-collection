@@ -214,21 +214,29 @@ func TestFingerprintStartsWith(t *testing.T) {
 	}
 }
 
+// Generates a file filled with many random bytes, then
+// writes the same bytes to a second file, one byte at a time.
+// Validates, after each byte is written, that fingerprint
+// matching would successfully associate the two files.
+// The static file can be thought of as the present state of
+// the file, while each iteration of the growing file represents
+// a possible state of the same file at a previous time.
 func TestFingerprintStartsWith_FromFile(t *testing.T) {
-	rand.Seed(112358)
+	r := rand.New(rand.NewSource(112358))
 
 	operator, _, tempDir := newTestFileOperator(t, nil, nil)
+	operator.fingerprintSize *= 10
 
-	fileLength := 10 * operator.fingerprintSize
+	fileLength := 12 * operator.fingerprintSize
 
 	// Make a []byte we can write one at a time
 	content := make([]byte, fileLength)
-	rand.Read(content) // Fill slice with random bytes
+	r.Read(content) // Fill slice with random bytes
 
 	// Overwrite some bytes with \n to ensure
 	// we are testing a file with multiple lines
 	newlineMask := make([]byte, fileLength)
-	rand.Read(newlineMask) // Fill slice with random bytes
+	r.Read(newlineMask) // Fill slice with random bytes
 	for i, b := range newlineMask {
 		if b == 0 && i != 0 { // 1/256 chance, but never first byte
 			content[i] = byte('\n')
