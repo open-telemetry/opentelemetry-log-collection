@@ -45,17 +45,25 @@ func (c Config) BuildPipeline(bc operator.BuildContext, defaultOperator operator
 		return nil, err
 	}
 
-	for i, op := range operators {
-		if len(op.GetOutputIDs()) == 0 && i+1 < len(operators) {
-			op.SetOutputIDs([]string{operators[i+1].ID()})
-		}
-	}
+	SetOutputIDs(operators)
 
 	if defaultOperator != nil {
 		operators = append(operators, defaultOperator)
 	}
 
 	return NewDirectedPipeline(operators)
+}
+
+func SetOutputIDs(operators []operator.Operator) error {
+	for i, op := range operators {
+		if len(op.GetOutputIDs()) == 0 && i+1 < len(operators) {
+			err := op.SetOutputIDs([]string{operators[i+1].ID()})
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }
 
 func getBuildContextWithDefaultOutput(configs []operator.Config, i int, bc operator.BuildContext) operator.BuildContext {

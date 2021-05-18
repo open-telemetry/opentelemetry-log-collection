@@ -101,39 +101,6 @@ output: stdout
 	require.Equal(t, "noop", noop.OperatorType)
 }
 
-func TestBuildRecursiveFails(t *testing.T) {
-	pluginConfig1 := []byte(`
-pipeline:
-  - type: plugin2
-`)
-
-	pluginConfig2 := []byte(`
-pipeline:
-  - type: plugin1
-`)
-
-	plugin1, err := NewPlugin("plugin1", pluginConfig1)
-	require.NoError(t, err)
-	plugin2, err := NewPlugin("plugin2", pluginConfig2)
-	require.NoError(t, err)
-
-	t.Cleanup(func() { operator.DefaultRegistry = operator.NewRegistry() })
-	operator.RegisterPlugin("plugin1", plugin1.NewBuilder)
-	operator.RegisterPlugin("plugin2", plugin2.NewBuilder)
-
-	pipelineConfig := []byte(`
-- type: plugin1
-`)
-
-	var pipeline pipeline.Config
-	err = yaml.Unmarshal(pipelineConfig, &pipeline)
-	require.NoError(t, err)
-
-	_, err = pipeline.BuildOperators(operator.NewBuildContext(zaptest.NewLogger(t).Sugar()))
-	require.Error(t, err)
-	require.Contains(t, err.Error(), "reached max plugin depth")
-}
-
 type PluginIDTestCase struct {
 	Name          string
 	PluginConfig  pipeline.Config
@@ -145,10 +112,10 @@ func TestPluginIDs(t *testing.T) {
 	pluginContent := []byte(`
 parameters:
 pipeline:
- - type: noop
-   id: noop
- - type: noop
-   id: noop1
+  - id: noop
+    type: noop
+  - id: noop1
+    type: noop
 `)
 	pluginName := "my_plugin"
 	pluginVar, err := NewPlugin(pluginName, pluginContent)
@@ -159,10 +126,10 @@ pipeline:
 	pluginContent2 := []byte(`
 parameters:
 pipeline:
- - type: noop
-   id: noop3
- - type: noop
-   id: noop4
+  - id: noop3
+    type: noop
+  - id: noop4
+    type: noop
 `)
 	secondPlugin := "secondPlugin"
 	secondPluginVar, err := NewPlugin(secondPlugin, pluginContent2)
@@ -170,57 +137,57 @@ pipeline:
 	operator.RegisterPlugin(secondPluginVar.ID, secondPluginVar.NewBuilder)
 
 	cases := []PluginIDTestCase{
-		// {
-		// 	Name: "basic_plugin",
-		// 	PluginConfig: func() []operator.Config {
-		// 		return pipeline.Config{
-		// 			operator.Config{
-		// 				Builder: &Config{
-		// 					WriterConfig: helper.WriterConfig{
-		// 						BasicConfig: helper.BasicConfig{
-		// 							OperatorID:   pluginName,
-		// 							OperatorType: pluginName,
-		// 						},
-		// 					},
-		// 					Parameters: map[string]interface{}{},
-		// 					Plugin:     pluginVar,
-		// 				},
-		// 			},
-		// 		}
-		// 	}(),
-		// 	ExpectedOpIDs: []string{
-		// 		"$." + pluginName + ".noop",
-		// 		"$." + pluginName + ".noop1",
-		// 	},
-		// },
-		// {
-		// 	Name: "same_op_outside_plugin",
-		// 	PluginConfig: func() []operator.Config {
-		// 		return pipeline.Config{
-		// 			operator.Config{
-		// 				Builder: &Config{
-		// 					WriterConfig: helper.WriterConfig{
-		// 						BasicConfig: helper.BasicConfig{
-		// 							OperatorID:   pluginName,
-		// 							OperatorType: pluginName,
-		// 						},
-		// 					},
-		// 					Parameters: map[string]interface{}{},
-		// 					Plugin:     pluginVar,
-		// 				},
-		// 			},
-		// 			operator.Config{
-		// 				// TODO: ID should be noop to start then auto gened to noop2
-		// 				Builder: noop.NewNoopOperatorConfig("noop2"),
-		// 			},
-		// 		}
-		// 	}(),
-		// 	ExpectedOpIDs: []string{
-		// 		"$." + pluginName + ".noop",
-		// 		"$." + pluginName + ".noop1",
-		// 		"$.noop2",
-		// 	},
-		// },
+		{
+			Name: "basic_plugin",
+			PluginConfig: func() []operator.Config {
+				return pipeline.Config{
+					operator.Config{
+						Builder: &Config{
+							WriterConfig: helper.WriterConfig{
+								BasicConfig: helper.BasicConfig{
+									OperatorID:   pluginName,
+									OperatorType: pluginName,
+								},
+							},
+							Parameters: map[string]interface{}{},
+							Plugin:     pluginVar,
+						},
+					},
+				}
+			}(),
+			ExpectedOpIDs: []string{
+				"$." + pluginName + ".noop",
+				"$." + pluginName + ".noop1",
+			},
+		},
+		{
+			Name: "same_op_outside_plugin",
+			PluginConfig: func() []operator.Config {
+				return pipeline.Config{
+					operator.Config{
+						Builder: &Config{
+							WriterConfig: helper.WriterConfig{
+								BasicConfig: helper.BasicConfig{
+									OperatorID:   pluginName,
+									OperatorType: pluginName,
+								},
+							},
+							Parameters: map[string]interface{}{},
+							Plugin:     pluginVar,
+						},
+					},
+					operator.Config{
+						// TODO: ID should be noop to start then auto gened to noop2
+						Builder: noop.NewNoopOperatorConfig("noop2"),
+					},
+				}
+			}(),
+			ExpectedOpIDs: []string{
+				"$." + pluginName + ".noop",
+				"$." + pluginName + ".noop1",
+				"$.noop2",
+			},
+		},
 		{
 			Name: "two_plugins_with_same_ops",
 			PluginConfig: func() []operator.Config {
@@ -261,14 +228,51 @@ pipeline:
 	}
 
 	for _, tc := range cases {
-		t.Run(tc.Name, func(t *testing.T) {
-			pipe, err := tc.PluginConfig.BuildPipeline(testutil.NewBuildContext(t), nil)
-			require.NoError(t, err)
-			operators := pipe.Operators()
-			require.Len(t, operators, len(tc.ExpectedOpIDs))
-			for i, op := range operators {
-				require.Equal(t, tc.ExpectedOpIDs[i], op.ID())
+		ops, err := tc.PluginConfig.BuildOperators(testutil.NewBuildContext(t))
+		require.NoError(t, err)
+
+		pipeline.SetOutputIDs(ops)
+
+		require.Len(t, ops, len(tc.ExpectedOpIDs))
+		for i, op := range ops {
+			require.Equal(t, tc.ExpectedOpIDs[i], op.ID())
+			if i+1 < len(ops) {
+				out := op.GetOutputIDs()
+				require.Equal(t, out[0], tc.ExpectedOpIDs[i+1])
 			}
-		})
+		}
 	}
+}
+
+func TestBuildRecursiveFails(t *testing.T) {
+	pluginConfig1 := []byte(`
+pipeline:
+  - type: plugin2
+`)
+
+	pluginConfig2 := []byte(`
+pipeline:
+  - type: plugin1
+`)
+
+	plugin1, err := NewPlugin("plugin1", pluginConfig1)
+	require.NoError(t, err)
+	plugin2, err := NewPlugin("plugin2", pluginConfig2)
+	require.NoError(t, err)
+
+	t.Cleanup(func() { operator.DefaultRegistry = operator.NewRegistry() })
+	operator.RegisterPlugin("plugin1", plugin1.NewBuilder)
+	operator.RegisterPlugin("plugin2", plugin2.NewBuilder)
+
+	pipelineConfig := []byte(`
+- type: plugin1
+`)
+
+	var pipeline pipeline.Config
+	err = yaml.Unmarshal(pipelineConfig, &pipeline)
+	require.NoError(t, err)
+
+	_, err = pipeline.BuildOperators(operator.NewBuildContext(zaptest.NewLogger(t).Sugar()))
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "reached max plugin depth")
 }
