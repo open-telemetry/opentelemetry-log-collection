@@ -50,7 +50,7 @@ func NewInputConfig(operatorID string) *InputConfig {
 		StartAt:            "end",
 		MaxLogSize:         defaultMaxLogSize,
 		MaxConcurrentFiles: defaultMaxConcurrentFiles,
-		Encoding:           "nop",
+		Encoding:           "utf-8",
 	}
 }
 
@@ -179,7 +179,7 @@ var encodingOverrides = map[string]encoding.Encoding{
 	"ascii":    unicode.UTF8,
 	"us-ascii": unicode.UTF8,
 	"nop":      encoding.Nop,
-	"":         encoding.Nop,
+	"":         unicode.UTF8,
 }
 
 func lookupEncoding(enc string) (encoding.Encoding, error) {
