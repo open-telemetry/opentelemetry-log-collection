@@ -168,12 +168,16 @@ func tcpInputAttributesTest(input []byte, expected []string) func(t *testing.T) 
 					"net.transport": "IP.TCP",
 				}
 				if addr, ok := conn.RemoteAddr().(*net.TCPAddr); ok {
+					ip := addr.IP.String()
 					expectedAttributes["net.host.ip"] = addr.IP.String()
 					expectedAttributes["net.host.port"] = strconv.FormatInt(int64(addr.Port), 10)
+					expectedAttributes["net.host.name"] = tcpInput.resolver.GetHostFromIp(ip)
 				}
 				if addr, ok := conn.LocalAddr().(*net.TCPAddr); ok {
-					expectedAttributes["net.peer.ip"] = addr.IP.String()
+					ip := addr.IP.String()
+					expectedAttributes["net.peer.ip"] = ip
 					expectedAttributes["net.peer.port"] = strconv.FormatInt(int64(addr.Port), 10)
+					expectedAttributes["net.peer.name"] = tcpInput.resolver.GetHostFromIp(ip)
 				}
 				require.Equal(t, expectedMessage, entry.Body)
 				require.Equal(t, expectedAttributes, entry.Attributes)
@@ -290,7 +294,7 @@ func TestBuild(t *testing.T) {
 		{
 			"buffer-size-valid-default",
 			TCPInputConfig{
-				MaxBufferSize: 0,
+				MaxLogSize:    0,
 				ListenAddress: "10.0.0.1:9000",
 			},
 			false,
@@ -298,7 +302,7 @@ func TestBuild(t *testing.T) {
 		{
 			"buffer-size-valid-min",
 			TCPInputConfig{
-				MaxBufferSize: 65536,
+				MaxLogSize:    65536,
 				ListenAddress: "10.0.0.1:9000",
 			},
 			false,
@@ -306,7 +310,7 @@ func TestBuild(t *testing.T) {
 		{
 			"buffer-size-negative",
 			TCPInputConfig{
-				MaxBufferSize: -1,
+				MaxLogSize:    -1,
 				ListenAddress: "10.0.0.1:9000",
 			},
 			true,
@@ -314,7 +318,7 @@ func TestBuild(t *testing.T) {
 		{
 			"tls-enabled-with-no-such-file-error",
 			TCPInputConfig{
-				MaxBufferSize: 65536,
+				MaxLogSize:    65536,
 				ListenAddress: "10.0.0.1:9000",
 				TLS:           createTlsConfig("/tmp/cert/missing", "/tmp/key/missing"),
 			},
@@ -326,7 +330,7 @@ func TestBuild(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			cfg := NewTCPInputConfig("test_id")
 			cfg.ListenAddress = tc.inputBody.ListenAddress
-			cfg.MaxBufferSize = tc.inputBody.MaxBufferSize
+			cfg.MaxLogSize = tc.inputBody.MaxLogSize
 			cfg.TLS = tc.inputBody.TLS
 			_, err := cfg.Build(testutil.NewBuildContext(t))
 			if tc.expectErr {
