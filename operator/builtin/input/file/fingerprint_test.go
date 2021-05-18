@@ -230,7 +230,7 @@ func TestFingerprintStartsWith_FromFile(t *testing.T) {
 	newlineMask := make([]byte, fileLength)
 	rand.Read(newlineMask) // Fill slice with random bytes
 	for i, b := range newlineMask {
-		if b == 0 { // 1/256 chance
+		if b == 0 && i != 0 { // 1/256 chance, but never first byte
 			content[i] = byte('\n')
 		}
 	}

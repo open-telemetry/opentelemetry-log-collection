@@ -1158,10 +1158,7 @@ func TestFileReader_FingerprintUpdated(t *testing.T) {
 }
 
 func stringWithLength(length int) string {
-	return stringWithLengthCharset(length, "abcdefghijklmnopqrstuvwxyz")
-}
-
-func stringWithLengthCharset(length int, charset string) string {
+	charset := "abcdefghijklmnopqrstuvwxyz"
 	b := make([]byte, length)
 	for i := range b {
 		b[i] = charset[rand.Intn(len(charset))]
