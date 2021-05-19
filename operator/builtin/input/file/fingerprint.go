@@ -58,7 +58,7 @@ func (f Fingerprint) Copy() *Fingerprint {
 // or if the new fingerprint starts with the old one
 func (f Fingerprint) StartsWith(old *Fingerprint) bool {
 	l0 := len(old.FirstBytes)
-	if l0 == 0 {
+	if l0 <= 2 {
 		return false
 	}
 	l1 := len(f.FirstBytes)

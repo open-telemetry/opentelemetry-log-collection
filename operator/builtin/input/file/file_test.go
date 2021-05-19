@@ -1207,7 +1207,7 @@ func waitForOne(t *testing.T, c chan *entry.Entry) *entry.Entry {
 	select {
 	case e := <-c:
 		return e
-	case <-time.After(time.Second):
+	case <-time.After(time.Second * 3):
 		require.FailNow(t, "Timed out waiting for message")
 		return nil
 	}
@@ -1219,7 +1219,7 @@ func waitForN(t *testing.T, c chan *entry.Entry, n int) []string {
 		select {
 		case e := <-c:
 			messages = append(messages, e.Body.(string))
-		case <-time.After(time.Second):
+		case <-time.After(time.Second * 3):
 			require.FailNow(t, "Timed out waiting for message")
 			return nil
 		}
@@ -1231,7 +1231,7 @@ func waitForMessage(t *testing.T, c chan *entry.Entry, expected string) {
 	select {
 	case e := <-c:
 		require.Equal(t, expected, e.Body.(string))
-	case <-time.After(time.Second):
+	case <-time.After(time.Second * 3):
 		require.FailNow(t, "Timed out waiting for message", expected)
 	}
 }
@@ -1243,7 +1243,7 @@ LOOP:
 		select {
 		case e := <-c:
 			receivedMessages = append(receivedMessages, e.Body.(string))
-		case <-time.After(time.Second):
+		case <-time.After(time.Second * 10):
 			break LOOP
 		}
 	}
@@ -1340,7 +1340,7 @@ func TestEncodings(t *testing.T) {
 				select {
 				case entry := <-receivedEntries:
 					require.Equal(t, expected, []byte(entry.Body.(string)))
-				case <-time.After(500 * time.Millisecond):
+				case <-time.After(time.Second * 5):
 					require.FailNow(t, "Timed out waiting for entry to be read")
 				}
 			}

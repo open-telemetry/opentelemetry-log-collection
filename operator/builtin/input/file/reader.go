@@ -35,9 +35,8 @@ type Reader struct {
 	Offset      int64
 	Path        string
 
-	generation int
-	fileInput  *InputOperator
-	file       *os.File
+	fileInput *InputOperator
+	file      *os.File
 
 	decoder      *encoding.Decoder
 	decodeBuffer []byte
@@ -77,6 +76,8 @@ func (f *Reader) InitializeOffset(startAtBeginning bool) error {
 			return fmt.Errorf("stat: %s", err)
 		}
 		f.Offset = info.Size()
+	} else {
+		f.Offset = 0
 	}
 
 	return nil
@@ -84,10 +85,11 @@ func (f *Reader) InitializeOffset(startAtBeginning bool) error {
 
 // ReadToEnd will read until the end of the file
 func (f *Reader) ReadToEnd(ctx context.Context) {
-	defer f.file.Close()
-
+	if f.fileInput == nil {
+		return
+	}
 	if _, err := f.file.Seek(f.Offset, 0); err != nil {
-		f.Errorw("Failed to seek", zap.Error(err))
+		f.Warnw("Failed to seek", zap.Error(err))
 		return
 	}
 

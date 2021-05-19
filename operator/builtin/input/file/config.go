@@ -151,10 +151,11 @@ func (c InputConfig) Build(context operator.BuildContext) ([]operator.Operator, 
 		firstCheck:         true,
 		cancel:             func() {},
 		knownFiles:         make([]*Reader, 0, 10),
+		tailingReaders:     map[string][]*Reader{},
+		readerQueue:        []*Reader{},
 		fingerprintSize:    int(c.FingerprintSize),
 		MaxLogSize:         int(c.MaxLogSize),
 		MaxConcurrentFiles: c.MaxConcurrentFiles,
-		SeenPaths:          make(map[string]struct{}, 100),
 	}
 
 	return []operator.Operator{op}, nil
