@@ -879,6 +879,7 @@ func TestMoveFile(t *testing.T) {
 	expectNoMessages(t, logReceived)
 }
 
+
 func TestTrackMovedAwayFiles(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("Moving files while open is unsupported on Windows")
@@ -898,9 +899,13 @@ func TestTrackMovedAwayFiles(t *testing.T) {
 
 	// Wait until all goroutines are finished before renaming
 	operator.wg.Wait()
-	tempDir2 := os.TempDir()
-	newFileName := fmt.Sprintf("%s%s", tempDir2, "newfile.log")
-	err := os.Rename(temp1.Name(), newFileName)
+
+	newDir := fmt.Sprintf("%s%s", tempDir[:len(tempDir)-1], "_new/")
+	err := os.Mkdir(newDir, 0777)
+	require.NoError(t, err)
+	newFileName := fmt.Sprintf("%s%s", newDir, "newfile.log")
+
+	err = os.Rename(temp1.Name(), newFileName)
 	require.NoError(t, err)
 
 	movedFile, err := os.OpenFile(newFileName, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
