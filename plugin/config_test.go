@@ -231,9 +231,15 @@ pipeline:
 		ops, err := tc.PluginConfig.BuildOperators(testutil.NewBuildContext(t))
 		require.NoError(t, err)
 
+		pipeline.SetOutputIDs(ops)
+
 		require.Len(t, ops, len(tc.ExpectedOpIDs))
 		for i, op := range ops {
 			require.Equal(t, tc.ExpectedOpIDs[i], op.ID())
+			if i+1 < len(ops) {
+				out := op.GetOutputIDs()
+				require.Equal(t, out[0], tc.ExpectedOpIDs[i+1])
+			}
 		}
 	}
 }

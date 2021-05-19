@@ -46,6 +46,22 @@ func (_m *Operator) CanProcess() bool {
 	return r0
 }
 
+// GetOutputIDs provides a mock function with given fields:
+func (_m *Operator) GetOutputIDs() []string {
+	ret := _m.Called()
+
+	var r0 []string
+	if rf, ok := ret.Get(0).(func() []string); ok {
+		r0 = rf()
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]string)
+		}
+	}
+
+	return r0
+}
+
 // ID provides a mock function with given fields:
 func (_m *Operator) ID() string {
 	ret := _m.Called()
@@ -99,6 +115,20 @@ func (_m *Operator) Process(_a0 context.Context, _a1 *entry.Entry) error {
 	var r0 error
 	if rf, ok := ret.Get(0).(func(context.Context, *entry.Entry) error); ok {
 		r0 = rf(_a0, _a1)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// SetOutputIDs provides a mock function with given fields: _a0
+func (_m *Operator) SetOutputIDs(_a0 []string) error {
+	ret := _m.Called(_a0)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func([]string) error); ok {
+		r0 = rf(_a0)
 	} else {
 		r0 = ret.Error(0)
 	}

@@ -40,8 +40,12 @@ type Operator interface {
 	CanOutput() bool
 	// Outputs returns the list of connected outputs.
 	Outputs() []Operator
+	// Outputs returns the list of connected outputs.
+	GetOutputIDs() []string
 	// SetOutputs will set the connected outputs.
 	SetOutputs([]Operator) error
+	// SetOutputIDs will set the connected outputs' IDs.
+	SetOutputIDs([]string) error
 
 	// CanProcess indicates if the operator will process entries from other operators.
 	CanProcess() bool
