@@ -116,6 +116,7 @@ pipeline:
     type: noop
   - id: noop1
     type: noop
+    output: {{ .output }}
 `)
 	pluginName := "my_plugin"
 	pluginVar, err := NewPlugin(pluginName, pluginContent)
@@ -231,16 +232,168 @@ pipeline:
 		ops, err := tc.PluginConfig.BuildOperators(testutil.NewBuildContext(t))
 		require.NoError(t, err)
 
-		pipeline.SetOutputIDs(ops)
-
 		require.Len(t, ops, len(tc.ExpectedOpIDs))
 		for i, op := range ops {
 			require.Equal(t, tc.ExpectedOpIDs[i], op.ID())
-			if i+1 < len(ops) {
-				out := op.GetOutputIDs()
-				require.Equal(t, out[0], tc.ExpectedOpIDs[i+1])
-			}
 		}
+	}
+}
+
+type PluginOutputIDTestCase struct {
+	Name          string
+	PluginConfig  pipeline.Config
+	ExpectedOpIDs map[string][]string
+}
+
+func TestPluginOutputIDs(t *testing.T) {
+	// TODO: ids shouldn't need to be specified once autogen IDs are implemented
+	pluginContent := []byte(`
+parameters:
+pipeline:
+  - id: noop
+    type: noop
+  - id: noop1
+    type: noop
+`)
+	pluginName := "my_plugin"
+	pluginVar, err := NewPlugin(pluginName, pluginContent)
+	require.NoError(t, err)
+	operator.RegisterPlugin(pluginVar.ID, pluginVar.NewBuilder)
+
+	// TODO: remove ID assignment
+	pluginContent2 := []byte(`
+parameters:
+pipeline:
+  - id: noop2
+    type: noop
+  - id: noop3
+    type: noop
+`)
+	secondPlugin := "secondPlugin"
+	secondPluginVar, err := NewPlugin(secondPlugin, pluginContent2)
+	require.NoError(t, err)
+	operator.RegisterPlugin(secondPluginVar.ID, secondPluginVar.NewBuilder)
+
+	cases := []PluginOutputIDTestCase{
+		// {
+		// 	Name: "same_op_outside_plugin",
+		// 	PluginConfig: func() []operator.Config {
+		// 		return pipeline.Config{
+		// 			operator.Config{
+		// 				// TODO: ID should be noop to start then auto gened to noop2
+		// 				Builder: noop.NewNoopOperatorConfig("noop2"),
+		// 			},
+		// 			operator.Config{
+		// 				Builder: &Config{
+		// 					WriterConfig: helper.WriterConfig{
+		// 						BasicConfig: helper.BasicConfig{
+		// 							OperatorID:   pluginName,
+		// 							OperatorType: pluginName,
+		// 						},
+		// 					},
+		// 					Parameters: map[string]interface{}{},
+		// 					Plugin:     pluginVar,
+		// 				},
+		// 			},
+		// 		}
+		// 	}(),
+		// 	ExpectedOpIDs: map[string][]string{
+		// 		"$.noop2":                   {"$." + pluginName + ".noop"},
+		// 		"$." + pluginName + ".noop": {"$." + pluginName + ".noop1"},
+		// 	},
+		// },
+		// {
+		// 	Name: "two_plugins_with_same_ops",
+		// 	PluginConfig: func() []operator.Config {
+		// 		return pipeline.Config{
+		// 			operator.Config{
+		// 				Builder: &Config{
+		// 					WriterConfig: helper.WriterConfig{
+		// 						BasicConfig: helper.BasicConfig{
+		// 							OperatorID:   pluginName,
+		// 							OperatorType: pluginName,
+		// 						},
+		// 					},
+		// 					Parameters: map[string]interface{}{},
+		// 					Plugin:     pluginVar,
+		// 				},
+		// 			},
+		// 			operator.Config{
+		// 				Builder: &Config{
+		// 					WriterConfig: helper.WriterConfig{
+		// 						BasicConfig: helper.BasicConfig{
+		// 							OperatorID:   secondPlugin,
+		// 							OperatorType: secondPlugin,
+		// 						},
+		// 					},
+		// 					Parameters: map[string]interface{}{},
+		// 					Plugin:     secondPluginVar,
+		// 				},
+		// 			},
+		// 		}
+		// 	}(),
+		// 	ExpectedOpIDs: map[string][]string{
+		// 		"$." + pluginName + ".noop":    {"$." + pluginName + ".noop1"},
+		// 		"$." + pluginName + ".noop1":   {"$." + secondPlugin + ".noop2"},
+		// 		"$." + secondPlugin + ".noop2": {"$." + secondPlugin + ".noop3"},
+		// 	},
+		// },
+		{
+			Name: "two_plugins_specified_output",
+			PluginConfig: func() []operator.Config {
+				return pipeline.Config{
+					operator.Config{
+						Builder: &Config{
+							WriterConfig: helper.WriterConfig{
+								BasicConfig: helper.BasicConfig{
+									OperatorID:   pluginName,
+									OperatorType: pluginName,
+								},
+								OutputIDs: []string{"$.noop5"},
+							},
+							Parameters: map[string]interface{}{},
+							Plugin:     pluginVar,
+						},
+					},
+					operator.Config{
+						Builder: &Config{
+							WriterConfig: helper.WriterConfig{
+								BasicConfig: helper.BasicConfig{
+									OperatorID:   secondPlugin,
+									OperatorType: secondPlugin,
+								},
+							},
+							Parameters: map[string]interface{}{},
+							Plugin:     secondPluginVar,
+						},
+					},
+					operator.Config{
+						Builder: noop.NewNoopOperatorConfig("noop5"),
+					},
+				}
+			}(),
+			ExpectedOpIDs: map[string][]string{
+				"$." + pluginName + ".noop":    {"$." + pluginName + ".noop1"},
+				"$." + pluginName + ".noop1":   {"$.noop5"},
+				"$." + secondPlugin + ".noop2": {"$." + pluginName + ".noop3"},
+				"$." + secondPlugin + ".noop3": {"$.noop5"},
+			},
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.Name, func(t *testing.T) {
+			ops, err := tc.PluginConfig.BuildOperators(testutil.NewBuildContext(t))
+			require.NoError(t, err)
+
+			for i, op := range ops {
+				if i+1 < len(ops) {
+					out := op.GetOutputIDs()
+					t.Log("ID:" + op.ID())
+					require.Equal(t, tc.ExpectedOpIDs[op.ID()], out)
+				}
+			}
+		})
 	}
 }
 

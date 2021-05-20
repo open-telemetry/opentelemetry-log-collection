@@ -24,13 +24,20 @@ type Config []operator.Config
 // BuildOperators builds the operators from the list of configs into operators
 func (c Config) BuildOperators(bc operator.BuildContext) ([]operator.Operator, error) {
 	operators := make([]operator.Operator, 0, len(c))
+	pluginMap := make(map[string]string)
 	for _, builder := range c {
 		op, err := builder.Build(bc)
 		if err != nil {
 			return nil, err
 		}
+
+		if len(op) > 1 {
+			pluginMap[bc.PrependNamespace(builder.ID())] = op[0].ID()
+		}
 		operators = append(operators, op...)
 	}
+	SetOutputIDs(operators, pluginMap)
+
 	return operators, nil
 }
 
@@ -45,8 +52,6 @@ func (c Config) BuildPipeline(bc operator.BuildContext, defaultOperator operator
 		return nil, err
 	}
 
-	SetOutputIDs(operators)
-
 	if defaultOperator != nil {
 		operators = append(operators, defaultOperator)
 	}
@@ -54,13 +59,22 @@ func (c Config) BuildPipeline(bc operator.BuildContext, defaultOperator operator
 	return NewDirectedPipeline(operators)
 }
 
-func SetOutputIDs(operators []operator.Operator) error {
+func SetOutputIDs(operators []operator.Operator, pluginMap map[string]string) error {
 	for i, op := range operators {
 		if len(op.GetOutputIDs()) == 0 && i+1 < len(operators) {
 			err := op.SetOutputIDs([]string{operators[i+1].ID()})
 			if err != nil {
 				return err
 			}
+			continue
+		}
+		allOutputs := []string{}
+		for _, id := range op.GetOutputIDs() {
+			if pluginMap[id] != "" {
+				allOutputs = append(allOutputs, pluginMap[id])
+				continue
+			}
+			allOutputs = append(allOutputs, id)
 		}
 	}
 	return nil
