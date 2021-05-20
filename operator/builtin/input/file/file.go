@@ -190,7 +190,6 @@ func getMatches(includes, excludes []string) []string {
 // discarding any that have a duplicate fingerprint to other files that have already
 // been read this polling interval
 func (f *InputOperator) makeReaders(filesPaths []string) []*Reader {
-
 	// Open the files first to minimize the time between listing and opening
 	files := make([]*os.File, 0, len(filesPaths))
 	for _, path := range filesPaths {
