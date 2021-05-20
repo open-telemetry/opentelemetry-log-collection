@@ -71,7 +71,7 @@ func (f *FakeOutput) GetOutputIDs() []string { return nil }
 // SetOutputs immediately returns nil for a fake output
 func (f *FakeOutput) SetOutputs(outputs []operator.Operator) error { return nil }
 
-// SetOutputs immediately returns nil for a fake output
+// SetOutputIDs immediately returns nil for a fake output
 func (f *FakeOutput) SetOutputIDs(s []string) error { return nil }
 
 // Start immediately returns nil for a fake output
