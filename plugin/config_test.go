@@ -127,9 +127,9 @@ pipeline:
 	pluginContent2 := []byte(`
 parameters:
 pipeline:
-  - id: noop3
+  - id: noop
     type: noop
-  - id: noop4
+  - id: noop1
     type: noop
 `)
 	secondPlugin := "secondPlugin"
@@ -222,8 +222,8 @@ pipeline:
 			ExpectedOpIDs: []string{
 				"$." + pluginName + ".noop",
 				"$." + pluginName + ".noop1",
-				"$." + secondPlugin + ".noop3",
-				"$." + secondPlugin + ".noop4",
+				"$." + secondPlugin + ".noop",
+				"$." + secondPlugin + ".noop1",
 			},
 		},
 	}
