@@ -76,6 +76,10 @@ func SetOutputIDs(operators []operator.Operator, pluginMap map[string]string) er
 			}
 			allOutputs = append(allOutputs, id)
 		}
+		err := op.SetOutputIDs(allOutputs)
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }

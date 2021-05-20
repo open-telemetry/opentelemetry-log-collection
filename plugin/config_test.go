@@ -254,6 +254,7 @@ pipeline:
     type: noop
   - id: noop1
     type: noop
+    output: {{ .output }}
 `)
 	pluginName := "my_plugin"
 	pluginVar, err := NewPlugin(pluginName, pluginContent)
@@ -264,9 +265,9 @@ pipeline:
 	pluginContent2 := []byte(`
 parameters:
 pipeline:
-  - id: noop2
+  - id: noop
     type: noop
-  - id: noop3
+  - id: noop1
     type: noop
 `)
 	secondPlugin := "secondPlugin"
@@ -275,69 +276,69 @@ pipeline:
 	operator.RegisterPlugin(secondPluginVar.ID, secondPluginVar.NewBuilder)
 
 	cases := []PluginOutputIDTestCase{
-		// {
-		// 	Name: "same_op_outside_plugin",
-		// 	PluginConfig: func() []operator.Config {
-		// 		return pipeline.Config{
-		// 			operator.Config{
-		// 				// TODO: ID should be noop to start then auto gened to noop2
-		// 				Builder: noop.NewNoopOperatorConfig("noop2"),
-		// 			},
-		// 			operator.Config{
-		// 				Builder: &Config{
-		// 					WriterConfig: helper.WriterConfig{
-		// 						BasicConfig: helper.BasicConfig{
-		// 							OperatorID:   pluginName,
-		// 							OperatorType: pluginName,
-		// 						},
-		// 					},
-		// 					Parameters: map[string]interface{}{},
-		// 					Plugin:     pluginVar,
-		// 				},
-		// 			},
-		// 		}
-		// 	}(),
-		// 	ExpectedOpIDs: map[string][]string{
-		// 		"$.noop2":                   {"$." + pluginName + ".noop"},
-		// 		"$." + pluginName + ".noop": {"$." + pluginName + ".noop1"},
-		// 	},
-		// },
-		// {
-		// 	Name: "two_plugins_with_same_ops",
-		// 	PluginConfig: func() []operator.Config {
-		// 		return pipeline.Config{
-		// 			operator.Config{
-		// 				Builder: &Config{
-		// 					WriterConfig: helper.WriterConfig{
-		// 						BasicConfig: helper.BasicConfig{
-		// 							OperatorID:   pluginName,
-		// 							OperatorType: pluginName,
-		// 						},
-		// 					},
-		// 					Parameters: map[string]interface{}{},
-		// 					Plugin:     pluginVar,
-		// 				},
-		// 			},
-		// 			operator.Config{
-		// 				Builder: &Config{
-		// 					WriterConfig: helper.WriterConfig{
-		// 						BasicConfig: helper.BasicConfig{
-		// 							OperatorID:   secondPlugin,
-		// 							OperatorType: secondPlugin,
-		// 						},
-		// 					},
-		// 					Parameters: map[string]interface{}{},
-		// 					Plugin:     secondPluginVar,
-		// 				},
-		// 			},
-		// 		}
-		// 	}(),
-		// 	ExpectedOpIDs: map[string][]string{
-		// 		"$." + pluginName + ".noop":    {"$." + pluginName + ".noop1"},
-		// 		"$." + pluginName + ".noop1":   {"$." + secondPlugin + ".noop2"},
-		// 		"$." + secondPlugin + ".noop2": {"$." + secondPlugin + ".noop3"},
-		// 	},
-		// },
+		{
+			Name: "same_op_outside_plugin",
+			PluginConfig: func() []operator.Config {
+				return pipeline.Config{
+					operator.Config{
+						// TODO: ID should be noop to start then auto gened to noop2
+						Builder: noop.NewNoopOperatorConfig("noop2"),
+					},
+					operator.Config{
+						Builder: &Config{
+							WriterConfig: helper.WriterConfig{
+								BasicConfig: helper.BasicConfig{
+									OperatorID:   pluginName,
+									OperatorType: pluginName,
+								},
+							},
+							Parameters: map[string]interface{}{},
+							Plugin:     pluginVar,
+						},
+					},
+				}
+			}(),
+			ExpectedOpIDs: map[string][]string{
+				"$.noop2":                   {"$." + pluginName + ".noop"},
+				"$." + pluginName + ".noop": {"$." + pluginName + ".noop1"},
+			},
+		},
+		{
+			Name: "two_plugins_with_same_ops",
+			PluginConfig: func() []operator.Config {
+				return pipeline.Config{
+					operator.Config{
+						Builder: &Config{
+							WriterConfig: helper.WriterConfig{
+								BasicConfig: helper.BasicConfig{
+									OperatorID:   pluginName,
+									OperatorType: pluginName,
+								},
+							},
+							Parameters: map[string]interface{}{},
+							Plugin:     pluginVar,
+						},
+					},
+					operator.Config{
+						Builder: &Config{
+							WriterConfig: helper.WriterConfig{
+								BasicConfig: helper.BasicConfig{
+									OperatorID:   secondPlugin,
+									OperatorType: secondPlugin,
+								},
+							},
+							Parameters: map[string]interface{}{},
+							Plugin:     secondPluginVar,
+						},
+					},
+				}
+			}(),
+			ExpectedOpIDs: map[string][]string{
+				"$." + pluginName + ".noop":   {"$." + pluginName + ".noop1"},
+				"$." + pluginName + ".noop1":  {"$." + secondPlugin + ".noop"},
+				"$." + secondPlugin + ".noop": {"$." + secondPlugin + ".noop1"},
+			},
+		},
 		{
 			Name: "two_plugins_specified_output",
 			PluginConfig: func() []operator.Config {
@@ -349,7 +350,7 @@ pipeline:
 									OperatorID:   pluginName,
 									OperatorType: pluginName,
 								},
-								OutputIDs: []string{"$.noop5"},
+								OutputIDs: []string{"noop5"},
 							},
 							Parameters: map[string]interface{}{},
 							Plugin:     pluginVar,
@@ -375,8 +376,49 @@ pipeline:
 			ExpectedOpIDs: map[string][]string{
 				"$." + pluginName + ".noop":    {"$." + pluginName + ".noop1"},
 				"$." + pluginName + ".noop1":   {"$.noop5"},
-				"$." + secondPlugin + ".noop2": {"$." + pluginName + ".noop3"},
-				"$." + secondPlugin + ".noop3": {"$.noop5"},
+				"$." + secondPlugin + ".noop":  {"$." + secondPlugin + ".noop1"},
+				"$." + secondPlugin + ".noop1": {"$.noop5"},
+			},
+		},
+		{
+			Name: "two_plugins_output_to_non_sequential_plugin",
+			PluginConfig: func() []operator.Config {
+				return pipeline.Config{
+					operator.Config{
+						Builder: &Config{
+							WriterConfig: helper.WriterConfig{
+								BasicConfig: helper.BasicConfig{
+									OperatorID:   pluginName,
+									OperatorType: pluginName,
+								},
+								OutputIDs: []string{secondPlugin},
+							},
+							Parameters: map[string]interface{}{},
+							Plugin:     pluginVar,
+						},
+					},
+					operator.Config{
+						Builder: noop.NewNoopOperatorConfig("noop5"),
+					},
+					operator.Config{
+						Builder: &Config{
+							WriterConfig: helper.WriterConfig{
+								BasicConfig: helper.BasicConfig{
+									OperatorID:   secondPlugin,
+									OperatorType: secondPlugin,
+								},
+							},
+							Parameters: map[string]interface{}{},
+							Plugin:     secondPluginVar,
+						},
+					},
+				}
+			}(),
+			ExpectedOpIDs: map[string][]string{
+				"$." + pluginName + ".noop":   {"$." + pluginName + ".noop1"},
+				"$." + pluginName + ".noop1":  {"$." + secondPlugin + ".noop"},
+				"$.noop5":                     {"$." + secondPlugin + ".noop"},
+				"$." + secondPlugin + ".noop": {"$." + secondPlugin + ".noop1"},
 			},
 		},
 	}
