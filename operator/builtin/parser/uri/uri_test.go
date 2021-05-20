@@ -42,6 +42,13 @@ func TestURIParserBuildFailure(t *testing.T) {
 	require.Contains(t, err.Error(), "invalid `on_error` field")
 }
 
+func TestURIParserByteFailure(t *testing.T) {
+	parser := newTestParser(t)
+	_, err := parser.parse([]byte("invalid"))
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "type '[]uint8' cannot be parsed as URI")
+}
+
 func TestURIParserStringFailure(t *testing.T) {
 	parser := newTestParser(t)
 	_, err := parser.parse("invalid")

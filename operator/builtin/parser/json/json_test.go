@@ -62,6 +62,13 @@ func TestJSONParserStringFailure(t *testing.T) {
 	require.Contains(t, err.Error(), "error found in #1 byte")
 }
 
+func TestJSONParserByteFailure(t *testing.T) {
+	parser := newTestParser(t)
+	_, err := parser.parse([]byte("invalid"))
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "type []uint8 cannot be parsed as JSON")
+}
+
 func TestJSONParserInvalidType(t *testing.T) {
 	parser := newTestParser(t)
 	_, err := parser.parse([]int{})

@@ -44,6 +44,13 @@ func TestRegexParserBuildFailure(t *testing.T) {
 	require.Contains(t, err.Error(), "invalid `on_error` field")
 }
 
+func TestRegexParserByteFailure(t *testing.T) {
+	parser := newTestParser(t, "^(?P<key>test)")
+	_, err := parser.parse([]byte("invalid"))
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "type '[]uint8' cannot be parsed as regex")
+}
+
 func TestRegexParserStringFailure(t *testing.T) {
 	parser := newTestParser(t, "^(?P<key>test)")
 	_, err := parser.parse("invalid")
