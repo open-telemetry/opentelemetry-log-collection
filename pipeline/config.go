@@ -24,8 +24,8 @@ type Config []operator.Config
 // BuildOperators builds the operators from the list of configs into operators.
 func (c Config) BuildOperators(bc operator.BuildContext) ([]operator.Operator, error) {
 	operators := make([]operator.Operator, 0, len(c))
-	// pluginMap is used for storing the applicable plugins in the pipeline and points to the first operator of that plugin.
-	// The map is then used in SetOutputIDs to assign the output value of an ops pointing to the plugin to the first operator in said plugin.
+	// buildsMulti is used for storing a key of the Builder that builds multiple operators.
+	// The map is then used in SetOutputIDs to assign the output value of any ops pointing to the Builder as their output to the first operator in said Builder.
 	buildsMulti := make(map[string]string)
 	for _, builder := range c {
 		op, err := builder.Build(bc)
