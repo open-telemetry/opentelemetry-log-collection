@@ -72,7 +72,7 @@ func (f *FakeOutput) GetOutputIDs() []string { return nil }
 func (f *FakeOutput) SetOutputs(outputs []operator.Operator) error { return nil }
 
 // SetOutputIDs immediately returns nil for a fake output
-func (f *FakeOutput) SetOutputIDs(s []string) error { return nil }
+func (f *FakeOutput) SetOutputIDs(s []string) {}
 
 // Start immediately returns nil for a fake output
 func (f *FakeOutput) Start(_ operator.Persister) error { return nil }

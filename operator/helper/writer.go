@@ -53,6 +53,11 @@ func (c WriterConfig) Build(bc operator.BuildContext) (WriterOperator, error) {
 	return writer, nil
 }
 
+// BuildsMultipleOps Returns false as a base line
+func (c WriterConfig) BuildsMultipleOps() bool {
+	return false
+}
+
 // WriterOperator is an operator that can write to other operators.
 type WriterOperator struct {
 	BasicOperator
@@ -81,7 +86,7 @@ func (w *WriterOperator) Outputs() []operator.Operator {
 	return w.OutputOperators
 }
 
-// Outputs returns the outputs of the writer operator.
+// GetOutputIDs returns the output IDs of the writer operator.
 func (w *WriterOperator) GetOutputIDs() []string {
 	return w.OutputIDs
 }
@@ -108,9 +113,8 @@ func (w *WriterOperator) SetOutputs(operators []operator.Operator) error {
 }
 
 // SetOutputs will set the outputs of the operator.
-func (w *WriterOperator) SetOutputIDs(opIds []string) error {
+func (w *WriterOperator) SetOutputIDs(opIds []string) {
 	w.OutputIDs = opIds
-	return nil
 }
 
 // FindOperator will find an operator matching the supplied id.

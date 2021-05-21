@@ -45,7 +45,7 @@ type Operator interface {
 	// SetOutputs will set the connected outputs.
 	SetOutputs([]Operator) error
 	// SetOutputIDs will set the connected outputs' IDs.
-	SetOutputIDs([]string) error
+	SetOutputIDs([]string)
 
 	// CanProcess indicates if the operator will process entries from other operators.
 	CanProcess() bool
