@@ -23,10 +23,10 @@ type Config []operator.Config
 
 // BuildOperators builds the operators from the list of configs into operators.
 func (c Config) BuildOperators(bc operator.BuildContext) ([]operator.Operator, error) {
-	operators := make([]operator.Operator, 0, len(c))
 	// buildsMulti's key represents an operator's ID that builds multiple operators, e.g. Plugins.
 	// the value is the plugin's first operator's ID.
 	buildsMulti := make(map[string]string)
+	operators := make([]operator.Operator, 0, len(c))
 	for _, builder := range c {
 		op, err := builder.Build(bc)
 		if err != nil {
