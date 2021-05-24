@@ -160,7 +160,7 @@ func (p *RouterOperator) Outputs() []operator.Operator {
 	return outputs
 }
 
-// Outputs will return all connected operators.
+// GetOutputIDs will return all connected operators.
 func (p *RouterOperator) GetOutputIDs() []string {
 	outputs := make([]string, 0, len(p.routes))
 	for _, route := range p.routes {

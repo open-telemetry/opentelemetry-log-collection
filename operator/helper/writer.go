@@ -112,7 +112,7 @@ func (w *WriterOperator) SetOutputs(operators []operator.Operator) error {
 	return nil
 }
 
-// SetOutputs will set the outputs of the operator.
+// SetOutputIDs will set the outputs of the operator.
 func (w *WriterOperator) SetOutputIDs(opIds []string) {
 	w.OutputIDs = opIds
 }
