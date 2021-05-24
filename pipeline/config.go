@@ -23,7 +23,7 @@ import (
 // Config is the configuration of a pipeline.
 type Config []operator.Config
 
-// BuildOperators builds the operators from the list of configs into operators
+// BuildOperators builds the operators from the list of configs into operators.
 func (c Config) BuildOperators(bc operator.BuildContext) ([]operator.Operator, error) {
 	operators := make([]operator.Operator, 0, len(c))
 
@@ -32,14 +32,22 @@ func (c Config) BuildOperators(bc operator.BuildContext) ([]operator.Operator, e
 		return nil, err
 	}
 
-	for i, builder := range c {
-		nbc := getBuildContextWithDefaultOutput(c, i, bc)
-		op, err := builder.Build(nbc)
+	// buildsMulti is used for storing a key of the Builder that builds multiple operators.
+	// The map is then used in SetOutputIDs to assign the output value of any ops pointing to the Builder as their output to the first operator in said Builder.
+	buildsMulti := make(map[string]string)
+	for _, builder := range c {
+		op, err := builder.Build(bc)
 		if err != nil {
 			return nil, err
 		}
+
+		if builder.BuildsMultipleOps() {
+			buildsMulti[bc.PrependNamespace(builder.ID())] = op[0].ID()
+		}
 		operators = append(operators, op...)
 	}
+	SetOutputIDs(operators, buildsMulti)
+
 	return operators, nil
 }
 
@@ -91,12 +99,33 @@ func (c Config) BuildPipeline(bc operator.BuildContext, defaultOperator operator
 	return NewDirectedPipeline(operators)
 }
 
-func getBuildContextWithDefaultOutput(configs []operator.Config, i int, bc operator.BuildContext) operator.BuildContext {
-	if i+1 >= len(configs) {
-		return bc
-	}
+// SetOutputIDs Loops through all the operators and sets a default output to the next operator in the slice.
+// Additionally, if the output is set to a plugin, it sets the output to the first operator in the plugins pipeline.
+func SetOutputIDs(operators []operator.Operator, buildsMulti map[string]string) error {
+	for i, op := range operators {
+		if i+1 == len(operators) {
+			break
+		}
 
-	id := configs[i+1].ID()
-	id = bc.PrependNamespace(id)
-	return bc.WithDefaultOutputIDs([]string{id})
+		if len(op.GetOutputIDs()) == 0 {
+			op.SetOutputIDs([]string{operators[i+1].ID()})
+			continue
+		}
+
+		// Check if there are any plugins within the outputIDs of the operator. If there is, change the output to be the first op in the plugin
+		allOutputs := []string{}
+		pluginFound := false
+		for _, id := range op.GetOutputIDs() {
+			if pid, ok := buildsMulti[id]; ok {
+				id = pid
+				pluginFound = true
+			}
+			allOutputs = append(allOutputs, id)
+		}
+
+		if pluginFound {
+			op.SetOutputIDs(allOutputs)
+		}
+	}
+	return nil
 }

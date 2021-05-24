@@ -112,6 +112,10 @@ func (w *dummyOperator) findOperator(operators []operator.Operator, operatorID s
 
 func (d dummyOperator) Outputs() []operator.Operator { return nil }
 
+func (d dummyOperator) GetOutputIDs() []string { return d.WriterOperator.OutputIDs }
+
+func (d dummyOperator) SetOutputIDs(ids []string) { d.OutputIDs = ids }
+
 func (d dummyOperator) Start(operator.Persister) error { return nil }
 
 func (d dummyOperator) Stop() error { return nil }
