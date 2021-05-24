@@ -121,7 +121,7 @@ func NewLineStartSplitFunc(re *regexp.Regexp, flushAtEOF bool) bufio.SplitFunc {
 	}
 }
 
-// SplitNone doesn't split any of the bytes, this is for when the encoding is nop so we just pass all bytes
+// SplitNone doesn't split any of the bytes, it reads in all of the bytes and returns it all at once. This is for when the encoding is nop
 func SplitNone() bufio.SplitFunc {
 	return func(data []byte, atEOF bool) (advance int, token []byte, err error) {
 		if !atEOF {

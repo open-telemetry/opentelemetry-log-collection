@@ -326,6 +326,21 @@ func TestReadExistingLogs(t *testing.T) {
 	waitForMessage(t, logReceived, "testlog2")
 }
 
+// TestReadUsingNopEncoding tests when nop encoding is set, that the splitfunction returns all bytes unchanged.
+func TestReadUsingNopEncoding(t *testing.T) {
+	t.Parallel()
+	operator, logReceived, tempDir := newTestFileOperator(t, nil, nil)
+	operator.SplitFunc = helper.SplitNone()
+	// Create a file, then start
+	temp := openTemp(t, tempDir)
+	writeString(t, temp, "testlog1\ntestlog2\n")
+
+	require.NoError(t, operator.Start(testutil.NewMockPersister("test")))
+	defer operator.Stop()
+
+	waitForMessage(t, logReceived, "testlog1\ntestlog2\n")
+}
+
 // ReadNewLogs tests that, after starting, if a new file is created
 // all the entries in that file are read from the beginning
 func TestReadNewLogs(t *testing.T) {
