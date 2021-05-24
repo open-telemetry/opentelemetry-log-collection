@@ -225,6 +225,7 @@ OUTER:
 	for i := 0; i < len(fps); {
 		fp := fps[i]
 		if len(fp.FirstBytes) == 0 {
+			files[i].Close()
 			// Empty file, don't read it until we can compare its fingerprint
 			fps = append(fps[:i], fps[i+1:]...)
 			files = append(files[:i], files[i+1:]...)
@@ -239,6 +240,7 @@ OUTER:
 			fp2 := fps[j]
 			if fp.StartsWith(fp2) || fp2.StartsWith(fp) {
 				// Exclude
+				files[i].Close()
 				fps = append(fps[:i], fps[i+1:]...)
 				files = append(files[:i], files[i+1:]...)
 				continue OUTER
