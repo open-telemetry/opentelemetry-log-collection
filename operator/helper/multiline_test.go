@@ -332,6 +332,70 @@ func TestNewlineSplitFunc(t *testing.T) {
 	}
 }
 
+func TestNoSplitFunc(t *testing.T) {
+	testCases := []tokenizerTestCase{
+		{
+			Name: "OneLogSimple",
+			Raw:  []byte("my log\n"),
+			ExpectedTokenized: []string{
+				"my log\n",
+			},
+		},
+		{
+			Name: "TwoLogsSimple",
+			Raw:  []byte("log1\nlog2\n"),
+			ExpectedTokenized: []string{
+				"log1\nlog2\n",
+			},
+		},
+		{
+			Name: "TwoLogsCarriageReturn",
+			Raw:  []byte("log1\r\nlog2\r\n"),
+			ExpectedTokenized: []string{
+				"log1\r\nlog2\r\n",
+			},
+		},
+		{
+			Name:              "NoTailingNewline",
+			Raw:               []byte(`foo`),
+			ExpectedTokenized: []string{"foo"},
+		},
+		{
+			Name: "HugeLog100",
+			Raw: func() []byte {
+				return generatedByteSliceOfLength(100)
+			}(),
+			ExpectedTokenized: []string{
+				string(generatedByteSliceOfLength(100)),
+			},
+		},
+		{
+			Name: "HugeLog10000",
+			Raw: func() []byte {
+				return generatedByteSliceOfLength(10000)
+			}(),
+			ExpectedTokenized: []string{
+				string(generatedByteSliceOfLength(10000)),
+			},
+		},
+		{
+			Name: "HugeLog1000000",
+			Raw: func() []byte {
+				newRaw := generatedByteSliceOfLength(1000000)
+				newRaw = append(newRaw, '\n')
+				return newRaw
+			}(),
+			ExpectedTokenized: []string{},
+			ExpectedError:     errors.New("bufio.Scanner: token too long"),
+		},
+	}
+
+	for _, tc := range testCases {
+		splitFunc := SplitNone()
+		t.Run(tc.Name, tc.RunFunc(splitFunc))
+	}
+}
+
 func TestNewlineSplitFunc_Encodings(t *testing.T) {
 	cases := []struct {
 		name     string

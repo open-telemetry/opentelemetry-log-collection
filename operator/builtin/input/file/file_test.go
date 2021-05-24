@@ -239,6 +239,17 @@ func TestBuild(t *testing.T) {
 			require.Error,
 			nil,
 		},
+		{
+			"NopMultilineError",
+			func(f *InputConfig) {
+				f.Multiline = helper.MultilineConfig{
+					LineEndPattern: "(",
+				}
+				f.Encoding = helper.EncodingConfig{Encoding: "Nop"}
+			},
+			require.Error,
+			nil,
+		},
 	}
 
 	for _, tc := range cases {

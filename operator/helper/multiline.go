@@ -45,15 +45,19 @@ func (c MultilineConfig) Build(context operator.BuildContext, encoding encoding.
 }
 
 // getSplitFunc returns split function for bufio.Scanner basing on configured pattern
-func (c MultilineConfig) getSplitFunc(encoding encoding.Encoding, flushAtEOF bool) (bufio.SplitFunc, error) {
+func (c MultilineConfig) getSplitFunc(encodingVar encoding.Encoding, flushAtEOF bool) (bufio.SplitFunc, error) {
 	endPattern := c.LineEndPattern
 	startPattern := c.LineStartPattern
 
 	switch {
 	case endPattern != "" && startPattern != "":
 		return nil, fmt.Errorf("only one of line_start_pattern or line_end_pattern can be set")
+	case (endPattern != "" || startPattern != "") && encodingVar == encoding.Nop:
+		return nil, fmt.Errorf("line_start_pattern or line_end_pattern should not be set when using nop encoding")
+	case encodingVar == encoding.Nop:
+		return SplitNone(), nil
 	case endPattern == "" && startPattern == "":
-		return NewNewlineSplitFunc(encoding, flushAtEOF)
+		return NewNewlineSplitFunc(encodingVar, flushAtEOF)
 	case endPattern != "":
 		re, err := regexp.Compile("(?m)" + c.LineEndPattern)
 		if err != nil {
@@ -114,6 +118,20 @@ func NewLineStartSplitFunc(re *regexp.Regexp, flushAtEOF bool) bufio.SplitFunc {
 		token = data[firstMatchStart:secondMatchStart] // the token begins at the first match, and ends at the beginning of the second match
 		err = nil
 		return
+	}
+}
+
+// SplitNone doesn't split any of the bytes, this is for when the encoding is nop so we just pass all bytes
+func SplitNone() bufio.SplitFunc {
+	return func(data []byte, atEOF bool) (advance int, token []byte, err error) {
+		if !atEOF {
+			return 0, nil, nil
+		}
+
+		if atEOF && len(data) == 0 {
+			return 0, nil, nil
+		}
+		return len(data), data, nil
 	}
 }
 
