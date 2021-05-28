@@ -15,6 +15,8 @@
 package pipeline
 
 import (
+	"fmt"
+
 	"github.com/open-telemetry/opentelemetry-log-collection/operator"
 )
 
@@ -24,6 +26,12 @@ type Config []operator.Config
 // BuildOperators builds the operators from the list of configs into operators
 func (c Config) BuildOperators(bc operator.BuildContext) ([]operator.Operator, error) {
 	operators := make([]operator.Operator, 0, len(c))
+
+	err := dedeplucateIDs(c)
+	if err != nil {
+		return nil, err
+	}
+
 	for i, builder := range c {
 		nbc := getBuildContextWithDefaultOutput(c, i, bc)
 		op, err := builder.Build(nbc)
@@ -33,6 +41,36 @@ func (c Config) BuildOperators(bc operator.BuildContext) ([]operator.Operator, e
 		operators = append(operators, op...)
 	}
 	return operators, nil
+}
+
+func dedeplucateIDs(ops []operator.Config) error {
+	typeMap := make(map[string]int)
+	for _, op := range ops {
+		if op.ID() != op.Type() {
+			continue
+		}
+
+		if typeMap[op.Type()] == 0 {
+			typeMap[op.Type()]++
+			continue
+		}
+		newID := fmt.Sprintf("%s%d", op.Type(), typeMap[op.Type()])
+		for i := 0; i < len(ops); i++ {
+			if ops[i].ID() == newID {
+				typeMap[op.Type()]++
+				newID = fmt.Sprintf("%s%d", op.Type(), typeMap[op.Type()])
+				i = 0
+				continue
+			}
+		}
+
+		err := op.SetID(newID)
+		if err != nil {
+			return err
+		}
+		typeMap[op.Type()]++
+	}
+	return nil
 }
 
 // BuildPipeline will build a pipeline from the config.
