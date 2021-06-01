@@ -274,6 +274,18 @@ pipeline:
 	require.NoError(t, err)
 	operator.RegisterPlugin(secondPluginVar.ID, secondPluginVar.NewBuilder)
 
+	pluginContent3 := []byte(`
+parameters:
+pipeline:
+ - type: my_plugin
+ - type: noop
+   output: {{ .output }}
+`)
+	layeredPlugin := "layeredPlugin"
+	layeredPluginVar, err := NewPlugin(layeredPlugin, pluginContent3)
+	require.NoError(t, err)
+	operator.RegisterPlugin(layeredPluginVar.ID, layeredPluginVar.NewBuilder)
+
 	cases := []PluginOutputIDTestCase{
 		{
 			Name: "same_op_outside_plugin",
@@ -401,7 +413,7 @@ pipeline:
 						},
 					},
 					operator.Config{
-						Builder: noop.NewNoopOperatorConfig("noop5"),
+						Builder: noop.NewNoopOperatorConfig("noop"),
 					},
 					operator.Config{
 						Builder: &Config{
@@ -420,7 +432,7 @@ pipeline:
 			ExpectedOpIDs: map[string][]string{
 				"$." + pluginName + ".noop":   {"$." + pluginName + ".noop1"},
 				"$." + pluginName + ".noop1":  {"$." + secondPlugin + ".noop"},
-				"$.noop5":                     {"$." + secondPlugin + ".noop"},
+				"$.noop":                      {"$." + secondPlugin + ".noop"},
 				"$." + secondPlugin + ".noop": {"$." + secondPlugin + ".noop1"},
 			},
 		},
@@ -508,6 +520,33 @@ pipeline:
 				"$." + pluginName + ".noop":  {"$." + pluginName + ".noop1"},
 				"$." + pluginName + ".noop1": {"$." + pluginName + "1.noop"},
 				"$." + pluginName + "1.noop": {"$." + pluginName + "1.noop1"},
+			},
+		},
+		{
+			Name: "plugin_within_a_plugin",
+			PluginConfig: func() []operator.Config {
+				return pipeline.Config{
+					operator.Config{
+						Builder: &Config{
+							WriterConfig: helper.WriterConfig{
+								BasicConfig: helper.BasicConfig{
+									OperatorID:   layeredPlugin,
+									OperatorType: layeredPlugin,
+								},
+							},
+							Parameters: map[string]interface{}{},
+							Plugin:     layeredPluginVar,
+						},
+					},
+					operator.Config{
+						Builder: noop.NewNoopOperatorConfig("noop"),
+					},
+				}
+			}(),
+			ExpectedOpIDs: map[string][]string{
+				"$.layeredPlugin." + pluginName + ".noop":  {"$.layeredPlugin." + pluginName + ".noop1"},
+				"$.layeredPlugin." + pluginName + ".noop1": {"$.layeredPlugin.noop"},
+				"$.layeredPlugin.noop":                     {"$.noop"},
 			},
 		},
 	}
