@@ -1,4 +1,4 @@
-name: ci
+name: Run CodeCov
 on:
   push:
     branches:
