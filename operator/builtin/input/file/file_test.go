@@ -429,10 +429,11 @@ func TestFileBatching(t *testing.T) {
 
 	files := 100
 	linesPerFile := 10
-	maxConcurrentFiles := 10
+	maxConcurrentFiles := 20
+	maxBatchFiles := maxConcurrentFiles / 2
 
-	expectedBatches := files / maxConcurrentFiles // assumes no remainder
-	expectedLinesPerBatch := maxConcurrentFiles * linesPerFile
+	expectedBatches := files / maxBatchFiles // assumes no remainder
+	expectedLinesPerBatch := maxBatchFiles * linesPerFile
 
 	expectedMessages := make([]string, 0, files*linesPerFile)
 	actualMessages := make([]string, 0, files*linesPerFile)
@@ -442,7 +443,7 @@ func TestFileBatching(t *testing.T) {
 			cfg.MaxConcurrentFiles = maxConcurrentFiles
 		},
 		func(out *testutil.FakeOutput) {
-			out.Received = make(chan *entry.Entry, expectedLinesPerBatch)
+			out.Received = make(chan *entry.Entry, expectedLinesPerBatch*2)
 		},
 	)
 	operator.persister = testutil.NewMockPersister("test")
@@ -465,7 +466,6 @@ func TestFileBatching(t *testing.T) {
 		// poll once so we can validate that files were batched
 		operator.poll(context.Background())
 		actualMessages = append(actualMessages, waitForN(t, logReceived, expectedLinesPerBatch)...)
-		expectNoMessagesUntil(t, logReceived, 10*time.Millisecond)
 	}
 
 	require.ElementsMatch(t, expectedMessages, actualMessages)
@@ -483,7 +483,6 @@ func TestFileBatching(t *testing.T) {
 		// poll once so we can validate that files were batched
 		operator.poll(context.Background())
 		actualMessages = append(actualMessages, waitForN(t, logReceived, expectedLinesPerBatch)...)
-		expectNoMessagesUntil(t, logReceived, 10*time.Millisecond)
 	}
 
 	require.ElementsMatch(t, expectedMessages, actualMessages)
