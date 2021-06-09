@@ -104,7 +104,7 @@ jobs:
         with:
           path: ~/go/bin
           key: ${{ runner.os }}-${{ hashFiles('**/go.mod') }}
-      - name: Run Unit Tests
+      - name: Run Benchmarks
         run: make bench
 
   bench-macos:
@@ -123,7 +123,7 @@ jobs:
         with:
           path: ~/go/bin
           key: ${{ runner.os }}-${{ hashFiles('**/go.mod') }}
-      - name: Run Unit Tests
+      - name: Run Benchmarks
         run: make bench
         
   bench-windows:
@@ -142,5 +142,5 @@ jobs:
         with:
           path: /Users/runneradmin/go/pkg/mod
           key: ${{ runner.os }}-${{ hashFiles('**/go.mod') }}
-      - name: Run Unit Tests
+      - name: Run Benchmarks
         run: make bench
