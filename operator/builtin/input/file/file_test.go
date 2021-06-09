@@ -111,6 +111,7 @@ func TestReadExistingAndNewLogs(t *testing.T) {
 	t.Parallel()
 	operator, logReceived, tempDir := newTestFileOperator(t, nil, nil)
 	operator.persister = testutil.NewMockPersister("test")
+	defer operator.Stop()
 
 	// Start with a file with an entry in it, and expect that entry
 	// to come through when we poll for the first time
@@ -134,6 +135,7 @@ func TestStartAtEnd(t *testing.T) {
 		cfg.StartAt = "end"
 	}, nil)
 	operator.persister = testutil.NewMockPersister("test")
+	defer operator.Stop()
 
 	temp := openTemp(t, tempDir)
 	writeString(t, temp, "testlog1\n")
@@ -156,9 +158,9 @@ func TestStartAtEndNewFile(t *testing.T) {
 	operator, logReceived, tempDir := newTestFileOperator(t, nil, nil)
 	operator.persister = testutil.NewMockPersister("test")
 	operator.startAtBeginning = false
+	defer operator.Stop()
 
 	operator.poll(context.Background())
-
 	temp := openTemp(t, tempDir)
 	writeString(t, temp, "testlog1\ntestlog2\n")
 
@@ -205,6 +207,7 @@ func TestSplitWrite(t *testing.T) {
 	t.Parallel()
 	operator, logReceived, tempDir := newTestFileOperator(t, nil, nil)
 	operator.persister = testutil.NewMockPersister("test")
+	defer operator.Stop()
 
 	temp := openTemp(t, tempDir)
 	writeString(t, temp, "testlog1")
@@ -447,6 +450,7 @@ func TestFileBatching(t *testing.T) {
 		},
 	)
 	operator.persister = testutil.NewMockPersister("test")
+	defer operator.Stop()
 
 	temps := make([]*os.File, 0, files)
 	for i := 0; i < files; i++ {
@@ -492,6 +496,7 @@ func TestFileReader_FingerprintUpdated(t *testing.T) {
 	t.Parallel()
 
 	operator, logReceived, tempDir := newTestFileOperator(t, nil, nil)
+	defer operator.Stop()
 
 	temp := openTemp(t, tempDir)
 	tempCopy := openFile(t, temp.Name())
@@ -499,6 +504,7 @@ func TestFileReader_FingerprintUpdated(t *testing.T) {
 	require.NoError(t, err)
 	reader, err := operator.NewReader(temp.Name(), tempCopy, fp)
 	require.NoError(t, err)
+	defer reader.Close()
 
 	writeString(t, temp, "testlog1\n")
 	reader.ReadToEnd(context.Background())
