@@ -4,11 +4,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## [0.19.0] - 2020-06-10
 
 ### Added
+- `csv_parser` ([PR123](https://github.com/open-telemetry/opentelemetry-log-collection/pull/123))
+- `multiline`, `encoding`, and `max_log_size` options to `udp_input` ([PR127](https://github.com/open-telemetry/opentelemetry-log-collection/pull/127))
 - GoSec workflow added to GitHub Actions ([PR154](https://github.com/open-telemetry/opentelemetry-log-collection/pull/154))
 - CodeQL workflow added to GitHub Actions ([PR153](https://github.com/open-telemetry/opentelemetry-log-collection/pull/153))
+
+### Changed
+- `file_input`'s default `encoding` is now `utf8` ([PR147](https://github.com/open-telemetry/opentelemetry-log-collection/pull/147))
+### Fixed
+- `file_input` can now track files that are rotated out of the `include` pattern matches ([PR168](https://github.com/open-telemetry/opentelemetry-log-collection/pull/168))
+- Noisy log message in `file_input` ([PR174](https://github.com/open-telemetry/opentelemetry-log-collection/pull/174))
+### Removed
+- Parsers will no longer process `[]byte` data type ([PR149](https://github.com/open-telemetry/opentelemetry-log-collection/pull/149))
 
 ## [0.18.0] - 2020-05-11
 
