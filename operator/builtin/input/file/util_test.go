@@ -35,7 +35,7 @@ import (
 
 func newDefaultConfig(tempDir string) *InputConfig {
 	cfg := NewInputConfig("testfile")
-	cfg.PollInterval = helper.Duration{Duration: 50 * time.Millisecond}
+	cfg.PollInterval = helper.Duration{Duration: 1 * time.Millisecond}
 	cfg.StartAt = "beginning"
 	cfg.Include = []string{fmt.Sprintf("%s/*", tempDir)}
 	cfg.OutputIDs = []string{"fake"}

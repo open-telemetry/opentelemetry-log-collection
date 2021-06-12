@@ -49,7 +49,7 @@ func NewTempDir(t testing.TB) string {
 // NewBuildContext will return a new build context for testing
 func NewBuildContext(t testing.TB) operator.BuildContext {
 	return operator.BuildContext{
-		Logger:    logger.New(zaptest.NewLogger(t, zaptest.Level(zapcore.ErrorLevel)).Sugar()),
+		Logger:    logger.New(zaptest.NewLogger(t, zaptest.Level(zapcore.InfoLevel)).Sugar()),
 		Namespace: "$",
 	}
 }
