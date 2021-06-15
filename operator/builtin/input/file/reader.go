@@ -26,6 +26,7 @@ import (
 	"golang.org/x/text/encoding"
 	"golang.org/x/text/transform"
 
+	"github.com/open-telemetry/opentelemetry-log-collection/entry"
 	"github.com/open-telemetry/opentelemetry-log-collection/errors"
 )
 
@@ -150,7 +151,34 @@ func (f *Reader) emit(ctx context.Context, msgBuf []byte) error {
 	if err := e.Set(f.fileInput.FileNameField, filepath.Base(f.Path)); err != nil {
 		return err
 	}
+	if err := f.resolvePath(e); err != nil {
+		return err
+	}
+
 	f.fileInput.Write(ctx, e)
+	return nil
+}
+
+// resolvePath resolves path to real and absolute form and add them into entry
+func (f *Reader) resolvePath(e *entry.Entry) error {
+	resolved, err := filepath.EvalSymlinks(f.Path)
+	if err != nil {
+		return err
+	}
+
+	abs, err := filepath.Abs(resolved)
+	if err != nil {
+		return err
+	}
+
+	if err := e.Set(f.fileInput.FilePathResolvedField, abs); err != nil {
+		return err
+	}
+
+	if err := e.Set(f.fileInput.FileNameResolvedField, filepath.Base(abs)); err != nil {
+		return err
+	}
+
 	return nil
 }
 
