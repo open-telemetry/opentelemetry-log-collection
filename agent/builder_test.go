@@ -26,7 +26,13 @@ import (
 )
 
 func TestBuildAgentSuccess(t *testing.T) {
-	mockCfg := Config{}
+	mockCfg := Config{
+		[]operator.Config{
+			{
+				Builder: noop.NewNoopOperatorConfig("noop"),
+			},
+		},
+	}
 	mockLogger := zap.NewNop().Sugar()
 	mockPluginDir := "/some/path/plugins"
 
@@ -41,10 +47,10 @@ func TestBuildAgentSuccess(t *testing.T) {
 func TestBuildAgentDefaultOperator(t *testing.T) {
 	mockCfg := Config{
 		[]operator.Config{
-			operator.Config{
+			{
 				Builder: noop.NewNoopOperatorConfig("noop"),
 			},
-			operator.Config{
+			{
 				Builder: noop.NewNoopOperatorConfig("noop1"),
 			},
 		},
@@ -67,22 +73,23 @@ func TestBuildAgentDefaultOperator(t *testing.T) {
 	exists := make(map[string]bool)
 
 	for _, op := range ops {
-		if op.ID() == "$.noop" {
-			require.Equal(t, 1, len(ops[0].GetOutputIDs()))
-			require.Equal(t, "$.noop1", ops[0].GetOutputIDs()[0])
+		switch op.ID() {
+		case "$.noop":
+			require.Equal(t, 1, len(op.GetOutputIDs()))
+			require.Equal(t, "$.noop1", op.GetOutputIDs()[0])
 			exists["$.noop"] = true
-		} else if op.ID() == "$.noop1" {
-			require.Equal(t, 1, len(ops[1].GetOutputIDs()))
-			require.Equal(t, "$.fake", ops[1].GetOutputIDs()[0])
+		case "$.noop1":
+			require.Equal(t, 1, len(op.GetOutputIDs()))
+			require.Equal(t, "$.fake", op.GetOutputIDs()[0])
 			exists["$.noop1"] = true
-		} else if op.ID() == "$.fake" {
-			require.Equal(t, 0, len(ops[2].GetOutputIDs()))
+		case "$.fake":
+			require.Equal(t, 0, len(op.GetOutputIDs()))
 			exists["$.fake"] = true
 		}
 	}
-	require.Equal(t, true, exists["$.noop"])
-	require.Equal(t, true, exists["$.noop1"])
-	require.Equal(t, true, exists["$.fake"])
+	require.True(t, exists["$.noop"])
+	require.True(t, exists["$.noop1"])
+	require.True(t, exists["$.fake"])
 }
 
 func TestBuildAgentFailureOnPluginRegistry(t *testing.T) {
@@ -90,13 +97,14 @@ func TestBuildAgentFailureOnPluginRegistry(t *testing.T) {
 	mockLogger := zap.NewNop().Sugar()
 	mockPluginDir := "[]"
 	mockOutput := testutil.NewFakeOutput(t)
-
-	_, err := NewBuilder(mockLogger).
+	agent, err := NewBuilder(mockLogger).
 		WithConfig(&mockCfg).
 		WithPluginDir(mockPluginDir).
 		WithDefaultOutput(mockOutput).
 		Build()
-	require.NoError(t, err)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "empty pipeline not allowed")
+	require.Nil(t, agent)
 }
 
 func TestBuildAgentFailureNoConfigOrGlobs(t *testing.T) {

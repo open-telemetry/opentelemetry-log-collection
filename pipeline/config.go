@@ -39,8 +39,7 @@ func (c Config) BuildOperators(bc operator.BuildContext, defaultOperator operato
 		operators = append(operators, op...)
 	}
 
-	if defaultOperator != nil {
-		bc.DefaultOutputIDs = []string{defaultOperator.ID()}
+	if defaultOperator != nil && operators[len(operators)-1].CanOutput() {
 		operators = append(operators, defaultOperator)
 	}
 
