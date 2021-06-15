@@ -17,6 +17,7 @@ package file
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -63,6 +64,52 @@ func TestAddFileFields(t *testing.T) {
 	e := waitForOne(t, logReceived)
 	require.Equal(t, filepath.Base(temp.Name()), e.Attributes["file_name"])
 	require.Equal(t, temp.Name(), e.Attributes["file_path"])
+}
+
+// AddFileResolvedFields tests that the `file_name_resolved` and `file_path_resolved` fields are included
+// when IncludeFileNameResolved and IncludeFilePathResolved are set to true
+func TestAddFileResolvedFields(t *testing.T) {
+	t.Parallel()
+	operator, logReceived, tempDir := newTestFileOperator(t, func(cfg *InputConfig) {
+		cfg.IncludeFileName = true
+		cfg.IncludeFilePath = true
+		cfg.IncludeFileNameResolved = true
+		cfg.IncludeFilePathResolved = true
+	}, nil)
+
+	// Create temp dir with log file
+	dir, err := ioutil.TempDir("", "")
+	require.NoError(t, err)
+
+	file, err := ioutil.TempFile(dir, "")
+	require.NoError(t, err)
+
+	// Create symbolic link in monitored directory
+	symLinkPath := filepath.Join(tempDir, "symlink")
+	err = os.Symlink(file.Name(), symLinkPath)
+	require.NoError(t, err)
+
+	// Populate data
+	writeString(t, file, "testlog\n")
+
+	// Resolve path
+	real, err := filepath.EvalSymlinks(file.Name())
+	require.NoError(t, err)
+	resolved, err := filepath.Abs(real)
+	require.NoError(t, err)
+
+	require.NoError(t, operator.Start(testutil.NewMockPersister("test")))
+	defer operator.Stop()
+
+	e := waitForOne(t, logReceived)
+	require.Equal(t, filepath.Base(symLinkPath), e.Attributes["file_name"])
+	require.Equal(t, symLinkPath, e.Attributes["file_path"])
+	require.Equal(t, filepath.Base(resolved), e.Attributes["file_name_resolved"])
+	require.Equal(t, resolved, e.Attributes["file_path_resolved"])
+
+	// Clean up (linux based host)
+	// Ignore error on windows host (The process cannot access the file because it is being used by another process.)
+	os.RemoveAll(dir)
 }
 
 // ReadExistingLogs tests that, when starting from beginning, we
