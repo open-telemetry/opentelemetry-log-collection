@@ -20,11 +20,35 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 
+	"github.com/open-telemetry/opentelemetry-log-collection/operator"
+	"github.com/open-telemetry/opentelemetry-log-collection/operator/builtin/transformer/noop"
 	"github.com/open-telemetry/opentelemetry-log-collection/testutil"
 )
 
 func TestBuildAgentSuccess(t *testing.T) {
 	mockCfg := Config{}
+	mockLogger := zap.NewNop().Sugar()
+	mockPluginDir := "/some/path/plugins"
+
+	agent, err := NewBuilder(mockLogger).
+		WithConfig(&mockCfg).
+		WithPluginDir(mockPluginDir).
+		Build()
+	require.NoError(t, err)
+	require.Equal(t, mockLogger, agent.SugaredLogger)
+}
+
+func TestBuildAgentDefaultOperator(t *testing.T) {
+	mockCfg := Config{
+		[]operator.Config{
+			operator.Config{
+				Builder: noop.NewNoopOperatorConfig("noop"),
+			},
+			operator.Config{
+				Builder: noop.NewNoopOperatorConfig("noop1"),
+			},
+		},
+	}
 	mockLogger := zap.NewNop().Sugar()
 	mockPluginDir := "/some/path/plugins"
 	mockOutput := testutil.NewFakeOutput(t)
@@ -36,6 +60,29 @@ func TestBuildAgentSuccess(t *testing.T) {
 		Build()
 	require.NoError(t, err)
 	require.Equal(t, mockLogger, agent.SugaredLogger)
+
+	ops := agent.pipeline.Operators()
+	require.Equal(t, 3, len(ops))
+
+	exists := make(map[string]bool)
+
+	for _, op := range ops {
+		if op.ID() == "$.noop" {
+			require.Equal(t, 1, len(ops[0].GetOutputIDs()))
+			require.Equal(t, "$.noop1", ops[0].GetOutputIDs()[0])
+			exists["$.noop"] = true
+		} else if op.ID() == "$.noop1" {
+			require.Equal(t, 1, len(ops[1].GetOutputIDs()))
+			require.Equal(t, "$.fake", ops[1].GetOutputIDs()[0])
+			exists["$.noop1"] = true
+		} else if op.ID() == "$.fake" {
+			require.Equal(t, 0, len(ops[2].GetOutputIDs()))
+			exists["$.fake"] = true
+		}
+	}
+	require.Equal(t, true, exists["$.noop"])
+	require.Equal(t, true, exists["$.noop1"])
+	require.Equal(t, true, exists["$.fake"])
 }
 
 func TestBuildAgentFailureOnPluginRegistry(t *testing.T) {
