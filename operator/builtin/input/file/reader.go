@@ -88,11 +88,6 @@ func (f *InputOperator) NewReader(path string, file *os.File, fp *Fingerprint) (
 	return r, nil
 }
 
-// SetPath sets fileAttributes based on new path
-func (r *Reader) SetPath(path string) {
-	r.fileAttributes = resolveFileAttributes(path)
-}
-
 // Copy creates a deep copy of a Reader
 func (f *Reader) Copy(file *os.File) (*Reader, error) {
 	reader, err := f.fileInput.NewReader(f.fileAttributes.Path, file, f.Fingerprint.Copy())
