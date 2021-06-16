@@ -318,7 +318,7 @@ func (f *InputOperator) newReader(file *os.File, fp *Fingerprint, firstCheck boo
 		if err != nil {
 			return nil, err
 		}
-		newReader.Path = file.Name()
+		newReader.SetPath(file.Name())
 		return newReader, nil
 	}
 
