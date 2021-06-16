@@ -112,6 +112,82 @@ func TestAddFileResolvedFields(t *testing.T) {
 	os.RemoveAll(dir)
 }
 
+// AddFileResolvedFields tests that the `file_name_resolved` and `file_path_resolved` fields are included
+// when IncludeFileNameResolved and IncludeFilePathResolved are set to true and underlaying symlink change
+// Scenario:
+// monitored file (symlink) -> middleSymlink -> file_1
+// monitored file (symlink) -> middleSymlink -> file_2
+func TestAddFileResolvedFieldsWithChangeOfSymlinkTarget(t *testing.T) {
+	t.Parallel()
+	operator, logReceived, tempDir := newTestFileOperator(t, func(cfg *InputConfig) {
+		cfg.IncludeFileName = true
+		cfg.IncludeFilePath = true
+		cfg.IncludeFileNameResolved = true
+		cfg.IncludeFilePathResolved = true
+	}, nil)
+
+	// Create temp dir with log file
+	dir, err := ioutil.TempDir("", "")
+	require.NoError(t, err)
+
+	file1, err := ioutil.TempFile(dir, "")
+	require.NoError(t, err)
+
+	file2, err := ioutil.TempFile(dir, "")
+	require.NoError(t, err)
+
+	// Resolve paths
+	real1, err := filepath.EvalSymlinks(file1.Name())
+	require.NoError(t, err)
+	resolved1, err := filepath.Abs(real1)
+	require.NoError(t, err)
+
+	real2, err := filepath.EvalSymlinks(file2.Name())
+	require.NoError(t, err)
+	resolved2, err := filepath.Abs(real2)
+	require.NoError(t, err)
+
+	// Create symbolic link in monitored directory
+	// symLinkPath(target of file input) -> middleSymLinkPath -> file1
+	middleSymLinkPath := filepath.Join(dir, "symlink")
+	symLinkPath := filepath.Join(tempDir, "symlink")
+	err = os.Symlink(file1.Name(), middleSymLinkPath)
+	require.NoError(t, err)
+	err = os.Symlink(middleSymLinkPath, symLinkPath)
+	require.NoError(t, err)
+
+	// Populate data
+	writeString(t, file1, "testlog\n")
+
+	require.NoError(t, operator.Start(testutil.NewMockPersister("test")))
+	defer operator.Stop()
+
+	e := waitForOne(t, logReceived)
+	require.Equal(t, filepath.Base(symLinkPath), e.Attributes["file_name"])
+	require.Equal(t, symLinkPath, e.Attributes["file_path"])
+	require.Equal(t, filepath.Base(resolved1), e.Attributes["file_name_resolved"])
+	require.Equal(t, resolved1, e.Attributes["file_path_resolved"])
+
+	// Change middleSymLink to point to file2
+	err = os.Remove(middleSymLinkPath)
+	require.NoError(t, err)
+	err = os.Symlink(file2.Name(), middleSymLinkPath)
+	require.NoError(t, err)
+
+	// Populate data (different content due to fingerprint)
+	writeString(t, file2, "testlog2\n")
+
+	e = waitForOne(t, logReceived)
+	require.Equal(t, filepath.Base(symLinkPath), e.Attributes["file_name"])
+	require.Equal(t, symLinkPath, e.Attributes["file_path"])
+	require.Equal(t, filepath.Base(resolved2), e.Attributes["file_name_resolved"])
+	require.Equal(t, resolved2, e.Attributes["file_path_resolved"])
+
+	// Clean up (linux based host)
+	// Ignore error on windows host (The process cannot access the file because it is being used by another process.)
+	os.RemoveAll(dir)
+}
+
 // ReadExistingLogs tests that, when starting from beginning, we
 // read all the lines that are already there
 func TestReadExistingLogs(t *testing.T) {
