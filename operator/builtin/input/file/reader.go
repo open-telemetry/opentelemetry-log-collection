@@ -39,15 +39,15 @@ type fileAttributes struct {
 
 // resolveFileAttributes resolves file attributes
 // and sets it to empty string in case of error
-func resolveFileAttributes(path string) *fileAttributes {
+func (f *InputOperator) resolveFileAttributes(path string) *fileAttributes {
 	resolved, err := filepath.EvalSymlinks(path)
 	if err != nil {
-		resolved = ""
+		f.Error(err)
 	}
 
 	abs, err := filepath.Abs(resolved)
 	if err != nil {
-		abs = ""
+		f.Error(err)
 	}
 
 	return &fileAttributes{
@@ -83,7 +83,7 @@ func (f *InputOperator) NewReader(path string, file *os.File, fp *Fingerprint) (
 		SugaredLogger:  f.SugaredLogger.With("path", path),
 		decoder:        f.encoding.Encoding.NewDecoder(),
 		decodeBuffer:   make([]byte, 1<<12),
-		fileAttributes: resolveFileAttributes(path),
+		fileAttributes: f.resolveFileAttributes(path),
 	}
 	return r, nil
 }
