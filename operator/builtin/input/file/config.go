@@ -134,22 +134,22 @@ func (c InputConfig) Build(context operator.BuildContext) ([]operator.Operator, 
 
 	fileNameField := entry.NewNilField()
 	if c.IncludeFileName {
-		fileNameField = entry.NewAttributeField("file_name")
+		fileNameField = entry.NewAttributeField("file.name")
 	}
 
 	filePathField := entry.NewNilField()
 	if c.IncludeFilePath {
-		filePathField = entry.NewAttributeField("file_path")
+		filePathField = entry.NewAttributeField("file.path")
 	}
 
 	fileNameResolvedField := entry.NewNilField()
 	if c.IncludeFileNameResolved {
-		fileNameResolvedField = entry.NewAttributeField("file_name_resolved")
+		fileNameResolvedField = entry.NewAttributeField("file.name.resolved")
 	}
 
 	filePathResolvedField := entry.NewNilField()
 	if c.IncludeFilePathResolved {
-		filePathResolvedField = entry.NewAttributeField("file_path_resolved")
+		filePathResolvedField = entry.NewAttributeField("file.path.resolved")
 	}
 
 	op := &InputOperator{
