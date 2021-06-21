@@ -18,7 +18,6 @@ import (
 	"bufio"
 	"context"
 	"fmt"
-	"io"
 	"os"
 	"path/filepath"
 
@@ -60,8 +59,9 @@ func (f *InputOperator) resolveFileAttributes(path string) *fileAttributes {
 
 // Reader manages a single file
 type Reader struct {
-	Fingerprint *Fingerprint
-	Offset      int64
+	Fingerprint     *Fingerprint
+	fingerprintSize int
+	Offset          int64
 
 	generation     int
 	fileInput      *InputOperator
@@ -77,13 +77,14 @@ type Reader struct {
 // NewReader creates a new file reader
 func (f *InputOperator) NewReader(path string, file *os.File, fp *Fingerprint) (*Reader, error) {
 	r := &Reader{
-		Fingerprint:    fp,
-		file:           file,
-		fileInput:      f,
-		SugaredLogger:  f.SugaredLogger.With("path", path),
-		decoder:        f.encoding.Encoding.NewDecoder(),
-		decodeBuffer:   make([]byte, 1<<12),
-		fileAttributes: f.resolveFileAttributes(path),
+		Fingerprint:     fp,
+		fingerprintSize: f.fingerprintSize,
+		file:            file,
+		fileInput:       f,
+		SugaredLogger:   f.SugaredLogger.With("path", path),
+		decoder:         f.encoding.Encoding.NewDecoder(),
+		decodeBuffer:    make([]byte, 1<<12),
+		fileAttributes:  f.resolveFileAttributes(path),
 	}
 	return r, nil
 }
@@ -107,7 +108,6 @@ func (f *Reader) InitializeOffset(startAtBeginning bool) error {
 		}
 		f.Offset = info.Size()
 	}
-
 	return nil
 }
 
@@ -118,8 +118,7 @@ func (f *Reader) ReadToEnd(ctx context.Context) {
 		return
 	}
 
-	fr := NewFingerprintUpdatingReader(f.file, f.Offset, f.Fingerprint, f.fileInput.fingerprintSize)
-	scanner := NewPositionalScanner(fr, f.fileInput.MaxLogSize, f.Offset, f.fileInput.SplitFunc)
+	scanner := NewPositionalScanner(f, f.fileInput.MaxLogSize, f.Offset, f.fileInput.SplitFunc)
 
 	// Iterate over the tokenized file, emitting entries as we go
 	for {
@@ -215,34 +214,14 @@ func getScannerError(scanner *PositionalScanner) error {
 	return nil
 }
 
-// NewFingerprintUpdatingReader creates a new FingerprintUpdatingReader starting starting at the given offset
-func NewFingerprintUpdatingReader(r io.Reader, offset int64, f *Fingerprint, fingerprintSize int) *FingerprintUpdatingReader {
-	return &FingerprintUpdatingReader{
-		fingerprint:     f,
-		fingerprintSize: fingerprintSize,
-		reader:          r,
-		offset:          offset,
-	}
-}
-
-// FingerprintUpdatingReader wraps another reader, and updates the fingerprint
-// with each read in the first fingerPrintSize bytes
-type FingerprintUpdatingReader struct {
-	fingerprint     *Fingerprint
-	fingerprintSize int
-	reader          io.Reader
-	offset          int64
-}
-
 // Read reads from the wrapped reader, saving the read bytes to the fingerprint
-func (f *FingerprintUpdatingReader) Read(dst []byte) (int, error) {
-	if len(f.fingerprint.FirstBytes) == f.fingerprintSize {
-		return f.reader.Read(dst)
+func (f *Reader) Read(dst []byte) (int, error) {
+	if len(f.Fingerprint.FirstBytes) == f.fingerprintSize {
+		return f.file.Read(dst)
 	}
-	n, err := f.reader.Read(dst)
-	appendCount := min0(n, f.fingerprintSize-int(f.offset))
-	f.fingerprint.FirstBytes = append(f.fingerprint.FirstBytes[:f.offset], dst[:appendCount]...)
-	f.offset += int64(n)
+	n, err := f.file.Read(dst)
+	appendCount := min0(n, f.fingerprintSize-int(f.Offset))
+	f.Fingerprint.FirstBytes = append(f.Fingerprint.FirstBytes[:f.Offset], dst[:appendCount]...)
 	return n, err
 }
 
