@@ -9,11 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - `csv_parser` ([PR123](https://github.com/open-telemetry/opentelemetry-log-collection/pull/123))
 - `multiline`, `encoding`, and `max_log_size` options to `udp_input` ([PR127](https://github.com/open-telemetry/opentelemetry-log-collection/pull/127))
+- `file_input` now has `include_file_name_resolved` and `include_file_path_resolved` settings which produce attributes `file.name.resolved` and `file.path.resolved`, respectively ([PR189](https://github.com/open-telemetry/opentelemetry-log-collection/pull/189))
 - GoSec workflow added to GitHub Actions ([PR154](https://github.com/open-telemetry/opentelemetry-log-collection/pull/154))
 - CodeQL workflow added to GitHub Actions ([PR153](https://github.com/open-telemetry/opentelemetry-log-collection/pull/153))
 
 ### Changed
 - `file_input`'s default `encoding` is now `utf8` ([PR147](https://github.com/open-telemetry/opentelemetry-log-collection/pull/147))
+- `file_input`'s `include_file_name` and `include_file_path` settings now produce attributes `file.name` and `file.path`, respectively ([PR189](https://github.com/open-telemetry/opentelemetry-log-collection/pull/189))
 
 ### Fixed
 - `file_input` can now track files that are rotated out of the `include` pattern matches ([PR182](https://github.com/open-telemetry/opentelemetry-log-collection/pull/182))
