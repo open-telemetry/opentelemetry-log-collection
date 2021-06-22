@@ -59,9 +59,8 @@ func (f *InputOperator) resolveFileAttributes(path string) *fileAttributes {
 
 // Reader manages a single file
 type Reader struct {
-	Fingerprint     *Fingerprint
-	fingerprintSize int
-	Offset          int64
+	Fingerprint *Fingerprint
+	Offset      int64
 
 	generation     int
 	fileInput      *InputOperator
@@ -77,14 +76,13 @@ type Reader struct {
 // NewReader creates a new file reader
 func (f *InputOperator) NewReader(path string, file *os.File, fp *Fingerprint) (*Reader, error) {
 	r := &Reader{
-		Fingerprint:     fp,
-		fingerprintSize: f.fingerprintSize,
-		file:            file,
-		fileInput:       f,
-		SugaredLogger:   f.SugaredLogger.With("path", path),
-		decoder:         f.encoding.Encoding.NewDecoder(),
-		decodeBuffer:    make([]byte, 1<<12),
-		fileAttributes:  f.resolveFileAttributes(path),
+		Fingerprint:    fp,
+		file:           file,
+		fileInput:      f,
+		SugaredLogger:  f.SugaredLogger.With("path", path),
+		decoder:        f.encoding.Encoding.NewDecoder(),
+		decodeBuffer:   make([]byte, 1<<12),
+		fileAttributes: f.resolveFileAttributes(path),
 	}
 	return r, nil
 }
@@ -214,13 +212,13 @@ func getScannerError(scanner *PositionalScanner) error {
 	return nil
 }
 
-// Read reads from the wrapped reader, saving the read bytes to the fingerprint
+// Read from the file and update the fingerprint if necessary
 func (f *Reader) Read(dst []byte) (int, error) {
-	if len(f.Fingerprint.FirstBytes) == f.fingerprintSize {
+	if len(f.Fingerprint.FirstBytes) == f.fileInput.fingerprintSize {
 		return f.file.Read(dst)
 	}
 	n, err := f.file.Read(dst)
-	appendCount := min0(n, f.fingerprintSize-int(f.Offset))
+	appendCount := min0(n, f.fileInput.fingerprintSize-int(f.Offset))
 	f.Fingerprint.FirstBytes = append(f.Fingerprint.FirstBytes[:f.Offset], dst[:appendCount]...)
 	return n, err
 }
