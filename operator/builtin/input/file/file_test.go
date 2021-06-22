@@ -688,11 +688,10 @@ func TestFingerprintGrowsAndStops(t *testing.T) {
 
 				writeString(t, temp, line)
 				reader.ReadToEnd(context.Background())
-				require.Equal(t, []byte(fileContent[:expectedFP]), reader.Fingerprint.FirstBytes)
+				require.Equal(t, fileContent[:expectedFP], reader.Fingerprint.FirstBytes)
 			}
 		})
 	}
-
 }
 
 func TestEncodings(t *testing.T) {
