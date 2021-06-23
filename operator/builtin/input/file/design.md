@@ -127,7 +127,7 @@ _Note: This is the actual start of poll cycle._
     1. If no queued files were left over from the previous cycle, then all previously matched files have been consumed, and we are ready to query the file system again. Prior to doing so, we will increment the "generation" of all historical Readers.
 
 
-# Additinal Details
+# Additional Details
 
 ### Startup Logic
 
