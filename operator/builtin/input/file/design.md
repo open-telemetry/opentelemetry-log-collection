@@ -69,6 +69,8 @@ Because state is carried over from one poll cycle to the next, the following det
 
 ### Detailed Poll Cycle
 
+_Note: The following steps are presented starting mid poll cycle._
+
 1. Matching
     1. Find files that match the `include` setting. The files are known only by their paths.
     2. Discard any of these files that match the `exclude` setting.
@@ -116,14 +118,12 @@ Because state is carried over from one poll cycle to the next, the following det
         - This number is somewhat arbitrary, and should probably be made configurable. However, its exact purpose is quite obscure.
 12. Persistence
     1. The historical record of readers is synced to whatever persistence mechanism was provided to the operator.
-13. End of poll cycle. 
+13. End Poll Cycle
     1. At this point, the operator sits idle until the poll timer fires again.
-
-_Note: This is the actual start of poll cycle._
-
-14. Dequeueing
+14. Start Poll Cycle
+15. Dequeueing
     1. If any matches are queued from the previous cycle, an appropriate number are dequeued, and processed that same as would a newly matched set of files.
-15. Aging
+16. Aging
     1. If no queued files were left over from the previous cycle, then all previously matched files have been consumed, and we are ready to query the file system again. Prior to doing so, we will increment the "generation" of all historical Readers.
 
 
