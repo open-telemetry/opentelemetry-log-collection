@@ -1,10 +1,18 @@
+# File Matching
+
+The operator searches the file system for files that meet the following requirements:
+1. The file's path matches one or more patterns specified in the `include` setting.
+2. The file's path does not match any pattern specified in the `exclude` setting.
+
+The set of files that satisfy these requirements are known in this document as "matched files". Similarly, the effective matching algorithm that identifies this set of files is referred to colloquially as the operator's "matching pattern".
+
 # Fingerprints
 
 Files are identified and tracked using fingerprints. A fingerprint is the first `N` bytes of the file, with the default for `N` being `1000`. 
 
 ### Fingerprint Growth
 
-When a file is smaller than `N` bytes, the fingerprint is the length of the file. A fingerprint that is less than `N` bytes will be compared to other fingerprints using a prefix check. As the file grows, its fingerprint will be updated, until it reaches the full size of `N`.
+When a file is smaller than `N` bytes, the fingerprint is the entire contents of the file. A fingerprint that is less than `N` bytes will be compared to other fingerprints using a prefix check. As the file grows, its fingerprint will be updated, until it reaches the full size of `N`.
 
 ### Deduplication of Files
 
@@ -37,7 +45,7 @@ Before a Reader begins consuming, it will seek the file's last known offset. The
 
 While a file is shorter than the length of a fingerprint, its Reader will continuously append to the fingerprint, as it consumes newly written data.
 
-A Reader consumes a file using an `bufio.Scanner`, with the Scanner's buffer size defined by the `max_log_size`setting, and the Scanner's split func defined by the `multiline` setting. 
+A Reader consumes a file using an `bufio.Scanner`, with the Scanner's buffer size defined by the `max_log_size` setting, and the Scanner's split func defined by the `multiline` setting. 
 
 As each log is read from the file, it is decoded according to the `encoding` function, and then emitted from the operator. 
 
@@ -64,67 +72,67 @@ At a very high level, each poll cycle operates as three phases:
 2. Begin work that will carry over to the next cycle.
 3. Allow some time to pass.
 
-Because state is carried over from one poll cycle to the next, the following detailed description is presented starting mid-cycle, at a point where there is no preexisting state.
-
-
 ### Detailed Poll Cycle
 
-_Note: The following steps are presented starting mid poll cycle._
-
-1. Matching
-    1. Find files that match the `include` setting. The files are known only by their paths.
-    2. Discard any of these files that match the `exclude` setting.
+1. Dequeuing
+    1. If any matches are queued from the previous cycle, an appropriate number are dequeued, and processed the same as would a newly matched set of files.
+2. Aging
+    1. If no queued files were left over from the previous cycle, then all previously matched files have been consumed, and we are ready to query the file system again. Prior to doing so, we will increment the "generation" of all historical Readers.
+3. Matching
+    1. The file system is searched for files that match the `include` setting. The files are known only by their paths.
+    2. Files that match the `exclude` setting are discarded.
     3. As a special case, on the first poll cycle, a warning is printed if no files are matched. Execution continues regardless.
-2. Queueing
+4. Queueing
     1. If the number of matched files is less than or equal to the maximum degree of concurrency, as defined by the `max_concurrent_files` setting, then no queueing occurs.
     2. Else, queueing occurs, which means the following:
         - Matched files are split into two sets, such that the first is small enough to respect `max_concurrent_files`, and the second contains the remaining files (called the queue).
         - The current poll interval will begin processing the first set of files, just as if they were the only ones found during the matching phase.
         - Subsequent poll cycles will pull matches off of the queue, until the queue is empty.
         - The `max_concurrent_files` setting is respected at all times.
-        - TODO: Use a worker pool to process the queue as quickly as possible, rather than waiting for poll cycles to trigger batching.
-3. Opening
+5. Opening
     1. Each of the matched files is opened. Note:
         - A small amount of time has passed since the file was matched.
-        - It is possible that is has been moved or deleted by this point.
+        - It is possible that it has been moved or deleted by this point.
         - Only a minimum set of operations should occur between file matching and opening.
         - If an error occurs while opening, it is logged.
-4. Fingerprinting
+6. Fingerprinting
     1. The first `N` bytes of each file are read. (See fingerprinting section above.)
-5. Exclusion
+7. Exclusion
     1. Empty files are closed immediately and discarded. (There is nothing to read.)
     2. Fingerprints found in this batch are cross referenced against each other to detect duplicates. Duplicate files are closed immediately and discarded.
         - In the vast majority of cases, this occurs during file rotation that uses the copy/truncate method. (See fingerprinting section above.)
-6. Reader Creation
+8. Reader Creation
     1. Each file handle is wrapped into a `Reader` along with some metadata. (See Reader section above)
-        - During the creation of a `Reader`, the file's fingerprint is crossreferenced with previously known fingerprints.
+        - During the creation of a `Reader`, the file's fingerprint is cross referenced with previously known fingerprints.
         - If a file's fingerprint matches one that has recently been seen, then metadata is copied over from the previous iteration of the Reader. Most importantly, the offset is accurately maintained in this way.
         - If a file's fingerprint does not match any recently seen files, then its offset is initialized according to the `start_at` setting.
-7. Detection of "Lost" Files
-8. Consumption
+9. Detection of Lost Files
+    1. Fingerprints are used to cross reference the matched files from this poll cycle against the matched file from the previous poll cycle. Files that were matched in the previous cycle but were not matched in this cycle are referred to as "lost files".
+    2. File become "lost" for several reasons:
+        - The file may have been deleted, typically due to rotation limits or ttl-based pruning.
+        - The file may have been rotated to another location.
+            - If the file was moved, the open file handle from the previous poll cycle may be useful.
+10. Consumption
     1. Lost files are consumed. Since these files are thought to have been rotated to a location where we will not match them again, we will never see them again. 
         - The best we can do is finish consuming their current contents.
-        - We can reasonable expect in most cases that these files are no longer being written to.
+        - We can reasonably expect in most cases that these files are no longer being written to.
     2. Matched files (from this poll cycle) are consumed.
-        - These file handles will be left open until the end of the next poll cycle.
+        - These file handles will be left open until the next poll cycle, when they will be used to detect lost files.
         - Typically, we can expect to find most of these files again. However, these files are consumed greedily, in case we do not see them again.
-    3. All files in both sets are consumed concurrently.
-9. Closing
+    3. All open files are consumed concurrently. This includes both the "lost" files, and the recently matched files.
+11. Closing
     1. All files from the previous poll cycle are closed.
-10. Archiving
+12. Archiving
     1. Readers created in the current poll cycle are added to the historical record.
-11. Pruning
-    1. The historical record is purged of Readers that have existsed for 3 generations.
+    2. The same Readers are also retained as a set, for use in the next poll cycle. 
+13. Pruning
+    1. The historical record is purged of Readers that have existed for 3 generations.
         - This number is somewhat arbitrary, and should probably be made configurable. However, its exact purpose is quite obscure.
-12. Persistence
+14. Persistence
     1. The historical record of readers is synced to whatever persistence mechanism was provided to the operator.
-13. End Poll Cycle
+15. End Poll Cycle
     1. At this point, the operator sits idle until the poll timer fires again.
-14. Start Poll Cycle
-15. Dequeueing
-    1. If any matches are queued from the previous cycle, an appropriate number are dequeued, and processed that same as would a newly matched set of files.
-16. Aging
-    1. If no queued files were left over from the previous cycle, then all previously matched files have been consumed, and we are ready to query the file system again. Prior to doing so, we will increment the "generation" of all historical Readers.
+
 
 
 # Additional Details
@@ -137,10 +145,41 @@ Whenever the operator starts, it:
 
 ### Shutdown Logic
 
-When the operator shuts down, it:
-- Closes any open files.
+When the operator shuts down, the following occurs:
+- If a poll cycle is not currently underway, the operator simply closes any open files.
+- Otherwise, the current poll cycle is signaled to stop immediately, which in turn signals all Readers to stop immediately.
+    - If a Reader is idle or in between log entries, it will return immediately. Otherwise it will return after consuming one final log entry.
+    - Once all Readers have stopped, the remainder of the poll cycle completes as usual, which includes the steps labeled `Closing`, `Archiving`, `Pruning`, and `Persistence`.
+
+The net effect of the shut down routine is that all files are checkpointed in a normal manner (i.e. not in the middle of a log entry), and all checkpoints are persisted.
 
 
-### Known Limitations
+# Known Limitations
+
+### Potential data loss when maximum concurrency must be enforced
+
+The operator may lose a small percentage of logs, if both of the following conditions are true:
+1. The number of files being matched exceeds the maximum degree of concurrency allowed by the `max_concurrent_files` setting. 
+2. Files are being "lost". That is, file rotation is moving files out of the operator's matching pattern, such that subsequent polling cycles will not find these files.
+
+When both of these conditions occur, it is impossible for the operator to both:
+1. Respect the specified concurrency limitation.
+2. Guarantee that if a file is rotated out of the matching pattern, it may still be consumed before being closed.
+
+When this scenario occurs, a design tradeoff must be made. The choice is between:
+1. Ensure that `max_concurrent_files` is always respected.
+2. Risk losing a small percentage of log entries.
+
+The current design chooses to guarantee the maximum degree of concurrency because failure to do so risks harming the operator's host system. While the loss of logs is not ideal, it is less likely to harm the operator's host system, and is therefore considered the more acceptable of the two options.
+
+### Potential data loss when file rotation via copy/truncate rotates backup files out of operator's matching pattern
+
+The operator may lose a small percentage of logs, if both of the following conditions are true:
+1. Files are being rotated using the copy/truncate strategy.
+2. Files are being "lost". That is, file rotation is moving files out of the operator's matching pattern, such that subsequent polling cycles will not find these files.
+
+When both of these conditions occur, it is possible that a file is written to (then copied elsewhere) and then truncated before the operator has a chance to consume the new data.
+
+### Potential failure to consume files when file rotation via move/create is used on Windows
 
 On Windows, rotation of files using the Move/Create strategy may cause errors and loss of data, because Golang does not currently support the Windows mechanism for `FILE_SHARE_DELETE`.
