@@ -4,7 +4,8 @@ The operator searches the file system for files that meet the following requirem
 1. The file's path matches one or more patterns specified in the `include` setting.
 2. The file's path does not match any pattern specified in the `exclude` setting.
 
-The set of files that satisfy these requirements are known in this document as "matched files". Similarly, the effective matching algorithm that identifies this set of files is referred to colloquially as the operator's "matching pattern".
+The set of files that satisfy these requirements are known in this document as "matched files". 
+The effective search space (`include - exclude`) is referred to colloquially as the operator's "matching pattern".
 
 # Fingerprints
 
@@ -41,20 +42,20 @@ A Reader contains the following:
 
 As implied by the name, Readers are responsible for consuming data as it is written to a file.
 
-Before a Reader begins consuming, it will seek the file's last known offset. Then it will begine reading from there.
+Before a Reader begins consuming, it will seek the file's last known offset. If no offset is known for the file, then the Reader will seek either the beginning or end of the file, according to the `start_at` setting. It will then begin reading from there.
 
 While a file is shorter than the length of a fingerprint, its Reader will continuously append to the fingerprint, as it consumes newly written data.
 
-A Reader consumes a file using an `bufio.Scanner`, with the Scanner's buffer size defined by the `max_log_size` setting, and the Scanner's split func defined by the `multiline` setting. 
+A Reader consumes a file using a `bufio.Scanner`, with the Scanner's buffer size defined by the `max_log_size` setting, and the Scanner's split func defined by the `multiline` setting. 
 
 As each log is read from the file, it is decoded according to the `encoding` function, and then emitted from the operator. 
 
-The Reader's offset is updated accordingly when a log is emitted.
+The Reader's offset is updated accordingly whenever a log is emitted.
 
 
 ### Persistence
 
-Readers are always instantiated with an open file handle. Eventually, the file handle is closed, but the Reader is not discarded. Rather, it is maintained for a fixed number of "poll cycles" (see Polling section below) as a reference to the file's metadata, which may be useful for detecting files that have been moved or copied, and for recalling metadata such as the file's previous path.
+Readers are always instantiated with an open file handle. Eventually, the file handle is closed, but the Reader is not immediately discarded. Rather, it is maintained for a fixed number of "poll cycles" (see Polling section below) as a reference to the file's metadata, which may be useful for detecting files that have been moved or copied, and for recalling metadata such as the file's previous path.
 
 Readers are maintained for a fixed period of time, and then discarded.
 
@@ -67,19 +68,14 @@ The file system is polled on a regular interval, defined by the `poll_interval` 
 
 Each poll cycle runs through a series of steps which are presented below.
 
-At a very high level, each poll cycle operates as three phases:
-1. Finish work that was started in the previous poll cycle.
-2. Begin work that will carry over to the next cycle.
-3. Allow some time to pass.
-
 ### Detailed Poll Cycle
 
 1. Dequeuing
     1. If any matches are queued from the previous cycle, an appropriate number are dequeued, and processed the same as would a newly matched set of files.
 2. Aging
-    1. If no queued files were left over from the previous cycle, then all previously matched files have been consumed, and we are ready to query the file system again. Prior to doing so, we will increment the "generation" of all historical Readers.
+    1. If no queued files were left over from the previous cycle, then all previously matched files have been consumed, and we are ready to query the file system again. Prior to doing so, we will increment the "generation" of all historical Readers. Eventually, these Readers will be discarded based on their age. Until that point, they may be useful references.
 3. Matching
-    1. The file system is searched for files that match the `include` setting. The files are known only by their paths.
+    1. The file system is searched for files with a path that matches the `include` setting.
     2. Files that match the `exclude` setting are discarded.
     3. As a special case, on the first poll cycle, a warning is printed if no files are matched. Execution continues regardless.
 4. Queueing
@@ -113,18 +109,18 @@ At a very high level, each poll cycle operates as three phases:
         - The file may have been rotated to another location.
             - If the file was moved, the open file handle from the previous poll cycle may be useful.
 10. Consumption
-    1. Lost files are consumed. Since these files are thought to have been rotated to a location where we will not match them again, we will never see them again. 
-        - The best we can do is finish consuming their current contents.
+    1. Lost files are consumed. In some cases, such as deletion, this operation will fail. However, if a file was moved, we may be able to consume the remainder of its content. 
+        - We do not expect to match this file again, so the best we can do is finish consuming their current contents.
         - We can reasonably expect in most cases that these files are no longer being written to.
     2. Matched files (from this poll cycle) are consumed.
-        - These file handles will be left open until the next poll cycle, when they will be used to detect lost files.
-        - Typically, we can expect to find most of these files again. However, these files are consumed greedily, in case we do not see them again.
-    3. All open files are consumed concurrently. This includes both the "lost" files, and the recently matched files.
+        - These file handles will be left open until the next poll cycle, when they will be used to detect and potentially consume lost files.
+        - Typically, we can expect to find most of these files again. However, these files are consumed greedily in case we do not see them again.
+    3. All open files are consumed concurrently. This includes both the lost files from the previous cycle, and the matched files from this cycle.
 11. Closing
     1. All files from the previous poll cycle are closed.
 12. Archiving
     1. Readers created in the current poll cycle are added to the historical record.
-    2. The same Readers are also retained as a set, for use in the next poll cycle. 
+    2. The same Readers are also retained as a separate slice, for easy access in the next poll cycle.
 13. Pruning
     1. The historical record is purged of Readers that have existed for 3 generations.
         - This number is somewhat arbitrary, and should probably be made configurable. However, its exact purpose is quite obscure.
@@ -140,7 +136,7 @@ At a very high level, each poll cycle operates as three phases:
 ### Startup Logic
 
 Whenever the operator starts, it:
-- Requests the historical record of Readers, as described in steps 10-12 of the poll cycle.
+- Requests the historical record of Readers, as described in steps 12-14 of the poll cycle.
 - Starts the polling timer.
 
 ### Shutdown Logic
