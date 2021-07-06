@@ -68,8 +68,8 @@ func TestLineStartSplitFunc(t *testing.T) {
 			Pattern: `LOGSTART \d+ `,
 			Raw:     []byte(`LOGSTART 123 log1 LOGSTART 234 log2 LOGSTART 345 foo`),
 			ExpectedTokenized: []string{
-				`LOGSTART 123 log1 `,
-				`LOGSTART 234 log2 `,
+				`LOGSTART 123 log1`,
+				`LOGSTART 234 log2`,
 			},
 		},
 		{
@@ -77,8 +77,8 @@ func TestLineStartSplitFunc(t *testing.T) {
 			Pattern: `^LOGSTART \d+ `,
 			Raw:     []byte("LOGSTART 123 LOGSTART 345 log1\nLOGSTART 234 log2\nLOGSTART 345 foo"),
 			ExpectedTokenized: []string{
-				"LOGSTART 123 LOGSTART 345 log1\n",
-				"LOGSTART 234 log2\n",
+				"LOGSTART 123 LOGSTART 345 log1",
+				"LOGSTART 234 log2",
 			},
 		},
 		{
@@ -92,7 +92,7 @@ func TestLineStartSplitFunc(t *testing.T) {
 			Pattern: `LOGSTART \d+ `,
 			Raw:     []byte(`part that doesn't match LOGSTART 123 part that matchesLOGSTART 123 foo`),
 			ExpectedTokenized: []string{
-				`part that doesn't match `,
+				`part that doesn't match`,
 				`LOGSTART 123 part that matches`,
 			},
 		},
