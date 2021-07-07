@@ -80,7 +80,7 @@ func NewLineStartSplitFunc(re *regexp.Regexp, flushAtEOF bool) bufio.SplitFunc {
 			// Flush if no more data is expected
 			if len(data) != 0 && atEOF && flushAtEOF {
 				token = trimWhitespaces(data)
-				advance = len(token)
+				advance = len(data)
 				return
 			}
 			return 0, nil, nil // read more data and try again.
@@ -103,7 +103,7 @@ func NewLineStartSplitFunc(re *regexp.Regexp, flushAtEOF bool) bufio.SplitFunc {
 		// Flush if no more data is expected
 		if atEOF && flushAtEOF {
 			token = trimWhitespaces(data)
-			advance = len(token)
+			advance = len(data)
 			return
 		}
 
@@ -130,7 +130,7 @@ func NewLineEndSplitFunc(re *regexp.Regexp, flushAtEOF bool) bufio.SplitFunc {
 			// Flush if no more data is expected
 			if len(data) != 0 && atEOF && flushAtEOF {
 				token = trimWhitespaces(data)
-				advance = len(token)
+				advance = len(data)
 				return
 			}
 			return 0, nil, nil // read more data and try again
@@ -175,7 +175,7 @@ func NewNewlineSplitFunc(encoding encoding.Encoding, flushAtEOF bool) (bufio.Spl
 		// Flush if no more data is expected
 		if atEOF && flushAtEOF {
 			token = trimWhitespaces(data)
-			advance = len(token)
+			advance = len(data)
 			return
 		}
 
@@ -197,5 +197,8 @@ func encodedCarriageReturn(encoding encoding.Encoding) ([]byte, error) {
 }
 
 func trimWhitespaces(data []byte) []byte {
-	return bytes.TrimRight(data, "\r\n\t ")
+	// TrimLeft to strip EOF whitespaces in case of using $ in regex
+	// For some reason newline and carriage return are being moved to beginning of next log
+	// TrimRight to strip all whitespaces from the end of log
+	return bytes.TrimLeft(bytes.TrimRight(data, "\r\n\t "), "\r\n")
 }

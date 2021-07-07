@@ -190,7 +190,7 @@ func TestLineEndSplitFunc(t *testing.T) {
 			Raw:     []byte("log1 LOGEND LOGEND\nlog2 LOGEND\n"),
 			ExpectedTokenized: []string{
 				"log1 LOGEND LOGEND",
-				"\nlog2 LOGEND",
+				"log2 LOGEND",
 			},
 		},
 		{
