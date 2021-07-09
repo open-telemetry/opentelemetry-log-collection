@@ -81,7 +81,7 @@ func (c UDPInputConfig) Build(context operator.BuildContext) ([]operator.Operato
 		return nil, err
 	}
 
-	splitFunc, err := c.Multiline.Build(encoding.Encoding, true, helper.NewForceFlush())
+	multiline, err := c.Multiline.Build(encoding.Encoding, true)
 	if err != nil {
 		return nil, err
 	}
@@ -97,7 +97,7 @@ func (c UDPInputConfig) Build(context operator.BuildContext) ([]operator.Operato
 		buffer:        make([]byte, MaxUDPSize),
 		addAttributes: c.AddAttributes,
 		encoding:      encoding,
-		splitFunc:     splitFunc,
+		splitFunc:     multiline.SplitFunc,
 		resolver:      resolver,
 	}
 	return []operator.Operator{udpInput}, nil

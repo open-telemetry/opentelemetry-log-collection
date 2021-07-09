@@ -33,6 +33,11 @@ func NewForceFlush() *ForceFlush {
 	}
 }
 
+type Multiline struct {
+	SplitFunc bufio.SplitFunc
+	force     *ForceFlush
+}
+
 // NewBasicConfig creates a new Multiline config
 func NewMultilineConfig() MultilineConfig {
 	return MultilineConfig{
@@ -48,8 +53,17 @@ type MultilineConfig struct {
 }
 
 // Build will build a Multiline operator.
-func (c MultilineConfig) Build(encoding encoding.Encoding, flushAtEOF bool, force *ForceFlush) (bufio.SplitFunc, error) {
-	return c.getSplitFunc(encoding, flushAtEOF, force)
+func (c MultilineConfig) Build(encoding encoding.Encoding, flushAtEOF bool) (*Multiline, error) {
+	force := NewForceFlush()
+	splitFunc, err := c.getSplitFunc(encoding, flushAtEOF, force)
+	if err != nil {
+		return nil, err
+	}
+
+	return &Multiline{
+		SplitFunc: splitFunc,
+		force:     force,
+	}, nil
 }
 
 // getSplitFunc returns split function for bufio.Scanner basing on configured pattern

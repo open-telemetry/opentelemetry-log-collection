@@ -15,7 +15,6 @@
 package file
 
 import (
-	"bufio"
 	"bytes"
 	"context"
 	"encoding/json"
@@ -44,7 +43,6 @@ type InputOperator struct {
 	FilePathResolvedField entry.Field
 	FileNameResolvedField entry.Field
 	PollInterval          time.Duration
-	SplitFunc             bufio.SplitFunc
 	Multiline             helper.MultilineConfig
 	MaxLogSize            int
 	MaxConcurrentFiles    int
@@ -313,8 +311,6 @@ func (f *InputOperator) saveCurrent(readers []*Reader) {
 }
 
 func (f *InputOperator) newReader(file *os.File, fp *Fingerprint, firstCheck bool) (*Reader, error) {
-	force := helper.NewForceFlush()
-	splitFunc, _ := f.Multiline.Build(f.encoding.Encoding, false, force)
 	// Check if the new path has the same fingerprint as an old path
 	if oldReader, ok := f.findFingerprintMatch(fp); ok {
 		newReader, err := oldReader.Copy(file)
@@ -326,7 +322,11 @@ func (f *InputOperator) newReader(file *os.File, fp *Fingerprint, firstCheck boo
 	}
 
 	// If we don't match any previously known files, create a new reader from scratch
-	newReader, err := f.NewReader(file.Name(), file, fp, splitFunc)
+	multiline, err := f.getMultiline()
+	if err != nil {
+		return nil, err
+	}
+	newReader, err := f.NewReader(file.Name(), file, fp, multiline)
 	if err != nil {
 		return nil, err
 	}
@@ -375,8 +375,6 @@ func (f *InputOperator) syncLastPollFiles(ctx context.Context) {
 
 // syncLastPollFiles loads the most recent set of files to the database
 func (f *InputOperator) loadLastPollFiles(ctx context.Context) error {
-	force := helper.NewForceFlush()
-	splitFunc, _ := f.Multiline.Build(f.encoding.Encoding, false, force)
 	encoded, err := f.persister.Get(ctx, knownFilesKey)
 	if err != nil {
 		return err
@@ -398,7 +396,11 @@ func (f *InputOperator) loadLastPollFiles(ctx context.Context) error {
 	// Decode each of the known files
 	f.knownFiles = make([]*Reader, 0, knownFileCount)
 	for i := 0; i < knownFileCount; i++ {
-		newReader, err := f.NewReader("", nil, nil, splitFunc)
+		multiline, err := f.getMultiline()
+		if err != nil {
+			return err
+		}
+		newReader, err := f.NewReader("", nil, nil, multiline)
 		if err != nil {
 			return err
 		}
@@ -409,4 +411,8 @@ func (f *InputOperator) loadLastPollFiles(ctx context.Context) error {
 	}
 
 	return nil
+}
+
+func (f *InputOperator) getMultiline() (*helper.Multiline, error) {
+	return f.Multiline.Build(f.encoding.Encoding, false)
 }

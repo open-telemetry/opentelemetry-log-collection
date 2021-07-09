@@ -26,6 +26,7 @@ import (
 	"golang.org/x/text/transform"
 
 	"github.com/open-telemetry/opentelemetry-log-collection/errors"
+	"github.com/open-telemetry/opentelemetry-log-collection/operator/helper"
 )
 
 // File attributes contains information about file paths
@@ -70,13 +71,13 @@ type Reader struct {
 	decoder      *encoding.Decoder
 	decodeBuffer []byte
 
-	splitFunc bufio.SplitFunc
+	multiline *helper.Multiline
 
 	*zap.SugaredLogger `json:"-"`
 }
 
 // NewReader creates a new file reader
-func (f *InputOperator) NewReader(path string, file *os.File, fp *Fingerprint, splitFunc bufio.SplitFunc) (*Reader, error) {
+func (f *InputOperator) NewReader(path string, file *os.File, fp *Fingerprint, multiline *helper.Multiline) (*Reader, error) {
 	r := &Reader{
 		Fingerprint:    fp,
 		file:           file,
@@ -85,14 +86,14 @@ func (f *InputOperator) NewReader(path string, file *os.File, fp *Fingerprint, s
 		decoder:        f.encoding.Encoding.NewDecoder(),
 		decodeBuffer:   make([]byte, 1<<12),
 		fileAttributes: f.resolveFileAttributes(path),
-		splitFunc:      splitFunc,
+		multiline:      multiline,
 	}
 	return r, nil
 }
 
 // Copy creates a deep copy of a Reader
 func (r *Reader) Copy(file *os.File) (*Reader, error) {
-	reader, err := r.fileInput.NewReader(r.fileAttributes.Path, file, r.Fingerprint.Copy(), r.splitFunc)
+	reader, err := r.fileInput.NewReader(r.fileAttributes.Path, file, r.Fingerprint.Copy(), r.multiline)
 	if err != nil {
 		return nil, err
 	}
@@ -119,7 +120,7 @@ func (r *Reader) ReadToEnd(ctx context.Context) {
 		return
 	}
 
-	scanner := NewPositionalScanner(r, r.fileInput.MaxLogSize, r.Offset, r.splitFunc)
+	scanner := NewPositionalScanner(r, r.fileInput.MaxLogSize, r.Offset, r.multiline.SplitFunc)
 
 	// Iterate over the tokenized file, emitting entries as we go
 	for {
