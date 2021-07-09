@@ -19,23 +19,50 @@ import (
 	"bytes"
 	"fmt"
 	"regexp"
+	"time"
 
 	"golang.org/x/text/encoding"
 )
 
 type ForceFlush struct {
-	Force bool
+	Force     bool
+	LastFlush time.Time
 }
 
 func NewForceFlush() *ForceFlush {
 	return &ForceFlush{
-		Force: false,
+		Force:     false,
+		LastFlush: time.Now(),
 	}
 }
 
 type Multiline struct {
-	SplitFunc bufio.SplitFunc
-	force     *ForceFlush
+	SplitFunc   bufio.SplitFunc
+	force       *ForceFlush
+	forcePeriod time.Duration
+
+	// lastFlush > force.LastFlush => we can force flush if no logs are incoming for forcePeriod
+	// lastFlush = force.LastFlush => last flush was forced, so we do cannot force, we can update lastFlush
+	// lastFlush < force.LastFlush =>we just forced flush, set lastFlush to force.LastFlush
+	lastFlush time.Time
+}
+
+// Flushed update lastFlush with current timestamp
+func (m *Multiline) Flushed() {
+	if m.lastFlush.Sub(m.force.LastFlush) < 0 {
+		m.lastFlush = m.force.LastFlush
+	} else {
+		m.lastFlush = time.Now()
+	}
+}
+
+// CheckAndFlush returns true if data is going to be force flushed
+func (m *Multiline) CheckAndFlush() {
+	if time.Since(m.lastFlush) > m.forcePeriod {
+		if m.lastFlush.Sub(m.force.LastFlush) > 0 {
+			m.force.Force = true
+		}
+	}
 }
 
 // NewBasicConfig creates a new Multiline config
@@ -43,6 +70,7 @@ func NewMultilineConfig() MultilineConfig {
 	return MultilineConfig{
 		LineStartPattern: "",
 		LineEndPattern:   "",
+		ForceFlushPeriod: "5s",
 	}
 }
 
@@ -50,6 +78,7 @@ func NewMultilineConfig() MultilineConfig {
 type MultilineConfig struct {
 	LineStartPattern string `mapstructure:"line_start_pattern"  json:"line_start_pattern" yaml:"line_start_pattern"`
 	LineEndPattern   string `mapstructure:"line_end_pattern"    json:"line_end_pattern"   yaml:"line_end_pattern"`
+	ForceFlushPeriod string `mapstructure:"force_flush_period"  json:"force_flush_period" yaml:"force_flush_period"`
 }
 
 // Build will build a Multiline operator.
@@ -60,9 +89,15 @@ func (c MultilineConfig) Build(encoding encoding.Encoding, flushAtEOF bool) (*Mu
 		return nil, err
 	}
 
+	duration, err := time.ParseDuration(c.ForceFlushPeriod)
+	if err != nil {
+		return nil, err
+	}
+
 	return &Multiline{
-		SplitFunc: splitFunc,
-		force:     force,
+		SplitFunc:   splitFunc,
+		force:       force,
+		forcePeriod: duration,
 	}, nil
 }
 
@@ -97,6 +132,14 @@ func (c MultilineConfig) getSplitFunc(encoding encoding.Encoding, flushAtEOF boo
 // tokens that start with a match to the regex pattern provided
 func NewLineStartSplitFunc(re *regexp.Regexp, flushAtEOF bool, force *ForceFlush) bufio.SplitFunc {
 	return func(data []byte, atEOF bool) (advance int, token []byte, err error) {
+		if force.Force {
+			force.Force = false
+			force.LastFlush = time.Now()
+			token = trimWhitespaces(data)
+			advance = len(data)
+			return
+		}
+
 		firstLoc := re.FindIndex(data)
 		if firstLoc == nil {
 			// Flush if no more data is expected
@@ -147,6 +190,13 @@ func NewLineStartSplitFunc(re *regexp.Regexp, flushAtEOF bool, force *ForceFlush
 // tokens that end with a match to the regex pattern provided
 func NewLineEndSplitFunc(re *regexp.Regexp, flushAtEOF bool, force *ForceFlush) bufio.SplitFunc {
 	return func(data []byte, atEOF bool) (advance int, token []byte, err error) {
+		if force.Force {
+			force.Force = false
+			force.LastFlush = time.Now()
+			token = trimWhitespaces(data)
+			advance = len(data)
+			return
+		}
 		loc := re.FindIndex(data)
 		if loc == nil {
 			// Flush if no more data is expected
@@ -185,6 +235,13 @@ func NewNewlineSplitFunc(encoding encoding.Encoding, flushAtEOF bool, force *For
 	}
 
 	return func(data []byte, atEOF bool) (advance int, token []byte, err error) {
+		if force.Force {
+			force.Force = false
+			force.LastFlush = time.Now()
+			token = trimWhitespaces(data)
+			advance = len(data)
+			return
+		}
 		if atEOF && len(data) == 0 {
 			return 0, nil, nil
 		}
