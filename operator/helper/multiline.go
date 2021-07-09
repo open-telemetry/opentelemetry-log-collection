@@ -58,10 +58,8 @@ func (m *Multiline) Flushed() {
 
 // CheckAndFlush returns true if data is going to be force flushed
 func (m *Multiline) CheckAndFlush() {
-	if time.Since(m.lastFlush) > m.forcePeriod {
-		if m.lastFlush.Sub(m.force.LastFlush) > 0 {
-			m.force.Force = true
-		}
+	if m.forcePeriod > 0 && time.Since(m.lastFlush) > m.forcePeriod && m.lastFlush.Sub(m.force.LastFlush) > 0 {
+		m.force.Force = true
 	}
 }
 
@@ -70,7 +68,7 @@ func NewMultilineConfig() MultilineConfig {
 	return MultilineConfig{
 		LineStartPattern: "",
 		LineEndPattern:   "",
-		ForceFlushPeriod: "5s",
+		ForceFlushPeriod: "0s",
 	}
 }
 
