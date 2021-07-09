@@ -134,6 +134,15 @@ func TestLineStartSplitFunc(t *testing.T) {
 			ExpectedError:     errors.New("bufio.Scanner: token too long"),
 			ExpectedTokenized: []string{},
 		},
+		{
+			Name:    "MultipleMultilineLogs",
+			Pattern: `^LOGSTART \d+`,
+			Raw:     []byte("LOGSTART 12 log1\t  \nLOGPART log1\nLOGPART log1\t   \nLOGSTART 17 log2\nLOGPART log2\nanother line\nLOGSTART 43 log5"),
+			ExpectedTokenized: []string{
+				"LOGSTART 12 log1\t  \nLOGPART log1\nLOGPART log1",
+				"LOGSTART 17 log2\nLOGPART log2\nanother line",
+			},
+		},
 	}
 
 	for _, tc := range testCases {
@@ -241,6 +250,15 @@ func TestLineEndSplitFunc(t *testing.T) {
 			}(),
 			ExpectedTokenized: []string{},
 			ExpectedError:     errors.New("bufio.Scanner: token too long"),
+		},
+		{
+			Name:    "MultipleMultilineLogs",
+			Pattern: `^LOGEND.*$`,
+			Raw:     []byte("LOGSTART 12 log1\t  \nLOGPART log1\nLOGEND log1\t   \nLOGSTART 17 log2\nLOGPART log2\nLOGEND log2\nLOGSTART 43 log5"),
+			ExpectedTokenized: []string{
+				"LOGSTART 12 log1\t  \nLOGPART log1\nLOGEND log1",
+				"LOGSTART 17 log2\nLOGPART log2\nLOGEND log2",
+			},
 		},
 	}
 
