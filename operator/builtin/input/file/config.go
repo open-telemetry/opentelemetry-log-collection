@@ -117,7 +117,7 @@ func (c InputConfig) Build(context operator.BuildContext) ([]operator.Operator, 
 		return nil, err
 	}
 
-	splitFunc, err := c.Multiline.Build(context, encoding.Encoding, false)
+	splitFunc, err := c.Multiline.Build(encoding.Encoding, false, helper.NewForceFlush())
 	if err != nil {
 		return nil, err
 	}
