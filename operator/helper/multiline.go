@@ -87,6 +87,10 @@ func (c MultilineConfig) Build(encoding encoding.Encoding, flushAtEOF bool) (*Mu
 		return nil, err
 	}
 
+	if c.ForceFlushPeriod == "" {
+		c.ForceFlushPeriod = "0s"
+	}
+
 	duration, err := time.ParseDuration(c.ForceFlushPeriod)
 	if err != nil {
 		return nil, err
