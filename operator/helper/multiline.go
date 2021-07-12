@@ -42,8 +42,8 @@ type Multiline struct {
 	forcePeriod time.Duration
 
 	// lastFlush > force.LastFlush => we can force flush if no logs are incoming for forcePeriod
-	// lastFlush = force.LastFlush => last flush was forced, so we do cannot force, we can update lastFlush
-	// lastFlush < force.LastFlush =>we just forced flush, set lastFlush to force.LastFlush
+	// lastFlush = force.LastFlush => last flush was forced, so we cannot force, we can update lastFlush
+	// lastFlush < force.LastFlush => we just forced flush, set lastFlush to force.LastFlush
 	lastFlush time.Time
 }
 
