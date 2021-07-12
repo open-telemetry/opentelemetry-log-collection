@@ -37,7 +37,12 @@ If set, the `multiline` configuration block instructs the `file_input` operator 
 The `multiline` configuration block must contain exactly one of `line_start_pattern` or `line_end_pattern`. These are regex patterns that
 match either the beginning of a new log entry, or the end of a log entry.
 
-Also refer to [recombine](/docs/operators/recombine.md) operator for merging events with greater control. 
+If using multiline, last log can sometimes be not flushed due to waiting for more content.
+In order to forcefully flush last buffered log after certain period of time,
+set `force_flush_period` option to [duration string](https://golang.org/pkg/time/#ParseDuration),
+eg: `5s`, `1m`. It's by default `0s` which means, that no force flushing will be performed.
+
+Also refer to [recombine](/docs/operators/recombine.md) operator for merging events with greater control.
 
 ### File rotation
 

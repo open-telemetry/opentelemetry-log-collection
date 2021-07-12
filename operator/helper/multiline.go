@@ -24,18 +24,22 @@ import (
 	"golang.org/x/text/encoding"
 )
 
+// ForceFlush keeps information about force flush state
 type ForceFlush struct {
 	Force     bool
 	LastFlush time.Time
 }
 
+// NewForceFlush Creates new ForceFlush with lastFlush set to unix epoch
+// and order to not force ongoing flush
 func NewForceFlush() *ForceFlush {
 	return &ForceFlush{
 		Force:     false,
-		LastFlush: time.Now(),
+		LastFlush: time.Unix(0, 0),
 	}
 }
 
+// Multiline consists of splitFunc and variables needed to perform force flush
 type Multiline struct {
 	SplitFunc   bufio.SplitFunc
 	force       *ForceFlush
@@ -56,7 +60,7 @@ func (m *Multiline) Flushed() {
 	}
 }
 
-// CheckAndFlush returns true if data is going to be force flushed
+// CheckAndFlush sets internal flag to true if data is going to be force flushed
 func (m *Multiline) CheckAndFlush() {
 	if m.forcePeriod > 0 && time.Since(m.lastFlush) > m.forcePeriod && m.lastFlush.Sub(m.force.LastFlush) > 0 {
 		m.force.Force = true
@@ -102,6 +106,7 @@ func (c MultilineConfig) Build(encoding encoding.Encoding, flushAtEOF bool) (*Mu
 		SplitFunc:   splitFunc,
 		force:       force,
 		forcePeriod: duration,
+		lastFlush:   time.Now(),
 	}, nil
 }
 

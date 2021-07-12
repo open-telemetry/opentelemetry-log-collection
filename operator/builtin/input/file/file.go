@@ -413,6 +413,7 @@ func (f *InputOperator) loadLastPollFiles(ctx context.Context) error {
 	return nil
 }
 
+// Build multiline using struct fields
 func (f *InputOperator) getMultiline() (*helper.Multiline, error) {
 	return f.Multiline.Build(f.encoding.Encoding, false)
 }
