@@ -68,6 +68,8 @@ func NewMultilineConfig() MultilineConfig {
 	return MultilineConfig{
 		LineStartPattern: "",
 		LineEndPattern:   "",
+
+		// Empty or `0s` means that we will never force flush
 		ForceFlushPeriod: "0s",
 	}
 }
