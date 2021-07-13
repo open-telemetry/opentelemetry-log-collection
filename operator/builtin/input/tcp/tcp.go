@@ -99,7 +99,7 @@ func (c TCPInputConfig) Build(context operator.BuildContext) ([]operator.Operato
 	}
 
 	// Build multiline
-	multiline, err := c.Multiline.Build(encoding.Encoding, true)
+	splitFunc, err := c.Multiline.Build(encoding.Encoding, true, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -115,7 +115,7 @@ func (c TCPInputConfig) Build(context operator.BuildContext) ([]operator.Operato
 		MaxLogSize:    int(c.MaxLogSize),
 		addAttributes: c.AddAttributes,
 		encoding:      encoding,
-		splitFunc:     multiline.SplitFunc,
+		splitFunc:     splitFunc,
 		backoff: backoff.Backoff{
 			Max: 3 * time.Second,
 		},

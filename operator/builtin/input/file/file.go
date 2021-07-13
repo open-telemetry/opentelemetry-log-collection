@@ -15,6 +15,7 @@
 package file
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"encoding/json"
@@ -44,6 +45,7 @@ type InputOperator struct {
 	FileNameResolvedField entry.Field
 	PollInterval          time.Duration
 	Multiline             helper.MultilineConfig
+	ForceFlush            helper.ForceFlushConfig
 	MaxLogSize            int
 	MaxConcurrentFiles    int
 	SeenPaths             map[string]struct{}
@@ -322,11 +324,11 @@ func (f *InputOperator) newReader(file *os.File, fp *Fingerprint, firstCheck boo
 	}
 
 	// If we don't match any previously known files, create a new reader from scratch
-	multiline, err := f.getMultiline()
+	splitFunc, forceFlush, err := f.getMultiline()
 	if err != nil {
 		return nil, err
 	}
-	newReader, err := f.NewReader(file.Name(), file, fp, multiline)
+	newReader, err := f.NewReader(file.Name(), file, fp, splitFunc, forceFlush)
 	if err != nil {
 		return nil, err
 	}
@@ -396,11 +398,11 @@ func (f *InputOperator) loadLastPollFiles(ctx context.Context) error {
 	// Decode each of the known files
 	f.knownFiles = make([]*Reader, 0, knownFileCount)
 	for i := 0; i < knownFileCount; i++ {
-		multiline, err := f.getMultiline()
+		splitFunc, forceFlush, err := f.getMultiline()
 		if err != nil {
 			return err
 		}
-		newReader, err := f.NewReader("", nil, nil, multiline)
+		newReader, err := f.NewReader("", nil, nil, splitFunc, forceFlush)
 		if err != nil {
 			return err
 		}
@@ -413,7 +415,10 @@ func (f *InputOperator) loadLastPollFiles(ctx context.Context) error {
 	return nil
 }
 
-// Build multiline using struct fields
-func (f *InputOperator) getMultiline() (*helper.Multiline, error) {
-	return f.Multiline.Build(f.encoding.Encoding, false)
+// getMultiline returns splitFunc, related ForceFlush structure and error eventually
+func (f *InputOperator) getMultiline() (bufio.SplitFunc, *helper.ForceFlush, error) {
+	force := f.ForceFlush.Build()
+	splitFunc, err := f.Multiline.Build(f.encoding.Encoding, false, force)
+
+	return splitFunc, force, err
 }

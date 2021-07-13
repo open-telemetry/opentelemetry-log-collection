@@ -43,6 +43,7 @@ func NewInputConfig(operatorID string) *InputConfig {
 		IncludeFilePath:         false,
 		IncludeFileNameResolved: false,
 		IncludeFilePathResolved: false,
+		ForceFlush:              helper.NewForceFlushConfig(),
 		StartAt:                 "end",
 		FingerprintSize:         defaultFingerprintSize,
 		MaxLogSize:              defaultMaxLogSize,
@@ -58,17 +59,18 @@ type InputConfig struct {
 	Include []string `mapstructure:"include,omitempty" json:"include,omitempty" yaml:"include,omitempty"`
 	Exclude []string `mapstructure:"exclude,omitempty" json:"exclude,omitempty" yaml:"exclude,omitempty"`
 
-	PollInterval            helper.Duration        `mapstructure:"poll_interval,omitempty"                  json:"poll_interval,omitempty"                 yaml:"poll_interval,omitempty"`
-	Multiline               helper.MultilineConfig `mapstructure:"multiline,omitempty"                      json:"multiline,omitempty"                     yaml:"multiline,omitempty"`
-	IncludeFileName         bool                   `mapstructure:"include_file_name,omitempty"              json:"include_file_name,omitempty"             yaml:"include_file_name,omitempty"`
-	IncludeFilePath         bool                   `mapstructure:"include_file_path,omitempty"              json:"include_file_path,omitempty"             yaml:"include_file_path,omitempty"`
-	IncludeFileNameResolved bool                   `mapstructure:"include_file_name_resolved,omitempty"     json:"include_file_name_resolved,omitempty"    yaml:"include_file_name_resolved,omitempty"`
-	IncludeFilePathResolved bool                   `mapstructure:"include_file_path_resolved,omitempty"     json:"include_file_path_resolved,omitempty"    yaml:"include_file_path_resolved,omitempty"`
-	StartAt                 string                 `mapstructure:"start_at,omitempty"                       json:"start_at,omitempty"                      yaml:"start_at,omitempty"`
-	FingerprintSize         helper.ByteSize        `mapstructure:"fingerprint_size,omitempty"               json:"fingerprint_size,omitempty"              yaml:"fingerprint_size,omitempty"`
-	MaxLogSize              helper.ByteSize        `mapstructure:"max_log_size,omitempty"                   json:"max_log_size,omitempty"                  yaml:"max_log_size,omitempty"`
-	MaxConcurrentFiles      int                    `mapstructure:"max_concurrent_files,omitempty"           json:"max_concurrent_files,omitempty"          yaml:"max_concurrent_files,omitempty"`
-	Encoding                helper.EncodingConfig  `mapstructure:",squash,omitempty"                        json:",inline,omitempty"                       yaml:",inline,omitempty"`
+	PollInterval            helper.Duration         `mapstructure:"poll_interval,omitempty"                  json:"poll_interval,omitempty"                 yaml:"poll_interval,omitempty"`
+	Multiline               helper.MultilineConfig  `mapstructure:"multiline,omitempty"                      json:"multiline,omitempty"                     yaml:"multiline,omitempty"`
+	IncludeFileName         bool                    `mapstructure:"include_file_name,omitempty"              json:"include_file_name,omitempty"             yaml:"include_file_name,omitempty"`
+	IncludeFilePath         bool                    `mapstructure:"include_file_path,omitempty"              json:"include_file_path,omitempty"             yaml:"include_file_path,omitempty"`
+	IncludeFileNameResolved bool                    `mapstructure:"include_file_name_resolved,omitempty"     json:"include_file_name_resolved,omitempty"    yaml:"include_file_name_resolved,omitempty"`
+	IncludeFilePathResolved bool                    `mapstructure:"include_file_path_resolved,omitempty"     json:"include_file_path_resolved,omitempty"    yaml:"include_file_path_resolved,omitempty"`
+	StartAt                 string                  `mapstructure:"start_at,omitempty"                       json:"start_at,omitempty"                      yaml:"start_at,omitempty"`
+	FingerprintSize         helper.ByteSize         `mapstructure:"fingerprint_size,omitempty"               json:"fingerprint_size,omitempty"              yaml:"fingerprint_size,omitempty"`
+	MaxLogSize              helper.ByteSize         `mapstructure:"max_log_size,omitempty"                   json:"max_log_size,omitempty"                  yaml:"max_log_size,omitempty"`
+	MaxConcurrentFiles      int                     `mapstructure:"max_concurrent_files,omitempty"           json:"max_concurrent_files,omitempty"          yaml:"max_concurrent_files,omitempty"`
+	Encoding                helper.EncodingConfig   `mapstructure:",squash,omitempty"                        json:",inline,omitempty"                       yaml:",inline,omitempty"`
+	ForceFlush              helper.ForceFlushConfig `mapstructure:",squash,omitempty"                        json:",inline,omitempty"                       yaml:",inline,omitempty"`
 }
 
 // Build will build a file input operator from the supplied configuration
@@ -118,7 +120,7 @@ func (c InputConfig) Build(context operator.BuildContext) ([]operator.Operator, 
 	}
 
 	// Ensure that multiline is buildable
-	_, err = c.Multiline.Build(encoding.Encoding, false)
+	_, err = c.Multiline.Build(encoding.Encoding, false, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -164,6 +166,7 @@ func (c InputConfig) Build(context operator.BuildContext) ([]operator.Operator, 
 		FilePathResolvedField: filePathResolvedField,
 		FileNameResolvedField: fileNameResolvedField,
 		startAtBeginning:      startAtBeginning,
+		ForceFlush:            c.ForceFlush,
 		queuedMatches:         make([]string, 0),
 		encoding:              encoding,
 		firstCheck:            true,

@@ -24,6 +24,22 @@ import (
 	"golang.org/x/text/encoding"
 )
 
+type ForceFlushConfig struct {
+	Period Duration `mapstructure:"force_flush_period"  json:"force_flush_period" yaml:"force_flush_period"`
+}
+
+// NewBasicConfig creates a new Multiline config
+func NewForceFlushConfig() ForceFlushConfig {
+	return ForceFlushConfig{
+		// Empty or `0s` means that we will never force flush
+		Period: Duration{Duration: 0},
+	}
+}
+
+func (c *ForceFlushConfig) Build() *ForceFlush {
+	return NewForceFlush(c.Period)
+}
+
 // ForceFlush keeps information about force flush state
 type ForceFlush struct {
 	force       bool
@@ -38,19 +54,13 @@ type ForceFlush struct {
 
 // NewForceFlush Creates new ForceFlush with lastFlush set to unix epoch
 // and order to not force ongoing flush
-func NewForceFlush(forcePeriod time.Duration) *ForceFlush {
+func NewForceFlush(forcePeriod Duration) *ForceFlush {
 	return &ForceFlush{
 		force:           false,
 		lastFlush:       time.Now(),
-		forcePeriod:     forcePeriod,
+		forcePeriod:     forcePeriod.Raw(),
 		lastForcedFlush: time.Unix(0, 0),
 	}
-}
-
-// Multiline consists of splitFunc and variables needed to perform force flush
-type Multiline struct {
-	SplitFunc bufio.SplitFunc
-	Force     *ForceFlush
 }
 
 // Flushed update lastFlush with current timestamp
@@ -80,14 +90,17 @@ func (ff *ForceFlush) ShouldFlush() bool {
 	return ff.force
 }
 
+// Multiline consists of splitFunc and variables needed to perform force flush
+type Multiline struct {
+	SplitFunc bufio.SplitFunc
+	Force     *ForceFlush
+}
+
 // NewBasicConfig creates a new Multiline config
 func NewMultilineConfig() MultilineConfig {
 	return MultilineConfig{
 		LineStartPattern: "",
 		LineEndPattern:   "",
-
-		// Empty or `0s` means that we will never force flush
-		ForceFlushPeriod: "0s",
 	}
 }
 
@@ -95,29 +108,11 @@ func NewMultilineConfig() MultilineConfig {
 type MultilineConfig struct {
 	LineStartPattern string `mapstructure:"line_start_pattern"  json:"line_start_pattern" yaml:"line_start_pattern"`
 	LineEndPattern   string `mapstructure:"line_end_pattern"    json:"line_end_pattern"   yaml:"line_end_pattern"`
-	ForceFlushPeriod string `mapstructure:"force_flush_period"  json:"force_flush_period" yaml:"force_flush_period"`
 }
 
 // Build will build a Multiline operator.
-func (c MultilineConfig) Build(encoding encoding.Encoding, flushAtEOF bool) (*Multiline, error) {
-	if c.ForceFlushPeriod == "" {
-		c.ForceFlushPeriod = "0s"
-	}
-
-	duration, err := time.ParseDuration(c.ForceFlushPeriod)
-	if err != nil {
-		return nil, err
-	}
-
-	force := NewForceFlush(duration)
-	splitFunc, err := c.getSplitFunc(encoding, flushAtEOF, force)
-	if err != nil {
-		return nil, err
-	}
-	return &Multiline{
-		SplitFunc: splitFunc,
-		Force:     force,
-	}, nil
+func (c MultilineConfig) Build(encoding encoding.Encoding, flushAtEOF bool, force *ForceFlush) (bufio.SplitFunc, error) {
+	return c.getSplitFunc(encoding, flushAtEOF, force)
 }
 
 // getSplitFunc returns split function for bufio.Scanner basing on configured pattern

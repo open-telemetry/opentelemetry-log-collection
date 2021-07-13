@@ -71,13 +71,14 @@ type Reader struct {
 	decoder      *encoding.Decoder
 	decodeBuffer []byte
 
-	multiline *helper.Multiline
+	splitFunc  bufio.SplitFunc
+	forceFlush *helper.ForceFlush
 
 	*zap.SugaredLogger `json:"-"`
 }
 
 // NewReader creates a new file reader
-func (f *InputOperator) NewReader(path string, file *os.File, fp *Fingerprint, multiline *helper.Multiline) (*Reader, error) {
+func (f *InputOperator) NewReader(path string, file *os.File, fp *Fingerprint, splitFunc bufio.SplitFunc, force *helper.ForceFlush) (*Reader, error) {
 	r := &Reader{
 		Fingerprint:    fp,
 		file:           file,
@@ -86,14 +87,15 @@ func (f *InputOperator) NewReader(path string, file *os.File, fp *Fingerprint, m
 		decoder:        f.encoding.Encoding.NewDecoder(),
 		decodeBuffer:   make([]byte, 1<<12),
 		fileAttributes: f.resolveFileAttributes(path),
-		multiline:      multiline,
+		splitFunc:      splitFunc,
+		forceFlush:     force,
 	}
 	return r, nil
 }
 
 // Copy creates a deep copy of a Reader
 func (r *Reader) Copy(file *os.File) (*Reader, error) {
-	reader, err := r.fileInput.NewReader(r.fileAttributes.Path, file, r.Fingerprint.Copy(), r.multiline)
+	reader, err := r.fileInput.NewReader(r.fileAttributes.Path, file, r.Fingerprint.Copy(), r.splitFunc, r.forceFlush)
 	if err != nil {
 		return nil, err
 	}
@@ -120,7 +122,7 @@ func (r *Reader) ReadToEnd(ctx context.Context) {
 		return
 	}
 
-	scanner := NewPositionalScanner(r, r.fileInput.MaxLogSize, r.Offset, r.multiline.SplitFunc)
+	scanner := NewPositionalScanner(r, r.fileInput.MaxLogSize, r.Offset, r.splitFunc)
 
 	// Iterate over the tokenized file, emitting entries as we go
 	for {
@@ -137,11 +139,11 @@ func (r *Reader) ReadToEnd(ctx context.Context) {
 			}
 
 			// Force flush eventually in next iteration
-			r.multiline.Force.CheckAndFlush()
+			r.forceFlush.CheckAndFlush()
 			break
 		}
 		// Update information about last flush time
-		r.multiline.Force.Flushed()
+		r.forceFlush.Flushed()
 
 		if err := r.emit(ctx, scanner.Bytes()); err != nil {
 			r.Error("Failed to emit entry", zap.Error(err))

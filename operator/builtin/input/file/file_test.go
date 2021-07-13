@@ -297,8 +297,8 @@ func TestStartAtEndNewFile(t *testing.T) {
 func TestNoNewline(t *testing.T) {
 	t.Parallel()
 	operator, logReceived, tempDir := newTestFileOperator(t, func(cfg *InputConfig) {
-		cfg.Multiline = helper.NewMultilineConfig()
-		cfg.Multiline.ForceFlushPeriod = "1ms"
+		cfg.ForceFlush = helper.NewForceFlushConfig()
+		cfg.ForceFlush.Period.Duration = time.Nanosecond
 	}, nil)
 
 	temp := openTemp(t, tempDir)
@@ -628,10 +628,10 @@ func TestFileReader_FingerprintUpdated(t *testing.T) {
 	fp, err := operator.NewFingerprint(temp)
 	require.NoError(t, err)
 
-	multiline, err := operator.getMultiline()
+	splitFunc, forceFlush, err := operator.getMultiline()
 	require.NoError(t, err)
 
-	reader, err := operator.NewReader(temp.Name(), tempCopy, fp, multiline)
+	reader, err := operator.NewReader(temp.Name(), tempCopy, fp, splitFunc, forceFlush)
 	require.NoError(t, err)
 	defer reader.Close()
 
@@ -672,10 +672,10 @@ func TestFingerprintGrowsAndStops(t *testing.T) {
 			require.NoError(t, err)
 			require.Equal(t, []byte(""), fp.FirstBytes)
 
-			multiline, err := operator.getMultiline()
+			splitFunc, forceFlush, err := operator.getMultiline()
 			require.NoError(t, err)
 
-			reader, err := operator.NewReader(temp.Name(), tempCopy, fp, multiline)
+			reader, err := operator.NewReader(temp.Name(), tempCopy, fp, splitFunc, forceFlush)
 			require.NoError(t, err)
 			defer reader.Close()
 
