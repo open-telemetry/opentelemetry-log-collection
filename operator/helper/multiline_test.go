@@ -151,8 +151,8 @@ func TestLineStartSplitFunc(t *testing.T) {
 			Raw:               []byte("LOGPART log1\nLOGPART log1\t   \n"),
 			ExpectedTokenized: []string{},
 			ForceFlush: &ForceFlush{
-				Force:     false,
-				LastFlush: time.Now(),
+				force:           false,
+				lastForcedFlush: time.Now(),
 			},
 		},
 		{
@@ -163,8 +163,8 @@ func TestLineStartSplitFunc(t *testing.T) {
 				"LOGPART log1\nLOGPART log1",
 			},
 			ForceFlush: &ForceFlush{
-				Force:     true,
-				LastFlush: time.Now(),
+				force:           true,
+				lastForcedFlush: time.Now(),
 			},
 		},
 	}
@@ -173,16 +173,14 @@ func TestLineStartSplitFunc(t *testing.T) {
 		cfg := &MultilineConfig{
 			LineStartPattern: tc.Pattern,
 		}
-		if tc.ForceFlush == nil {
-			tc.ForceFlush = NewForceFlush()
-		}
+
 		splitFunc, err := cfg.getSplitFunc(unicode.UTF8, false, tc.ForceFlush)
 		require.NoError(t, err)
 		t.Run(tc.Name, tc.RunFunc(splitFunc))
 	}
 
 	t.Run("FirstMatchHitsEndOfBuffer", func(t *testing.T) {
-		splitFunc := NewLineStartSplitFunc(regexp.MustCompile("LOGSTART"), false, NewForceFlush())
+		splitFunc := NewLineStartSplitFunc(regexp.MustCompile("LOGSTART"), false, nil)
 		data := []byte(`LOGSTART`)
 
 		t.Run("NotAtEOF", func(t *testing.T) {
@@ -293,8 +291,8 @@ func TestLineEndSplitFunc(t *testing.T) {
 			Raw:               []byte("LOGPART log1\nLOGPART log1\t   \n"),
 			ExpectedTokenized: []string{},
 			ForceFlush: &ForceFlush{
-				Force:     false,
-				LastFlush: time.Now(),
+				force:           false,
+				lastForcedFlush: time.Now(),
 			},
 		},
 		{
@@ -305,8 +303,8 @@ func TestLineEndSplitFunc(t *testing.T) {
 				"LOGPART log1\nLOGPART log1",
 			},
 			ForceFlush: &ForceFlush{
-				Force:     true,
-				LastFlush: time.Now(),
+				force:           true,
+				lastForcedFlush: time.Now(),
 			},
 		},
 	}
@@ -315,9 +313,7 @@ func TestLineEndSplitFunc(t *testing.T) {
 		cfg := &MultilineConfig{
 			LineEndPattern: tc.Pattern,
 		}
-		if tc.ForceFlush == nil {
-			tc.ForceFlush = NewForceFlush()
-		}
+
 		splitFunc, err := cfg.getSplitFunc(unicode.UTF8, false, tc.ForceFlush)
 		require.NoError(t, err)
 		t.Run(tc.Name, tc.RunFunc(splitFunc))
@@ -399,8 +395,8 @@ func TestNewlineSplitFunc(t *testing.T) {
 			Raw:               []byte("LOGPART log1"),
 			ExpectedTokenized: []string{},
 			ForceFlush: &ForceFlush{
-				Force:     false,
-				LastFlush: time.Now(),
+				force:           false,
+				lastForcedFlush: time.Now(),
 			},
 		},
 		{
@@ -411,16 +407,13 @@ func TestNewlineSplitFunc(t *testing.T) {
 				"LOGPART log1",
 			},
 			ForceFlush: &ForceFlush{
-				Force:     true,
-				LastFlush: time.Now(),
+				force:           true,
+				lastForcedFlush: time.Now(),
 			},
 		},
 	}
 
 	for _, tc := range testCases {
-		if tc.ForceFlush == nil {
-			tc.ForceFlush = NewForceFlush()
-		}
 		splitFunc, err := NewNewlineSplitFunc(unicode.UTF8, false, tc.ForceFlush)
 		require.NoError(t, err)
 		t.Run(tc.Name, tc.RunFunc(splitFunc))
@@ -474,7 +467,7 @@ func TestNewlineSplitFunc_Encodings(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			splitFunc, err := NewNewlineSplitFunc(tc.encoding, false, NewForceFlush())
+			splitFunc, err := NewNewlineSplitFunc(tc.encoding, false, nil)
 			require.NoError(t, err)
 			scanner := bufio.NewScanner(bytes.NewReader(tc.input))
 			scanner.Split(splitFunc)

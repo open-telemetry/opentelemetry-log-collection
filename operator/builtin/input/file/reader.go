@@ -137,11 +137,11 @@ func (r *Reader) ReadToEnd(ctx context.Context) {
 			}
 
 			// Force flush eventually in next iteration
-			r.multiline.CheckAndFlush()
+			r.multiline.Force.CheckAndFlush()
 			break
 		}
 		// Update information about last flush time
-		r.multiline.Flushed()
+		r.multiline.Force.Flushed()
 
 		if err := r.emit(ctx, scanner.Bytes()); err != nil {
 			r.Error("Failed to emit entry", zap.Error(err))

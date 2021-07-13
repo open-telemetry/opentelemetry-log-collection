@@ -26,45 +26,58 @@ import (
 
 // ForceFlush keeps information about force flush state
 type ForceFlush struct {
-	Force     bool
-	LastFlush time.Time
+	force       bool
+	forcePeriod time.Duration
+
+	// lastFlush > lastForcedFlush => we can force flush if no logs are incoming for forcePeriod
+	// lastFlush = lastForcedFlush => last flush was forced, so we cannot force, we can update lastFlush
+	// lastFlush < lastForcedFlush => we just forced flush, set lastFlush to lastForcedFlush
+	lastFlush       time.Time
+	lastForcedFlush time.Time
 }
 
 // NewForceFlush Creates new ForceFlush with lastFlush set to unix epoch
 // and order to not force ongoing flush
-func NewForceFlush() *ForceFlush {
+func NewForceFlush(forcePeriod time.Duration) *ForceFlush {
 	return &ForceFlush{
-		Force:     false,
-		LastFlush: time.Unix(0, 0),
+		force:           false,
+		lastFlush:       time.Now(),
+		forcePeriod:     forcePeriod,
+		lastForcedFlush: time.Unix(0, 0),
 	}
 }
 
 // Multiline consists of splitFunc and variables needed to perform force flush
 type Multiline struct {
-	SplitFunc   bufio.SplitFunc
-	force       *ForceFlush
-	forcePeriod time.Duration
-
-	// lastFlush > force.LastFlush => we can force flush if no logs are incoming for forcePeriod
-	// lastFlush = force.LastFlush => last flush was forced, so we cannot force, we can update lastFlush
-	// lastFlush < force.LastFlush => we just forced flush, set lastFlush to force.LastFlush
-	lastFlush time.Time
+	SplitFunc bufio.SplitFunc
+	Force     *ForceFlush
 }
 
 // Flushed update lastFlush with current timestamp
-func (m *Multiline) Flushed() {
-	if m.lastFlush.Sub(m.force.LastFlush) < 0 {
-		m.lastFlush = m.force.LastFlush
+func (ff *ForceFlush) Flushed() {
+	if ff.lastFlush.Sub(ff.lastForcedFlush) < 0 {
+		ff.lastFlush = ff.lastForcedFlush
 	} else {
-		m.lastFlush = time.Now()
+		ff.lastFlush = time.Now()
 	}
 }
 
 // CheckAndFlush sets internal flag to true if data is going to be force flushed
-func (m *Multiline) CheckAndFlush() {
-	if m.forcePeriod > 0 && time.Since(m.lastFlush) > m.forcePeriod && m.lastFlush.Sub(m.force.LastFlush) > 0 {
-		m.force.Force = true
+func (ff *ForceFlush) CheckAndFlush() {
+	if ff.forcePeriod > 0 && time.Since(ff.lastFlush) > ff.forcePeriod && ff.lastFlush.Sub(ff.lastForcedFlush) > 0 {
+		ff.force = true
 	}
+}
+
+// ForceFlushed update struct fields after forced flush
+func (ff *ForceFlush) ForceFlushed() {
+	ff.force = false
+	ff.lastForcedFlush = time.Now()
+}
+
+// ShouldFlush returns true if data should be forcefully flushed
+func (ff *ForceFlush) ShouldFlush() bool {
+	return ff.force
 }
 
 // NewBasicConfig creates a new Multiline config
@@ -87,12 +100,6 @@ type MultilineConfig struct {
 
 // Build will build a Multiline operator.
 func (c MultilineConfig) Build(encoding encoding.Encoding, flushAtEOF bool) (*Multiline, error) {
-	force := NewForceFlush()
-	splitFunc, err := c.getSplitFunc(encoding, flushAtEOF, force)
-	if err != nil {
-		return nil, err
-	}
-
 	if c.ForceFlushPeriod == "" {
 		c.ForceFlushPeriod = "0s"
 	}
@@ -102,11 +109,14 @@ func (c MultilineConfig) Build(encoding encoding.Encoding, flushAtEOF bool) (*Mu
 		return nil, err
 	}
 
+	force := NewForceFlush(duration)
+	splitFunc, err := c.getSplitFunc(encoding, flushAtEOF, force)
+	if err != nil {
+		return nil, err
+	}
 	return &Multiline{
-		SplitFunc:   splitFunc,
-		force:       force,
-		forcePeriod: duration,
-		lastFlush:   time.Now(),
+		SplitFunc: splitFunc,
+		Force:     force,
 	}, nil
 }
 
@@ -141,9 +151,8 @@ func (c MultilineConfig) getSplitFunc(encoding encoding.Encoding, flushAtEOF boo
 // tokens that start with a match to the regex pattern provided
 func NewLineStartSplitFunc(re *regexp.Regexp, flushAtEOF bool, force *ForceFlush) bufio.SplitFunc {
 	return func(data []byte, atEOF bool) (advance int, token []byte, err error) {
-		if force.Force {
-			force.Force = false
-			force.LastFlush = time.Now()
+		if force != nil && force.ShouldFlush() {
+			force.ForceFlushed()
 			token = trimWhitespaces(data)
 			advance = len(data)
 			return
@@ -199,9 +208,8 @@ func NewLineStartSplitFunc(re *regexp.Regexp, flushAtEOF bool, force *ForceFlush
 // tokens that end with a match to the regex pattern provided
 func NewLineEndSplitFunc(re *regexp.Regexp, flushAtEOF bool, force *ForceFlush) bufio.SplitFunc {
 	return func(data []byte, atEOF bool) (advance int, token []byte, err error) {
-		if force.Force {
-			force.Force = false
-			force.LastFlush = time.Now()
+		if force != nil && force.ShouldFlush() {
+			force.ForceFlushed()
 			token = trimWhitespaces(data)
 			advance = len(data)
 			return
@@ -244,9 +252,8 @@ func NewNewlineSplitFunc(encoding encoding.Encoding, flushAtEOF bool, force *For
 	}
 
 	return func(data []byte, atEOF bool) (advance int, token []byte, err error) {
-		if force.Force {
-			force.Force = false
-			force.LastFlush = time.Now()
+		if force != nil && force.ShouldFlush() {
+			force.ForceFlushed()
 			token = trimWhitespaces(data)
 			advance = len(data)
 			return
