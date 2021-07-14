@@ -34,7 +34,7 @@ type tokenizerTestCase struct {
 	Raw               []byte
 	ExpectedTokenized []string
 	ExpectedError     error
-	ForceFlush        *ForceFlush
+	Flusher           *Flusher
 }
 
 func (tc tokenizerTestCase) RunFunc(splitFunc bufio.SplitFunc) func(t *testing.T) {
@@ -146,23 +146,23 @@ func TestLineStartSplitFunc(t *testing.T) {
 			},
 		},
 		{
-			Name:              "LogsWithoutForceFlush",
+			Name:              "LogsWithoutFlusher",
 			Pattern:           `^LOGSTART \d+`,
 			Raw:               []byte("LOGPART log1\nLOGPART log1\t   \n"),
 			ExpectedTokenized: []string{},
-			ForceFlush: &ForceFlush{
+			Flusher: &Flusher{
 				force:           false,
 				lastForcedFlush: time.Now(),
 			},
 		},
 		{
-			Name:    "LogsWithForceFlush",
+			Name:    "LogsWithFlusher",
 			Pattern: `^LOGSTART \d+`,
 			Raw:     []byte("LOGPART log1\nLOGPART log1\t   \n"),
 			ExpectedTokenized: []string{
 				"LOGPART log1\nLOGPART log1",
 			},
-			ForceFlush: &ForceFlush{
+			Flusher: &Flusher{
 				force:           true,
 				lastForcedFlush: time.Now(),
 			},
@@ -174,7 +174,7 @@ func TestLineStartSplitFunc(t *testing.T) {
 			LineStartPattern: tc.Pattern,
 		}
 
-		splitFunc, err := cfg.getSplitFunc(unicode.UTF8, false, tc.ForceFlush)
+		splitFunc, err := cfg.getSplitFunc(unicode.UTF8, false, tc.Flusher)
 		require.NoError(t, err)
 		t.Run(tc.Name, tc.RunFunc(splitFunc))
 	}
@@ -286,23 +286,23 @@ func TestLineEndSplitFunc(t *testing.T) {
 			},
 		},
 		{
-			Name:              "LogsWithoutForceFlush",
+			Name:              "LogsWithoutFlusher",
 			Pattern:           `^LOGEND.*$`,
 			Raw:               []byte("LOGPART log1\nLOGPART log1\t   \n"),
 			ExpectedTokenized: []string{},
-			ForceFlush: &ForceFlush{
+			Flusher: &Flusher{
 				force:           false,
 				lastForcedFlush: time.Now(),
 			},
 		},
 		{
-			Name:    "LogsWithForceFlush",
+			Name:    "LogsWithFlusher",
 			Pattern: `^LOGEND.*$`,
 			Raw:     []byte("LOGPART log1\nLOGPART log1\t   \n"),
 			ExpectedTokenized: []string{
 				"LOGPART log1\nLOGPART log1",
 			},
-			ForceFlush: &ForceFlush{
+			Flusher: &Flusher{
 				force:           true,
 				lastForcedFlush: time.Now(),
 			},
@@ -314,7 +314,7 @@ func TestLineEndSplitFunc(t *testing.T) {
 			LineEndPattern: tc.Pattern,
 		}
 
-		splitFunc, err := cfg.getSplitFunc(unicode.UTF8, false, tc.ForceFlush)
+		splitFunc, err := cfg.getSplitFunc(unicode.UTF8, false, tc.Flusher)
 		require.NoError(t, err)
 		t.Run(tc.Name, tc.RunFunc(splitFunc))
 	}
@@ -390,23 +390,23 @@ func TestNewlineSplitFunc(t *testing.T) {
 			ExpectedError:     errors.New("bufio.Scanner: token too long"),
 		},
 		{
-			Name:              "LogsWithoutForceFlush",
+			Name:              "LogsWithoutFlusher",
 			Pattern:           `^LOGEND.*$`,
 			Raw:               []byte("LOGPART log1"),
 			ExpectedTokenized: []string{},
-			ForceFlush: &ForceFlush{
+			Flusher: &Flusher{
 				force:           false,
 				lastForcedFlush: time.Now(),
 			},
 		},
 		{
-			Name:    "LogsWithForceFlush",
+			Name:    "LogsWithFlusher",
 			Pattern: `^LOGEND.*$`,
 			Raw:     []byte("LOGPART log1"),
 			ExpectedTokenized: []string{
 				"LOGPART log1",
 			},
-			ForceFlush: &ForceFlush{
+			Flusher: &Flusher{
 				force:           true,
 				lastForcedFlush: time.Now(),
 			},
@@ -414,7 +414,7 @@ func TestNewlineSplitFunc(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		splitFunc, err := NewNewlineSplitFunc(unicode.UTF8, false, tc.ForceFlush)
+		splitFunc, err := NewNewlineSplitFunc(unicode.UTF8, false, tc.Flusher)
 		require.NoError(t, err)
 		t.Run(tc.Name, tc.RunFunc(splitFunc))
 	}

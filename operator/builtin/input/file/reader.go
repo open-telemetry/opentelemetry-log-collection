@@ -71,14 +71,13 @@ type Reader struct {
 	decoder      *encoding.Decoder
 	decodeBuffer []byte
 
-	splitFunc  bufio.SplitFunc
-	forceFlush *helper.ForceFlush
+	splitter *helper.Splitter
 
 	*zap.SugaredLogger `json:"-"`
 }
 
 // NewReader creates a new file reader
-func (f *InputOperator) NewReader(path string, file *os.File, fp *Fingerprint, splitFunc bufio.SplitFunc, force *helper.ForceFlush) (*Reader, error) {
+func (f *InputOperator) NewReader(path string, file *os.File, fp *Fingerprint, splitter *helper.Splitter) (*Reader, error) {
 	r := &Reader{
 		Fingerprint:    fp,
 		file:           file,
@@ -87,15 +86,14 @@ func (f *InputOperator) NewReader(path string, file *os.File, fp *Fingerprint, s
 		decoder:        f.encoding.Encoding.NewDecoder(),
 		decodeBuffer:   make([]byte, 1<<12),
 		fileAttributes: f.resolveFileAttributes(path),
-		splitFunc:      splitFunc,
-		forceFlush:     force,
+		splitter:       splitter,
 	}
 	return r, nil
 }
 
 // Copy creates a deep copy of a Reader
 func (r *Reader) Copy(file *os.File) (*Reader, error) {
-	reader, err := r.fileInput.NewReader(r.fileAttributes.Path, file, r.Fingerprint.Copy(), r.splitFunc, r.forceFlush)
+	reader, err := r.fileInput.NewReader(r.fileAttributes.Path, file, r.Fingerprint.Copy(), r.splitter)
 	if err != nil {
 		return nil, err
 	}
@@ -122,7 +120,7 @@ func (r *Reader) ReadToEnd(ctx context.Context) {
 		return
 	}
 
-	scanner := NewPositionalScanner(r, r.fileInput.MaxLogSize, r.Offset, r.splitFunc)
+	scanner := NewPositionalScanner(r, r.fileInput.MaxLogSize, r.Offset, r.splitter.SplitFunc)
 
 	// Iterate over the tokenized file, emitting entries as we go
 	for {
@@ -139,11 +137,11 @@ func (r *Reader) ReadToEnd(ctx context.Context) {
 			}
 
 			// Force flush eventually in next iteration
-			r.forceFlush.CheckAndFlush()
+			r.splitter.CheckAndFlush()
 			break
 		}
 		// Update information about last flush time
-		r.forceFlush.Flushed()
+		r.splitter.Flushed()
 
 		if err := r.emit(ctx, scanner.Bytes()); err != nil {
 			r.Error("Failed to emit entry", zap.Error(err))
