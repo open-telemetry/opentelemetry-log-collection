@@ -42,37 +42,33 @@ type severityTestCase struct {
 // maps values into any of the predefined keys.
 // For example, this ensures that users can do this:
 //   mapping:
-//     warning3: warn_three
+//     warn3: warn_three
 func validMappingKeyCases() []severityTestCase {
 	aliasedMapping := map[string]entry.Severity{
-		"trace":       entry.Trace,
-		"trace2":      entry.Trace2,
-		"trace3":      entry.Trace3,
-		"trace4":      entry.Trace4,
-		"debug":       entry.Debug,
-		"debug2":      entry.Debug2,
-		"debug3":      entry.Debug3,
-		"debug4":      entry.Debug4,
-		"info":        entry.Info,
-		"info2":       entry.Info2,
-		"info3":       entry.Info3,
-		"info4":       entry.Info4,
-		"notice":      entry.Notice,
-		"warning":     entry.Warning,
-		"warning2":    entry.Warning2,
-		"warning3":    entry.Warning3,
-		"warning4":    entry.Warning4,
-		"error":       entry.Error,
-		"error2":      entry.Error2,
-		"error3":      entry.Error3,
-		"error4":      entry.Error4,
-		"critical":    entry.Critical,
-		"alert":       entry.Alert,
-		"emergency":   entry.Emergency,
-		"emergency2":  entry.Emergency2,
-		"emergency3":  entry.Emergency3,
-		"emergency4":  entry.Emergency4,
-		"catastrophe": entry.Catastrophe,
+		"trace":  entry.Trace,
+		"trace2": entry.Trace2,
+		"trace3": entry.Trace3,
+		"trace4": entry.Trace4,
+		"debug":  entry.Debug,
+		"debug2": entry.Debug2,
+		"debug3": entry.Debug3,
+		"debug4": entry.Debug4,
+		"info":   entry.Info,
+		"info2":  entry.Info2,
+		"info3":  entry.Info3,
+		"info4":  entry.Info4,
+		"warn":   entry.Warn,
+		"warn2":  entry.Warn2,
+		"warn3":  entry.Warn3,
+		"warn4":  entry.Warn4,
+		"error":  entry.Error,
+		"error2": entry.Error2,
+		"error3": entry.Error3,
+		"error4": entry.Error4,
+		"fatal":  entry.Fatal,
+		"fatal2": entry.Fatal2,
+		"fatal3": entry.Fatal3,
+		"fatal4": entry.Fatal4,
 	}
 
 	cases := []severityTestCase{}
@@ -105,18 +101,18 @@ func otlpSevCases() []severityTestCase {
 		"iNFo2":  entry.Info2,
 		"iNFo3":  entry.Info3,
 		"iNFo4":  entry.Info4,
-		"wARn":   entry.Warning,
-		"wARn2":  entry.Warning2,
-		"wARn3":  entry.Warning3,
-		"wARn4":  entry.Warning4,
+		"wARn":   entry.Warn,
+		"wARn2":  entry.Warn2,
+		"wARn3":  entry.Warn3,
+		"wARn4":  entry.Warn4,
 		"eRrOr":  entry.Error,
 		"eRrOr2": entry.Error2,
 		"eRrOr3": entry.Error3,
 		"eRrOr4": entry.Error4,
-		"fAtAl":  entry.Emergency,
-		"fAtAl2": entry.Emergency2,
-		"fAtAl3": entry.Emergency3,
-		"fAtAl4": entry.Emergency4,
+		"fAtAl":  entry.Fatal,
+		"fAtAl2": entry.Fatal2,
+		"fAtAl3": entry.Fatal3,
+		"fAtAl4": entry.Fatal4,
 	}
 
 	cases := []severityTestCase{}
@@ -147,6 +143,18 @@ func otlpSevCases() []severityTestCase {
 }
 
 func TestSeverityParser(t *testing.T) {
+	allTheThingsMap := map[interface{}]interface{}{
+		"info":   "3xx",
+		"error3": "4xx",
+		"debug4": "5xx",
+		"trace2": []interface{}{
+			"ttttttracer",
+			[]byte{100, 100, 100},
+			map[interface{}]interface{}{"min": 1111, "max": 1234},
+		},
+		"fatal2": "",
+	}
+
 	testCases := []severityTestCase{
 		{
 			name:     "unknown",
@@ -208,48 +216,37 @@ func TestSeverityParser(t *testing.T) {
 			mapping:  map[interface{}]interface{}{"error": []interface{}{"NOOOOOOO", "this is bad", 1234}},
 			expected: entry.Error,
 		},
-		{
-			name:     "overload-int-key",
-			sample:   "E",
-			mapping:  map[interface{}]interface{}{60: "E"},
-			expected: entry.Error, // 60
-		},
-		{
-			name:     "overload-native",
-			sample:   "E",
-			mapping:  map[interface{}]interface{}{int(entry.Error): "E"},
-			expected: entry.Error, // 60
-		},
-		{
-			name:     "custom-level",
-			sample:   "weird",
-			mapping:  map[interface{}]interface{}{12: "weird"},
-			expected: 12,
-		},
-		{
-			name:     "custom-level-list",
-			sample:   "hey!",
-			mapping:  map[interface{}]interface{}{16: []interface{}{"hey!", 1234}},
-			expected: 16,
-		},
-		{
-			name:     "custom-level-list-unfound",
-			sample:   "not-in-the-list-but-thats-ok",
-			mapping:  map[interface{}]interface{}{16: []interface{}{"hey!", 1234}},
-			expected: entry.Default,
-		},
-		{
-			name:     "custom-level-unbuildable",
-			sample:   "not-in-the-list-but-thats-ok",
-			mapping:  map[interface{}]interface{}{16: []interface{}{"hey!", 1234, 12.34}},
-			buildErr: true,
-		},
-		{
-			name:     "custom-level-list-unparseable",
-			sample:   12.34,
-			mapping:  map[interface{}]interface{}{16: []interface{}{"hey!", 1234}},
-			parseErr: true,
-		},
+		// TODO replace custom level tests with level2,3,4 tests
+		// {
+		// 	name:     "custom-level",
+		// 	sample:   "weird",
+		// 	mapping:  map[interface{}]interface{}{12: "weird"},
+		// 	expected: 12,
+		// },
+		// {
+		// 	name:     "custom-level-list",
+		// 	sample:   "hey!",
+		// 	mapping:  map[interface{}]interface{}{16: []interface{}{"hey!", 1234}},
+		// 	expected: 16,
+		// },
+		// {
+		// 	name:     "custom-level-list-unfound",
+		// 	sample:   "not-in-the-list-but-thats-ok",
+		// 	mapping:  map[interface{}]interface{}{16: []interface{}{"hey!", 1234}},
+		// 	expected: entry.Default,
+		// },
+		// {
+		// 	name:     "custom-level-unbuildable",
+		// 	sample:   "not-in-the-list-but-thats-ok",
+		// 	mapping:  map[interface{}]interface{}{16: []interface{}{"hey!", 1234, 12.34}},
+		// 	buildErr: true,
+		// },
+		// {
+		// 	name:     "custom-level-list-unparseable",
+		// 	sample:   12.34,
+		// 	mapping:  map[interface{}]interface{}{16: []interface{}{"hey!", 1234}},
+		// 	parseErr: true,
+		// },
 		{
 			name:     "in-range",
 			sample:   123,
@@ -323,83 +320,33 @@ func TestSeverityParser(t *testing.T) {
 			expected: 30,
 		},
 		{
-			name:   "all-the-things-midrange",
-			sample: 1234,
-			mapping: map[interface{}]interface{}{
-				"30":             "3xx",
-				int(entry.Error): "4xx",
-				"critical":       "5xx",
-				int(entry.Trace): []interface{}{
-					"ttttttracer",
-					[]byte{100, 100, 100},
-					map[interface{}]interface{}{"min": 1111, "max": 1234},
-				},
-				77: "",
-			},
-			expected: entry.Trace,
+			name:     "all-the-things-midrange",
+			sample:   1234,
+			mapping:  allTheThingsMap,
+			expected: entry.Trace2,
 		},
 		{
-			name:   "all-the-things-bytes",
-			sample: []byte{100, 100, 100},
-			mapping: map[interface{}]interface{}{
-				"30":             "3xx",
-				int(entry.Error): "4xx",
-				"critical":       "5xx",
-				int(entry.Trace): []interface{}{
-					"ttttttracer",
-					[]byte{100, 100, 100},
-					map[interface{}]interface{}{"min": 1111, "max": 1234},
-				},
-				77: "",
-			},
-			expected: entry.Trace,
+			name:     "all-the-things-bytes",
+			sample:   []byte{100, 100, 100},
+			mapping:  allTheThingsMap,
+			expected: entry.Trace2,
 		},
 		{
-			name:   "all-the-things-empty",
-			sample: "",
-			mapping: map[interface{}]interface{}{
-				"30":             "3xx",
-				int(entry.Error): "4xx",
-				"critical":       "5xx",
-				int(entry.Trace): []interface{}{
-					"ttttttracer",
-					[]byte{100, 100, 100},
-					map[interface{}]interface{}{"min": 1111, "max": 1234},
-				},
-				77: "",
-			},
-			expected: 77,
+			name:     "all-the-things-empty",
+			sample:   "",
+			mapping:  allTheThingsMap,
+			expected: entry.Fatal2,
 		},
 		{
-			name:   "all-the-things-3xx",
-			sample: "399",
-			mapping: map[interface{}]interface{}{
-				"30":             "3xx",
-				int(entry.Error): "4xx",
-				"critical":       "5xx",
-				int(entry.Trace): []interface{}{
-					"ttttttracer",
-					[]byte{100, 100, 100},
-					map[interface{}]interface{}{"min": 1111, "max": 1234},
-				},
-				77: "",
-			},
-			expected: 30,
+			name:     "all-the-things-3xx",
+			sample:   "399",
+			mapping:  allTheThingsMap,
+			expected: entry.Info,
 		},
 		{
-			name:   "all-the-things-miss",
-			sample: "miss",
-			mapping: map[interface{}]interface{}{
-				"30":             "3xx",
-				int(entry.Error): "4xx",
-				"critical":       "5xx",
-				int(entry.Trace): []interface{}{
-					"ttttttracer",
-					[]byte{100, 100, 100},
-					map[interface{}]interface{}{"min": 1111, "max": 2000},
-				},
-				77: "",
-			},
+			name:     "all-the-things-miss",
+			sample:   "miss",
+			mapping:  allTheThingsMap,
 			expected: entry.Default,
 		},
 		{
