@@ -105,37 +105,6 @@ func TestSeverityParser(t *testing.T) {
 			mapping:  map[interface{}]interface{}{"error": []interface{}{"NOOOOOOO", "this is bad", 1234}},
 			expected: entry.Error,
 		},
-		// TODO
-		{
-			name:     "custom-level",
-			sample:   "weird",
-			mapping:  map[interface{}]interface{}{12: "weird"},
-			expected: 12,
-		},
-		{
-			name:     "custom-level-list",
-			sample:   "hey!",
-			mapping:  map[interface{}]interface{}{16: []interface{}{"hey!", 1234}},
-			expected: 16,
-		},
-		{
-			name:     "custom-level-list-unfound",
-			sample:   "not-in-the-list-but-thats-ok",
-			mapping:  map[interface{}]interface{}{16: []interface{}{"hey!", 1234}},
-			expected: entry.Default,
-		},
-		{
-			name:     "custom-level-unbuildable",
-			sample:   "not-in-the-list-but-thats-ok",
-			mapping:  map[interface{}]interface{}{16: []interface{}{"hey!", 1234, 12.34}},
-			buildErr: true,
-		},
-		{
-			name:     "custom-level-list-unparseable",
-			sample:   12.34,
-			mapping:  map[interface{}]interface{}{16: []interface{}{"hey!", 1234}},
-			parseErr: true,
-		},
 		{
 			name:     "in-range",
 			sample:   123,

@@ -169,6 +169,24 @@ func TestSeverityParser(t *testing.T) {
 			expected: entry.Error,
 		},
 		{
+			name:     "error2",
+			sample:   "error2",
+			mapping:  nil,
+			expected: entry.Error2,
+		},
+		{
+			name:     "error3",
+			sample:   "error3",
+			mapping:  nil,
+			expected: entry.Error3,
+		},
+		{
+			name:     "error4",
+			sample:   "error4",
+			mapping:  nil,
+			expected: entry.Error4,
+		},
+		{
 			name:     "error-capitalized",
 			sample:   "Error",
 			mapping:  nil,
@@ -216,37 +234,24 @@ func TestSeverityParser(t *testing.T) {
 			mapping:  map[interface{}]interface{}{"error": []interface{}{"NOOOOOOO", "this is bad", 1234}},
 			expected: entry.Error,
 		},
-		// TODO replace custom level tests with level2,3,4 tests
-		// {
-		// 	name:     "custom-level",
-		// 	sample:   "weird",
-		// 	mapping:  map[interface{}]interface{}{12: "weird"},
-		// 	expected: 12,
-		// },
-		// {
-		// 	name:     "custom-level-list",
-		// 	sample:   "hey!",
-		// 	mapping:  map[interface{}]interface{}{16: []interface{}{"hey!", 1234}},
-		// 	expected: 16,
-		// },
-		// {
-		// 	name:     "custom-level-list-unfound",
-		// 	sample:   "not-in-the-list-but-thats-ok",
-		// 	mapping:  map[interface{}]interface{}{16: []interface{}{"hey!", 1234}},
-		// 	expected: entry.Default,
-		// },
-		// {
-		// 	name:     "custom-level-unbuildable",
-		// 	sample:   "not-in-the-list-but-thats-ok",
-		// 	mapping:  map[interface{}]interface{}{16: []interface{}{"hey!", 1234, 12.34}},
-		// 	buildErr: true,
-		// },
-		// {
-		// 	name:     "custom-level-list-unparseable",
-		// 	sample:   12.34,
-		// 	mapping:  map[interface{}]interface{}{16: []interface{}{"hey!", 1234}},
-		// 	parseErr: true,
-		// },
+		{
+			name:     "numbered-level",
+			sample:   "critical",
+			mapping:  map[interface{}]interface{}{"error2": "critical"},
+			expected: entry.Error2,
+		},
+		{
+			name:     "override-standard",
+			sample:   "error",
+			mapping:  map[interface{}]interface{}{"error3": []interface{}{"error"}},
+			expected: entry.Error3,
+		},
+		{
+			name:     "level-unfound",
+			sample:   "not-in-the-list-but-thats-ok",
+			mapping:  map[interface{}]interface{}{"error4": []interface{}{"hey!", 1234}},
+			expected: entry.Default,
+		},
 		{
 			name:     "in-range",
 			sample:   123,
@@ -316,8 +321,8 @@ func TestSeverityParser(t *testing.T) {
 		{
 			name:     "Http-All",
 			sample:   "301",
-			mapping:  map[interface{}]interface{}{20: "2xx", 30: "3xx", 40: "4xx", 50: "5xx"},
-			expected: 30,
+			mapping:  map[interface{}]interface{}{"debug": "2xx", "info": "3xx", "error": "4xx", "warn": "5xx"},
+			expected: entry.Info,
 		},
 		{
 			name:     "all-the-things-midrange",
