@@ -66,17 +66,10 @@ func getBuiltinMapping(name string) severityMap {
 		mapping.add(entry.Warn2, "warning2")
 		mapping.add(entry.Warn3, "warning3")
 		mapping.add(entry.Warn4, "warning4")
-
 		mapping.add(entry.Error, "err")
 		mapping.add(entry.Error2, "err2")
 		mapping.add(entry.Error3, "err3")
 		mapping.add(entry.Error4, "err4")
-
-		mapping.add(entry.Fatal, "fatal")
-		mapping.add(entry.Fatal2, "fatal2")
-		mapping.add(entry.Fatal3, "fatal3")
-		mapping.add(entry.Fatal4, "fatal4")
-
 		return mapping
 	}
 }
