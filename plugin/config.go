@@ -57,8 +57,10 @@ func (c *Config) Build(bc operator.BuildContext) ([]operator.Operator, error) {
 	}
 
 	nbc := bc.WithSubNamespace(c.ID()).WithIncrementedDepth()
-	return pipelineConfig.Pipeline.BuildOperators(nbc)
+	return pipelineConfig.Pipeline.BuildOperators(nbc, nil)
 }
+
+func (c *Config) BuildsMultipleOps() bool { return true }
 
 func (c *Config) getRenderParams(bc operator.BuildContext) map[string]interface{} {
 	// Copy the parameters to avoid mutating them

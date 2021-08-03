@@ -15,7 +15,6 @@
 package file
 
 import (
-	"bufio"
 	"bytes"
 	"context"
 	"encoding/json"
@@ -37,20 +36,24 @@ import (
 type InputOperator struct {
 	helper.InputOperator
 
-	Include            []string
-	Exclude            []string
-	FilePathField      entry.Field
-	FileNameField      entry.Field
-	PollInterval       time.Duration
-	SplitFunc          bufio.SplitFunc
-	MaxLogSize         int
-	MaxConcurrentFiles int
-	SeenPaths          map[string]struct{}
+	Include               []string
+	Exclude               []string
+	FilePathField         entry.Field
+	FileNameField         entry.Field
+	FilePathResolvedField entry.Field
+	FileNameResolvedField entry.Field
+	PollInterval          time.Duration
+	Splitter              helper.SplitterConfig
+	MaxLogSize            int
+	MaxConcurrentFiles    int
+	SeenPaths             map[string]struct{}
 
 	persister operator.Persister
 
-	knownFiles    []*Reader
-	queuedMatches []string
+	knownFiles      []*Reader
+	queuedMatches   []string
+	maxBatchFiles   int
+	lastPollReaders []*Reader
 
 	startAtBeginning bool
 
@@ -85,6 +88,12 @@ func (f *InputOperator) Start(persister operator.Persister) error {
 func (f *InputOperator) Stop() error {
 	f.cancel()
 	f.wg.Wait()
+	for _, reader := range f.lastPollReaders {
+		reader.Close()
+	}
+	for _, reader := range f.knownFiles {
+		reader.Close()
+	}
 	f.knownFiles = nil
 	f.cancel = nil
 	return nil
@@ -113,9 +122,10 @@ func (f *InputOperator) startPoller(ctx context.Context) {
 
 // poll checks all the watched paths for new entries
 func (f *InputOperator) poll(ctx context.Context) {
+	f.maxBatchFiles = f.MaxConcurrentFiles / 2
 	var matches []string
-	if len(f.queuedMatches) > f.MaxConcurrentFiles {
-		matches, f.queuedMatches = f.queuedMatches[:f.MaxConcurrentFiles], f.queuedMatches[f.MaxConcurrentFiles:]
+	if len(f.queuedMatches) > f.maxBatchFiles {
+		matches, f.queuedMatches = f.queuedMatches[:f.maxBatchFiles], f.queuedMatches[f.maxBatchFiles:]
 	} else {
 		if len(f.queuedMatches) > 0 {
 			matches, f.queuedMatches = f.queuedMatches, make([]string, 0)
@@ -130,35 +140,36 @@ func (f *InputOperator) poll(ctx context.Context) {
 			matches = getMatches(f.Include, f.Exclude)
 			if f.firstCheck && len(matches) == 0 {
 				f.Warnw("no files match the configured include patterns", "include", f.Include)
-			} else if len(matches) > f.MaxConcurrentFiles {
-				matches, f.queuedMatches = matches[:f.MaxConcurrentFiles], matches[f.MaxConcurrentFiles:]
+			} else if len(matches) > f.maxBatchFiles {
+				matches, f.queuedMatches = matches[:f.maxBatchFiles], matches[f.maxBatchFiles:]
 			}
 		}
 	}
 
-	// Open the files first to minimize the time between listing and opening
-	files := make([]*os.File, 0, len(matches))
-	for _, path := range matches {
-		if _, ok := f.SeenPaths[path]; !ok {
-			if f.startAtBeginning {
-				f.Infow("Started watching file", "path", path)
-			} else {
-				f.Infow("Started watching file from end. To read preexisting logs, configure the argument 'start_at' to 'beginning'", "path", path)
-			}
-			f.SeenPaths[path] = struct{}{}
-		}
-		file, err := os.Open(path)
-		if err != nil {
-			f.Errorw("Failed to open file", zap.Error(err))
-			continue
-		}
-		files = append(files, file)
-	}
-
-	readers := f.makeReaders(files)
+	readers := f.makeReaders(matches)
 	f.firstCheck = false
 
+	// Detect files that have been rotated out of matching pattern
+	lostReaders := make([]*Reader, 0, len(f.lastPollReaders))
+OUTER:
+	for _, oldReader := range f.lastPollReaders {
+		for _, reader := range readers {
+			if reader.Fingerprint.StartsWith(oldReader.Fingerprint) {
+				continue OUTER
+			}
+		}
+		lostReaders = append(lostReaders, oldReader)
+	}
+
 	var wg sync.WaitGroup
+	for _, reader := range lostReaders {
+		wg.Add(1)
+		go func(r *Reader) {
+			defer wg.Done()
+			r.ReadToEnd(ctx)
+		}(reader)
+	}
+
 	for _, reader := range readers {
 		wg.Add(1)
 		go func(r *Reader) {
@@ -171,9 +182,11 @@ func (f *InputOperator) poll(ctx context.Context) {
 	wg.Wait()
 
 	// Close all files
-	for _, file := range files {
-		file.Close()
+	for _, reader := range f.lastPollReaders {
+		reader.Close()
 	}
+
+	f.lastPollReaders = readers
 
 	f.saveCurrent(readers)
 	f.syncLastPollFiles(ctx)
@@ -208,7 +221,26 @@ func getMatches(includes, excludes []string) []string {
 // makeReaders takes a list of paths, then creates readers from each of those paths,
 // discarding any that have a duplicate fingerprint to other files that have already
 // been read this polling interval
-func (f *InputOperator) makeReaders(files []*os.File) []*Reader {
+func (f *InputOperator) makeReaders(filesPaths []string) []*Reader {
+	// Open the files first to minimize the time between listing and opening
+	files := make([]*os.File, 0, len(filesPaths))
+	for _, path := range filesPaths {
+		if _, ok := f.SeenPaths[path]; !ok {
+			if f.startAtBeginning {
+				f.Infow("Started watching file", "path", path)
+			} else {
+				f.Infow("Started watching file from end. To read preexisting logs, configure the argument 'start_at' to 'beginning'", "path", path)
+			}
+			f.SeenPaths[path] = struct{}{}
+		}
+		file, err := os.Open(path) // #nosec - operator must read in files defined by user
+		if err != nil {
+			f.Errorw("Failed to open file", zap.Error(err))
+			continue
+		}
+		files = append(files, file)
+	}
+
 	// Get fingerprints for each file
 	fps := make([]*Fingerprint, 0, len(files))
 	for _, file := range files {
@@ -220,40 +252,35 @@ func (f *InputOperator) makeReaders(files []*os.File) []*Reader {
 		fps = append(fps, fp)
 	}
 
-	// Make a copy of the files so we don't modify the original
-	filesCopy := make([]*os.File, len(files))
-	copy(filesCopy, files)
-
 	// Exclude any empty fingerprints or duplicate fingerprints to avoid doubling up on copy-truncate files
 OUTER:
-	for i := 0; i < len(fps); {
+	for i := 0; i < len(fps); i++ {
 		fp := fps[i]
 		if len(fp.FirstBytes) == 0 {
+			if err := files[i].Close(); err != nil {
+				f.Errorf("problem closing file", "file", files[i].Name())
+			}
 			// Empty file, don't read it until we can compare its fingerprint
 			fps = append(fps[:i], fps[i+1:]...)
-			filesCopy = append(filesCopy[:i], filesCopy[i+1:]...)
+			files = append(files[:i], files[i+1:]...)
 		}
-
-		for j := 0; j < len(fps); j++ {
-			if i == j {
-				// Skip checking itself
-				continue
-			}
-
+		for j := i + 1; j < len(fps); j++ {
 			fp2 := fps[j]
 			if fp.StartsWith(fp2) || fp2.StartsWith(fp) {
 				// Exclude
+				if err := files[i].Close(); err != nil {
+					f.Errorf("problem closing file", "file", files[i].Name())
+				}
 				fps = append(fps[:i], fps[i+1:]...)
-				filesCopy = append(filesCopy[:i], filesCopy[i+1:]...)
+				files = append(files[:i], files[i+1:]...)
 				continue OUTER
 			}
 		}
-		i++
 	}
 
 	readers := make([]*Reader, 0, len(fps))
 	for i := 0; i < len(fps); i++ {
-		reader, err := f.newReader(filesCopy[i], fps[i], f.firstCheck)
+		reader, err := f.newReader(files[i], fps[i], f.firstCheck)
 		if err != nil {
 			f.Errorw("Failed to create reader", zap.Error(err))
 			continue
@@ -290,12 +317,16 @@ func (f *InputOperator) newReader(file *os.File, fp *Fingerprint, firstCheck boo
 		if err != nil {
 			return nil, err
 		}
-		newReader.Path = file.Name()
+		newReader.fileAttributes = f.resolveFileAttributes(file.Name())
 		return newReader, nil
 	}
 
 	// If we don't match any previously known files, create a new reader from scratch
-	newReader, err := f.NewReader(file.Name(), file, fp)
+	splitter, err := f.getMultiline()
+	if err != nil {
+		return nil, err
+	}
+	newReader, err := f.NewReader(file.Name(), file, fp, splitter)
 	if err != nil {
 		return nil, err
 	}
@@ -365,7 +396,11 @@ func (f *InputOperator) loadLastPollFiles(ctx context.Context) error {
 	// Decode each of the known files
 	f.knownFiles = make([]*Reader, 0, knownFileCount)
 	for i := 0; i < knownFileCount; i++ {
-		newReader, err := f.NewReader("", nil, nil)
+		splitter, err := f.getMultiline()
+		if err != nil {
+			return err
+		}
+		newReader, err := f.NewReader("", nil, nil, splitter)
 		if err != nil {
 			return err
 		}
@@ -376,4 +411,9 @@ func (f *InputOperator) loadLastPollFiles(ctx context.Context) error {
 	}
 
 	return nil
+}
+
+// getMultiline returns helper.Splitter structure and error eventually
+func (f *InputOperator) getMultiline() (*helper.Splitter, error) {
+	return f.Splitter.Build(f.encoding.Encoding, false)
 }

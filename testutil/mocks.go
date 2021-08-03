@@ -65,8 +65,14 @@ func (f *FakeOutput) Logger() *zap.SugaredLogger { return f.SugaredLogger }
 // Outputs always returns nil for a fake output
 func (f *FakeOutput) Outputs() []operator.Operator { return nil }
 
+// Outputs always returns nil for a fake output
+func (f *FakeOutput) GetOutputIDs() []string { return nil }
+
 // SetOutputs immediately returns nil for a fake output
 func (f *FakeOutput) SetOutputs(outputs []operator.Operator) error { return nil }
+
+// SetOutputIDs immediately returns nil for a fake output
+func (f *FakeOutput) SetOutputIDs(s []string) {}
 
 // Start immediately returns nil for a fake output
 func (f *FakeOutput) Start(_ operator.Persister) error { return nil }
@@ -102,5 +108,15 @@ func (f *FakeOutput) ExpectEntry(t testing.TB, expected *entry.Entry) {
 		require.Equal(t, expected, e)
 	case <-time.After(time.Second):
 		require.FailNow(t, "Timed out waiting for entry")
+	}
+}
+
+// ExpectNoEntry expects that no entry will be received within the specified time
+func (f *FakeOutput) ExpectNoEntry(t testing.TB, timeout time.Duration) {
+	select {
+	case <-f.Received:
+		require.FailNow(t, "Should not have received entry")
+	case <-time.After(timeout):
+		return
 	}
 }
