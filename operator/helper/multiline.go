@@ -121,19 +121,19 @@ func (c MultilineConfig) Build(encoding encoding.Encoding, flushAtEOF bool, forc
 }
 
 // getSplitFunc returns split function for bufio.Scanner basing on configured pattern
-func (c MultilineConfig) getSplitFunc(encoding encoding.Encoding, flushAtEOF bool, force *Flusher) (bufio.SplitFunc, error) {
+func (c MultilineConfig) getSplitFunc(encodingVar encoding.Encoding, flushAtEOF bool, force *Flusher) (bufio.SplitFunc, error) {
 	endPattern := c.LineEndPattern
 	startPattern := c.LineStartPattern
 
 	switch {
 	case endPattern != "" && startPattern != "":
 		return nil, fmt.Errorf("only one of line_start_pattern or line_end_pattern can be set")
-	case (endPattern != "" || startPattern != "") && encodingVar == encoding.Nop:
+	case encodingVar == encoding.Nop && (endPattern != "" || startPattern != ""):
 		return nil, fmt.Errorf("line_start_pattern or line_end_pattern should not be set when using nop encoding")
 	case encodingVar == encoding.Nop:
 		return SplitNone(), nil
 	case endPattern == "" && startPattern == "":
-		return NewNewlineSplitFunc(encoding, flushAtEOF, force)
+		return NewNewlineSplitFunc(encodingVar, flushAtEOF, force)
 	case endPattern != "":
 		re, err := regexp.Compile("(?m)" + c.LineEndPattern)
 		if err != nil {

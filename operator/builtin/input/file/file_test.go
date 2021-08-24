@@ -212,12 +212,18 @@ func TestReadUsingNopEncoding(t *testing.T) {
 	operator.SplitFunc = helper.SplitNone()
 	// Create a file, then start
 	temp := openTemp(t, tempDir)
-	writeString(t, temp, "testlog1\ntestlog2\n")
 
+	_, err := temp.Write([]byte("testlog1\ntestlog2\n"))
+	require.NoError(t, err)
 	require.NoError(t, operator.Start(testutil.NewMockPersister("test")))
 	defer operator.Stop()
 
-	waitForMessage(t, logReceived, "testlog1\ntestlog2\n")
+	select {
+	case e := <-logReceived:
+		require.Equal(t, []byte("testlog1\ntestlog2\n"), e.Body.([]byte))
+	case <-time.After(3 * time.Second):
+		require.FailNow(t, "Timed out waiting for message", []byte("testlog1\ntestlog2\n"))
+	}
 }
 
 // ReadNewLogs tests that, after starting, if a new file is created
