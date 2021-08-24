@@ -4,10 +4,11 @@ GOARCH=$(shell go env GOARCH)
 GIT_SHA=$(shell git rev-parse --short HEAD)
 
 PROJECT_ROOT = $(shell pwd)
-ARTIFACTS = ${PROJECT_ROOT}/artifacts
 ALL_MODULES := $(shell find . -type f -name "go.mod" -exec dirname {} \; | sort )
 ALL_SRC := $(shell find . -name '*.go' -type f | sort)
 ADDLICENSE=addlicense
+ALL_COVERAGE_MOD_DIRS := $(shell find . -type f -name 'go.mod' -exec dirname {} \; | egrep -v '^./internal/tools' | sort)
+FIELDALIGNMENT_DIRS := ./agent/ ./pipeline/
 
 TOOLS_MOD_DIR := ./internal/tools
 .PHONY: install-tools
@@ -15,6 +16,8 @@ install-tools:
 	cd $(TOOLS_MOD_DIR) && go install github.com/golangci/golangci-lint/cmd/golangci-lint
 	cd $(TOOLS_MOD_DIR) && go install github.com/vektra/mockery/cmd/mockery
 	cd $(TOOLS_MOD_DIR) && go install github.com/google/addlicense
+	cd $(TOOLS_MOD_DIR) && go install github.com/securego/gosec/v2/cmd/gosec
+	cd $(TOOLS_MOD_DIR) && go install golang.org/x/tools/go/analysis/passes/fieldalignment/cmd/fieldalignment
 
 .PHONY: test
 test: vet test-only
@@ -23,14 +26,27 @@ test: vet test-only
 test-only:
 	$(MAKE) for-all CMD="go test -race -coverprofile coverage.txt -coverpkg ./... ./..."
 
+.PHONY: test-coverage
+test-coverage: clean
+	@set -e; \
+	printf "" > coverage.txt; \
+	for dir in $(ALL_COVERAGE_MOD_DIRS); do \
+	  (cd "$${dir}" && \
+	    go list ./... \
+	    | grep -v third_party \
+	    | xargs go test -coverpkg=./... -covermode=atomic -coverprofile=coverage.out && \
+	  go tool cover -html=coverage.out -o coverage.html); \
+	  [ -f "$${dir}/coverage.out" ] && cat "$${dir}/coverage.out" >> coverage.txt; \
+	done; \
+	sed -i.bak -e '2,$$ { /^mode: /d; }' coverage.txt	
+
 .PHONY: bench
 bench:
-	$(MAKE) for-all CMD="go test -run=NONE -bench '.*' ./... -benchmem"
+	go test -benchmem -run=^$$ -bench ^* ./...
 
 .PHONY: clean
 clean:
-	rm -fr ./artifacts
-	$(MAKE) for-all CMD="rm -f coverage.txt coverage.html"
+	$(MAKE) for-all CMD="rm -f coverage.txt.* coverage.html coverage.out"
 
 .PHONY: tidy
 tidy:
@@ -51,11 +67,23 @@ lint:
 lint-fix:
 	golangci-lint run --fix --allow-parallel-runners ./...
 
+.PHONY: fieldalignment
+fieldalignment:
+	fieldalignment $(FIELDALIGNMENT_DIRS)
+
+.PHONY: fieldalignment-fix
+fieldalignment-fix:
+	fieldalignment -fix $(FIELDALIGNMENT_DIRS)
+
 .PHONY: vet
 vet:
 	GOOS=darwin $(MAKE) for-all CMD="go vet ./..."
 	GOOS=linux $(MAKE) for-all CMD="go vet ./..."
 	GOOS=windows $(MAKE) for-all CMD="go vet ./..."
+
+.PHONY: secure
+secure:
+	gosec ./...
 
 .PHONY: generate
 generate:
@@ -91,4 +119,4 @@ for-all:
 	done
 
 .PHONY: ci-check
-ci-check: vet lint check-license
+ci-check: vet lint check-license secure fieldalignment

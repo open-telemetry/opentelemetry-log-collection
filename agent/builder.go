@@ -27,11 +27,11 @@ import (
 
 // LogAgentBuilder is a construct used to build a log agent
 type LogAgentBuilder struct {
-	configFiles   []string
+	defaultOutput operator.Operator
 	config        *Config
 	logger        *zap.SugaredLogger
 	pluginDir     string
-	defaultOutput operator.Operator
+	configFiles   []string
 }
 
 // NewBuilder creates a new LogAgentBuilder
@@ -85,6 +85,10 @@ func (b *LogAgentBuilder) Build() (*LogAgent, error) {
 			return nil, errors.Wrap(err, "read configs from globs")
 		}
 		b.config = cfgs
+	}
+
+	if len(b.config.Pipeline) == 0 {
+		return nil, errors.NewError("empty pipeline not allowed", "")
 	}
 
 	sampledLogger := b.logger.Desugar().WithOptions(

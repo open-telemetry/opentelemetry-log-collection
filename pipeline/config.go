@@ -24,17 +24,11 @@ import (
 type Config []operator.Config
 
 // BuildOperators builds the operators from the list of configs into operators.
-func (c Config) BuildOperators(bc operator.BuildContext) ([]operator.Operator, error) {
-	operators := make([]operator.Operator, 0, len(c))
-
-	err := dedeplucateIDs(c)
-	if err != nil {
-		return nil, err
-	}
-
-	// buildsMulti is used for storing a key of the Builder that builds multiple operators.
-	// The map is then used in SetOutputIDs to assign the output value of any ops pointing to the Builder as their output to the first operator in said Builder.
+func (c Config) BuildOperators(bc operator.BuildContext, defaultOperator operator.Operator) ([]operator.Operator, error) {
+	// buildsMulti's key represents an operator's ID that builds multiple operators, e.g. Plugins.
+	// the value is the plugin's first operator's ID.
 	buildsMulti := make(map[string]string)
+	operators := make([]operator.Operator, 0, len(c))
 	for _, builder := range c {
 		op, err := builder.Build(bc)
 		if err != nil {
@@ -46,7 +40,14 @@ func (c Config) BuildOperators(bc operator.BuildContext) ([]operator.Operator, e
 		}
 		operators = append(operators, op...)
 	}
-	SetOutputIDs(operators, buildsMulti)
+
+	if defaultOperator != nil && operators[len(operators)-1].CanOutput() {
+		operators = append(operators, defaultOperator)
+	}
+
+	if err := SetOutputIDs(operators, buildsMulti); err != nil {
+		return nil, err
+	}
 
 	return operators, nil
 }
@@ -83,17 +84,9 @@ func dedeplucateIDs(ops []operator.Config) error {
 
 // BuildPipeline will build a pipeline from the config.
 func (c Config) BuildPipeline(bc operator.BuildContext, defaultOperator operator.Operator) (*DirectedPipeline, error) {
-	if defaultOperator != nil {
-		bc.DefaultOutputIDs = []string{defaultOperator.ID()}
-	}
-
-	operators, err := c.BuildOperators(bc)
+	operators, err := c.BuildOperators(bc, defaultOperator)
 	if err != nil {
 		return nil, err
-	}
-
-	if defaultOperator != nil {
-		operators = append(operators, defaultOperator)
 	}
 
 	return NewDirectedPipeline(operators)
@@ -103,6 +96,8 @@ func (c Config) BuildPipeline(bc operator.BuildContext, defaultOperator operator
 // Additionally, if the output is set to a plugin, it sets the output to the first operator in the plugins pipeline.
 func SetOutputIDs(operators []operator.Operator, buildsMulti map[string]string) error {
 	for i, op := range operators {
+		// because no output is specified at this point for the last operator,
+		// it will always be empty and there is nothing after it to automatically point towards, so we break the loop
 		if i+1 == len(operators) {
 			break
 		}
@@ -112,7 +107,7 @@ func SetOutputIDs(operators []operator.Operator, buildsMulti map[string]string) 
 			continue
 		}
 
-		// Check if there are any plugins within the outputIDs of the operator. If there is, change the output to be the first op in the plugin
+		// Check if there are any plugins within the outputIDs of the operator. If there are, change the output to be the first op in the plugin
 		allOutputs := []string{}
 		pluginFound := false
 		for _, id := range op.GetOutputIDs() {

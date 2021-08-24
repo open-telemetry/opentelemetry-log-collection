@@ -22,11 +22,13 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/open-telemetry/opentelemetry-log-collection/entry"
+	"github.com/open-telemetry/opentelemetry-log-collection/operator"
 	"github.com/open-telemetry/opentelemetry-log-collection/operator/helper"
 	"github.com/open-telemetry/opentelemetry-log-collection/operator/helper/operatortest"
+	"github.com/open-telemetry/opentelemetry-log-collection/testutil"
 )
 
-func TestConfig(t *testing.T) {
+func TestUnmarshal(t *testing.T) {
 	cases := []operatortest.ConfigUnmarshalTest{
 		{
 			Name:      "default",
@@ -387,9 +389,9 @@ func TestConfig(t *testing.T) {
 			ExpectErr: false,
 			Expect: func() *InputConfig {
 				cfg := defaultCfg()
-				newMulti := helper.MultilineConfig{}
-				newMulti.LineStartPattern = "Start"
-				cfg.Multiline = newMulti
+				newSplit := helper.NewSplitterConfig()
+				newSplit.Multiline.LineStartPattern = "Start"
+				cfg.Splitter = newSplit
 				return cfg
 			}(),
 		},
@@ -398,9 +400,9 @@ func TestConfig(t *testing.T) {
 			ExpectErr: false,
 			Expect: func() *InputConfig {
 				cfg := defaultCfg()
-				newMulti := helper.MultilineConfig{}
-				newMulti.LineStartPattern = "%"
-				cfg.Multiline = newMulti
+				newSplit := helper.NewSplitterConfig()
+				newSplit.Multiline.LineStartPattern = "%"
+				cfg.Splitter = newSplit
 				return cfg
 			}(),
 		},
@@ -409,9 +411,9 @@ func TestConfig(t *testing.T) {
 			ExpectErr: false,
 			Expect: func() *InputConfig {
 				cfg := defaultCfg()
-				newMulti := helper.MultilineConfig{}
-				newMulti.LineEndPattern = "Start"
-				cfg.Multiline = newMulti
+				newSplit := helper.NewSplitterConfig()
+				newSplit.Multiline.LineEndPattern = "Start"
+				cfg.Splitter = newSplit
 				return cfg
 			}(),
 		},
@@ -420,9 +422,9 @@ func TestConfig(t *testing.T) {
 			ExpectErr: false,
 			Expect: func() *InputConfig {
 				cfg := defaultCfg()
-				newMulti := helper.MultilineConfig{}
-				newMulti.LineEndPattern = "%"
-				cfg.Multiline = newMulti
+				newSplit := helper.NewSplitterConfig()
+				newSplit.Multiline.LineEndPattern = "%"
+				cfg.Splitter = newSplit
 				return cfg
 			}(),
 		},
@@ -512,6 +514,163 @@ func TestConfig(t *testing.T) {
 	}
 }
 
+func TestBuild(t *testing.T) {
+	t.Parallel()
+	fakeOutput := testutil.NewMockOperator("$.fake")
+
+	basicConfig := func() *InputConfig {
+		cfg := NewInputConfig("testfile")
+		cfg.OutputIDs = []string{"fake"}
+		cfg.Include = []string{"/var/log/testpath.*"}
+		cfg.Exclude = []string{"/var/log/testpath.ex*"}
+		cfg.PollInterval = helper.Duration{Duration: 10 * time.Millisecond}
+		return cfg
+	}
+
+	cases := []struct {
+		name             string
+		modifyBaseConfig func(*InputConfig)
+		errorRequirement require.ErrorAssertionFunc
+		validate         func(*testing.T, *InputOperator)
+	}{
+		{
+			"Basic",
+			func(f *InputConfig) {},
+			require.NoError,
+			func(t *testing.T, f *InputOperator) {
+				require.Equal(t, f.OutputOperators[0], fakeOutput)
+				require.Equal(t, f.Include, []string{"/var/log/testpath.*"})
+				require.Equal(t, f.FilePathField, entry.NewNilField())
+				require.Equal(t, f.FileNameField, entry.NewAttributeField("file.name"))
+				require.Equal(t, f.PollInterval, 10*time.Millisecond)
+			},
+		},
+		{
+			"BadIncludeGlob",
+			func(f *InputConfig) {
+				f.Include = []string{"["}
+			},
+			require.Error,
+			nil,
+		},
+		{
+			"BadExcludeGlob",
+			func(f *InputConfig) {
+				f.Include = []string{"["}
+			},
+			require.Error,
+			nil,
+		},
+		{
+			"MultilineConfiguredStartAndEndPatterns",
+			func(f *InputConfig) {
+				f.Splitter = helper.NewSplitterConfig()
+				f.Splitter.Multiline = helper.MultilineConfig{
+					LineEndPattern:   "Exists",
+					LineStartPattern: "Exists",
+				}
+			},
+			require.Error,
+			nil,
+		},
+		{
+			"MultilineConfiguredStartPattern",
+			func(f *InputConfig) {
+				f.Splitter = helper.NewSplitterConfig()
+				f.Splitter.Multiline = helper.MultilineConfig{
+					LineStartPattern: "START.*",
+				}
+			},
+			require.NoError,
+			func(t *testing.T, f *InputOperator) {},
+		},
+		{
+			"MultilineConfiguredEndPattern",
+			func(f *InputConfig) {
+				f.Splitter = helper.NewSplitterConfig()
+				f.Splitter.Multiline = helper.MultilineConfig{
+					LineEndPattern: "END.*",
+				}
+			},
+			require.NoError,
+			func(t *testing.T, f *InputOperator) {},
+		},
+		{
+			"InvalidEncoding",
+			func(f *InputConfig) {
+				f.Encoding = helper.EncodingConfig{Encoding: "UTF-3233"}
+			},
+			require.Error,
+			nil,
+		},
+		{
+			"LineStartAndEnd",
+			func(f *InputConfig) {
+				f.Splitter = helper.NewSplitterConfig()
+				f.Splitter.Multiline = helper.MultilineConfig{
+					LineStartPattern: ".*",
+					LineEndPattern:   ".*",
+				}
+			},
+			require.Error,
+			nil,
+		},
+		{
+			"NoLineStartOrEnd",
+			func(f *InputConfig) {
+				f.Splitter = helper.NewSplitterConfig()
+				f.Splitter.Multiline = helper.MultilineConfig{}
+			},
+			require.NoError,
+			func(t *testing.T, f *InputOperator) {},
+		},
+		{
+			"InvalidLineStartRegex",
+			func(f *InputConfig) {
+				f.Splitter = helper.NewSplitterConfig()
+				f.Splitter.Multiline = helper.MultilineConfig{
+					LineStartPattern: "(",
+				}
+			},
+			require.Error,
+			nil,
+		},
+		{
+			"InvalidLineEndRegex",
+			func(f *InputConfig) {
+				f.Splitter = helper.NewSplitterConfig()
+				f.Splitter.Multiline = helper.MultilineConfig{
+					LineEndPattern: "(",
+				}
+			},
+			require.Error,
+			nil,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			tc := tc
+			t.Parallel()
+			cfg := basicConfig()
+			tc.modifyBaseConfig(cfg)
+
+			ops, err := cfg.Build(testutil.NewBuildContext(t))
+			tc.errorRequirement(t, err)
+			if err != nil {
+				return
+			}
+			op := ops[0]
+
+			err = op.SetOutputs([]operator.Operator{fakeOutput})
+			require.NoError(t, err)
+
+			fileInput := op.(*InputOperator)
+			tc.validate(t, fileInput)
+		})
+	}
+}
+
 func defaultCfg() *InputConfig {
 	return NewInputConfig("file_input")
 }
@@ -521,7 +680,8 @@ func NewTestInputConfig() *InputConfig {
 	cfg.WriteTo = entry.NewBodyField([]string{}...)
 	cfg.Include = []string{"i1", "i2"}
 	cfg.Exclude = []string{"e1", "e2"}
-	cfg.Multiline = helper.MultilineConfig{
+	cfg.Splitter = helper.NewSplitterConfig()
+	cfg.Splitter.Multiline = helper.MultilineConfig{
 		LineStartPattern: "start",
 		LineEndPattern:   "end",
 	}
@@ -543,8 +703,8 @@ func TestMapStructureDecodeConfigWithHook(t *testing.T) {
 		"exclude":       expect.Exclude,
 		"poll_interval": 0.2,
 		"multiline": map[string]interface{}{
-			"line_start_pattern": expect.Multiline.LineStartPattern,
-			"line_end_pattern":   expect.Multiline.LineEndPattern,
+			"line_start_pattern": expect.Splitter.Multiline.LineStartPattern,
+			"line_end_pattern":   expect.Splitter.Multiline.LineEndPattern,
 		},
 		"include_file_name":    true,
 		"include_file_path":    false,
@@ -579,8 +739,8 @@ func TestMapStructureDecodeConfig(t *testing.T) {
 			"Duration": 200 * 1000 * 1000,
 		},
 		"multiline": map[string]interface{}{
-			"line_start_pattern": expect.Multiline.LineStartPattern,
-			"line_end_pattern":   expect.Multiline.LineEndPattern,
+			"line_start_pattern": expect.Splitter.Multiline.LineStartPattern,
+			"line_end_pattern":   expect.Splitter.Multiline.LineEndPattern,
 		},
 		"include_file_name":    true,
 		"include_file_path":    false,

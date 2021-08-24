@@ -426,7 +426,7 @@ func TestUpdateOutputIDs(t *testing.T) {
 		t.Run("Deduplicate/"+tc.name, func(t *testing.T) {
 			opsConfig := tc.ops()
 			bc := testutil.NewBuildContext(t)
-			ops, err := opsConfig.BuildOperators(bc)
+			ops, err := opsConfig.BuildOperators(bc, nil)
 			require.NoError(t, err)
 			require.Equal(t, tc.expectedOps, ops)
 			require.Equal(t, ops, tc.expectedOps)

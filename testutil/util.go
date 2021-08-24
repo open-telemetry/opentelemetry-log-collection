@@ -22,6 +22,7 @@ import (
 	"sync"
 	"testing"
 
+	"go.uber.org/zap/zapcore"
 	"go.uber.org/zap/zaptest"
 
 	"github.com/open-telemetry/opentelemetry-log-collection/logger"
@@ -37,7 +38,9 @@ func NewTempDir(t testing.TB) string {
 	}
 
 	t.Cleanup(func() {
-		os.RemoveAll(tempDir)
+		if err := os.RemoveAll(tempDir); err != nil {
+			t.Errorf(err.Error())
+		}
 	})
 
 	return tempDir
@@ -46,7 +49,7 @@ func NewTempDir(t testing.TB) string {
 // NewBuildContext will return a new build context for testing
 func NewBuildContext(t testing.TB) operator.BuildContext {
 	return operator.BuildContext{
-		Logger:    logger.New(zaptest.NewLogger(t).Sugar()),
+		Logger:    logger.New(zaptest.NewLogger(t, zaptest.Level(zapcore.ErrorLevel)).Sugar()),
 		Namespace: "$",
 	}
 }
