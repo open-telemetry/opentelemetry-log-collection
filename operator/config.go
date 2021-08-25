@@ -31,7 +31,7 @@ type Builder interface {
 	ID() string
 	Type() string
 	Build(BuildContext) ([]Operator, error)
-	SetID(string) error
+	SetID(string)
 	BuildsMultipleOps() bool
 }
 

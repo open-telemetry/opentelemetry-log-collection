@@ -75,10 +75,7 @@ func dedeplucateIDs(ops []operator.Config) error {
 		}
 
 		typeMap[op.Type()]++
-		err := op.SetID(newID)
-		if err != nil {
-			return err
-		}
+		op.SetID(newID)
 	}
 	return nil
 }
@@ -104,7 +101,7 @@ func SetOutputIDs(operators []operator.Operator, buildsMulti map[string]string) 
 		}
 
 		if len(op.GetOutputIDs()) == 0 {
-			operators[i].SetOutputIDs([]string{operators[i+1].ID()})
+			op.SetOutputIDs([]string{operators[i+1].ID()})
 			continue
 		}
 
