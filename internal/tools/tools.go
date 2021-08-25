@@ -24,5 +24,7 @@ package tools
 import (
 	_ "github.com/golangci/golangci-lint/cmd/golangci-lint"
 	_ "github.com/google/addlicense"
+	_ "github.com/securego/gosec/v2"
 	_ "github.com/tcnksm/ghr"
+	_ "github.com/vektra/mockery"
 )
