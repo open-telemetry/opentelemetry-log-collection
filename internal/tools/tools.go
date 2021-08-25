@@ -29,7 +29,7 @@ import (
 	_ "github.com/onsi/gomega"
 	_ "github.com/securego/gosec/v2"
 	_ "github.com/securego/gosec/v2/report/sarif"
-	_ "github.com/securego/gosec/v2/report/text@"
+	_ "github.com/securego/gosec/v2/report/text"
 	_ "github.com/tcnksm/ghr"
 	_ "github.com/vektra/mockery"
 )
