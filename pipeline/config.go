@@ -53,7 +53,7 @@ func (c Config) BuildOperators(bc operator.BuildContext, defaultOperator operato
 	return operators, nil
 }
 
-func dedeplucateIDs(ops []operator.Config) error {
+func dedeplucateIDs(ops []operator.Config) {
 	typeMap := make(map[string]int)
 	for _, op := range ops {
 		if op.Type() != op.ID() {
@@ -77,7 +77,6 @@ func dedeplucateIDs(ops []operator.Config) error {
 		typeMap[op.Type()]++
 		op.SetID(newID)
 	}
-	return nil
 }
 
 // BuildPipeline will build a pipeline from the config.

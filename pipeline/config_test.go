@@ -31,7 +31,6 @@ func newDummyOpConfig(dummyID string, dummyType string) *operator.Config {
 			TransformerConfig: helper.NewTransformerConfig(dummyID, dummyType),
 		},
 	}
-
 }
 
 type deduplicateTestCase struct {
