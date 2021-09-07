@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 CURDIR=$(pwd)
 CONTRIB_PATH="/tmp/opentelemetry-collector-contrib"
 LOG_COLLECTION_MOD_NAME="github.com/open-telemetry/opentelemetry-log-collection"
