@@ -20,17 +20,17 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/open-telemetry/opentelemetry-log-collection/operator"
-	"github.com/open-telemetry/opentelemetry-log-collection/operator/builtin/transformer/noop"
-	"github.com/open-telemetry/opentelemetry-log-collection/operator/helper"
+	"github.com/open-telemetry/opentelemetry-log-collection/operator/builtin/parser/json"
+	"github.com/open-telemetry/opentelemetry-log-collection/operator/builtin/transformer/copy"
 	"github.com/open-telemetry/opentelemetry-log-collection/testutil"
 )
 
-func newDummyOpConfig(dummyID string, dummyType string) *operator.Config {
-	return &operator.Config{
-		Builder: &noop.NoopOperatorConfig{
-			TransformerConfig: helper.NewTransformerConfig(dummyID, dummyType),
-		},
-	}
+func newDummyJSON(dummyID string) operator.Config {
+	return operator.Config{Builder: json.NewJSONParserConfig(dummyID)}
+}
+
+func newDummyCopy(dummyID string) operator.Config {
+	return operator.Config{Builder: copy.NewCopyOperatorConfig(dummyID)}
 }
 
 type deduplicateTestCase struct {
@@ -45,18 +45,14 @@ func TestDeduplicateIDs(t *testing.T) {
 			"one_op_rename",
 			func() Config {
 				var ops Config
-				op1 := operator.Config{Builder: newDummyOpConfig("json_parser", "json_parser")}
-				ops = append(ops, op1)
-				op2 := operator.Config{Builder: newDummyOpConfig("json_parser", "json_parser")}
-				ops = append(ops, op2)
+				ops = append(ops, newDummyJSON("json_parser"))
+				ops = append(ops, newDummyJSON("json_parser"))
 				return ops
 			},
 			func() Config {
 				var ops Config
-				op1 := operator.Config{Builder: newDummyOpConfig("json_parser", "json_parser")}
-				ops = append(ops, op1)
-				op2 := operator.Config{Builder: newDummyOpConfig("json_parser1", "json_parser")}
-				ops = append(ops, op2)
+				ops = append(ops, newDummyJSON("json_parser"))
+				ops = append(ops, newDummyJSON("json_parser1"))
 				return ops
 			}(),
 		},
@@ -64,21 +60,21 @@ func TestDeduplicateIDs(t *testing.T) {
 			"multi_op_rename",
 			func() Config {
 				var ops Config
-				ops = append(ops, operator.Config{Builder: newDummyOpConfig("json_parser", "json_parser")})
-				ops = append(ops, operator.Config{Builder: newDummyOpConfig("json_parser", "json_parser")})
-				ops = append(ops, operator.Config{Builder: newDummyOpConfig("json_parser", "json_parser")})
-				ops = append(ops, operator.Config{Builder: newDummyOpConfig("json_parser", "json_parser")})
-				ops = append(ops, operator.Config{Builder: newDummyOpConfig("json_parser", "json_parser")})
+				ops = append(ops, newDummyJSON("json_parser"))
+				ops = append(ops, newDummyJSON("json_parser"))
+				ops = append(ops, newDummyJSON("json_parser"))
+				ops = append(ops, newDummyJSON("json_parser"))
+				ops = append(ops, newDummyJSON("json_parser"))
 
 				return ops
 			},
 			func() Config {
 				var ops Config
-				ops = append(ops, operator.Config{Builder: newDummyOpConfig("json_parser", "json_parser")})
-				ops = append(ops, operator.Config{Builder: newDummyOpConfig("json_parser1", "json_parser")})
-				ops = append(ops, operator.Config{Builder: newDummyOpConfig("json_parser2", "json_parser")})
-				ops = append(ops, operator.Config{Builder: newDummyOpConfig("json_parser3", "json_parser")})
-				ops = append(ops, operator.Config{Builder: newDummyOpConfig("json_parser4", "json_parser")})
+				ops = append(ops, newDummyJSON("json_parser"))
+				ops = append(ops, newDummyJSON("json_parser1"))
+				ops = append(ops, newDummyJSON("json_parser2"))
+				ops = append(ops, newDummyJSON("json_parser3"))
+				ops = append(ops, newDummyJSON("json_parser4"))
 				return ops
 			}(),
 		},
@@ -86,21 +82,21 @@ func TestDeduplicateIDs(t *testing.T) {
 			"different_ops",
 			func() Config {
 				var ops Config
-				ops = append(ops, operator.Config{Builder: newDummyOpConfig("json_parser", "json_parser")})
-				ops = append(ops, operator.Config{Builder: newDummyOpConfig("json_parser", "json_parser")})
-				ops = append(ops, operator.Config{Builder: newDummyOpConfig("json_parser", "json_parser")})
-				ops = append(ops, operator.Config{Builder: newDummyOpConfig("copy", "copy")})
-				ops = append(ops, operator.Config{Builder: newDummyOpConfig("copy", "copy")})
+				ops = append(ops, newDummyJSON("json_parser"))
+				ops = append(ops, newDummyJSON("json_parser"))
+				ops = append(ops, newDummyJSON("json_parser"))
+				ops = append(ops, newDummyCopy("copy"))
+				ops = append(ops, newDummyCopy("copy"))
 
 				return ops
 			},
 			func() Config {
 				var ops Config
-				ops = append(ops, operator.Config{Builder: newDummyOpConfig("json_parser", "json_parser")})
-				ops = append(ops, operator.Config{Builder: newDummyOpConfig("json_parser1", "json_parser")})
-				ops = append(ops, operator.Config{Builder: newDummyOpConfig("json_parser2", "json_parser")})
-				ops = append(ops, operator.Config{Builder: newDummyOpConfig("copy", "copy")})
-				ops = append(ops, operator.Config{Builder: newDummyOpConfig("copy1", "copy")})
+				ops = append(ops, newDummyJSON("json_parser"))
+				ops = append(ops, newDummyJSON("json_parser1"))
+				ops = append(ops, newDummyJSON("json_parser2"))
+				ops = append(ops, newDummyCopy("copy"))
+				ops = append(ops, newDummyCopy("copy1"))
 				return ops
 			}(),
 		},
@@ -108,21 +104,20 @@ func TestDeduplicateIDs(t *testing.T) {
 			"unordered",
 			func() Config {
 				var ops Config
-				ops = append(ops, operator.Config{Builder: newDummyOpConfig("json_parser", "json_parser")})
-				ops = append(ops, operator.Config{Builder: newDummyOpConfig("copy", "copy")})
-				ops = append(ops, operator.Config{Builder: newDummyOpConfig("json_parser", "json_parser")})
-				ops = append(ops, operator.Config{Builder: newDummyOpConfig("copy", "copy")})
-				ops = append(ops, operator.Config{Builder: newDummyOpConfig("json_parser", "json_parser")})
-
+				ops = append(ops, newDummyJSON("json_parser"))
+				ops = append(ops, newDummyCopy("copy"))
+				ops = append(ops, newDummyJSON("json_parser"))
+				ops = append(ops, newDummyCopy("copy"))
+				ops = append(ops, newDummyJSON("json_parser"))
 				return ops
 			},
 			func() Config {
 				var ops Config
-				ops = append(ops, operator.Config{Builder: newDummyOpConfig("json_parser", "json_parser")})
-				ops = append(ops, operator.Config{Builder: newDummyOpConfig("copy", "copy")})
-				ops = append(ops, operator.Config{Builder: newDummyOpConfig("json_parser1", "json_parser")})
-				ops = append(ops, operator.Config{Builder: newDummyOpConfig("copy1", "copy")})
-				ops = append(ops, operator.Config{Builder: newDummyOpConfig("json_parser2", "json_parser")})
+				ops = append(ops, newDummyJSON("json_parser"))
+				ops = append(ops, newDummyCopy("copy"))
+				ops = append(ops, newDummyJSON("json_parser1"))
+				ops = append(ops, newDummyCopy("copy1"))
+				ops = append(ops, newDummyJSON("json_parser2"))
 				return ops
 			}(),
 		},
@@ -130,21 +125,41 @@ func TestDeduplicateIDs(t *testing.T) {
 			"already_renamed",
 			func() Config {
 				var ops Config
-				ops = append(ops, operator.Config{Builder: newDummyOpConfig("json_parser", "json_parser")})
-				ops = append(ops, operator.Config{Builder: newDummyOpConfig("json_parser", "json_parser")})
-				ops = append(ops, operator.Config{Builder: newDummyOpConfig("json_parser", "json_parser")})
-				ops = append(ops, operator.Config{Builder: newDummyOpConfig("json_parser3", "json_parser")})
-				ops = append(ops, operator.Config{Builder: newDummyOpConfig("json_parser", "json_parser")})
-
+				ops = append(ops, newDummyJSON("json_parser"))
+				ops = append(ops, newDummyJSON("json_parser"))
+				ops = append(ops, newDummyJSON("json_parser"))
+				ops = append(ops, newDummyJSON("json_parser3"))
+				ops = append(ops, newDummyJSON("json_parser"))
 				return ops
 			},
 			func() Config {
 				var ops Config
-				ops = append(ops, operator.Config{Builder: newDummyOpConfig("json_parser", "json_parser")})
-				ops = append(ops, operator.Config{Builder: newDummyOpConfig("json_parser1", "json_parser")})
-				ops = append(ops, operator.Config{Builder: newDummyOpConfig("json_parser2", "json_parser")})
-				ops = append(ops, operator.Config{Builder: newDummyOpConfig("json_parser3", "json_parser")})
-				ops = append(ops, operator.Config{Builder: newDummyOpConfig("json_parser4", "json_parser")})
+				ops = append(ops, newDummyJSON("json_parser"))
+				ops = append(ops, newDummyJSON("json_parser1"))
+				ops = append(ops, newDummyJSON("json_parser2"))
+				ops = append(ops, newDummyJSON("json_parser3"))
+				ops = append(ops, newDummyJSON("json_parser4"))
+				return ops
+			}(),
+		},
+		{
+			"iterate_twice",
+			func() Config {
+				var ops Config
+				ops = append(ops, newDummyJSON("json_parser"))
+				ops = append(ops, newDummyJSON("json_parser"))
+				ops = append(ops, newDummyJSON("json_parser3"))
+				ops = append(ops, newDummyJSON("json_parser"))
+				ops = append(ops, newDummyJSON("json_parser"))
+				return ops
+			},
+			func() Config {
+				var ops Config
+				ops = append(ops, newDummyJSON("json_parser"))
+				ops = append(ops, newDummyJSON("json_parser1"))
+				ops = append(ops, newDummyJSON("json_parser3"))
+				ops = append(ops, newDummyJSON("json_parser2"))
+				ops = append(ops, newDummyJSON("json_parser4"))
 				return ops
 			}(),
 		},
@@ -153,7 +168,7 @@ func TestDeduplicateIDs(t *testing.T) {
 	for _, tc := range cases {
 		t.Run("Deduplicate/"+tc.name, func(t *testing.T) {
 			ops := tc.ops()
-			dedeplucateIDs(ops)
+			ops.dedeplucateIDs()
 			require.Equal(t, ops, tc.expectedOps)
 		})
 	}
@@ -171,8 +186,8 @@ func TestUpdateOutputIDs(t *testing.T) {
 			"one_op_rename",
 			func() Config {
 				var ops Config
-				ops = append(ops, operator.Config{Builder: newDummyOpConfig("json_parser", "json_parser")})
-				ops = append(ops, operator.Config{Builder: newDummyOpConfig("json_parser", "json_parser")})
+				ops = append(ops, newDummyJSON("json_parser"))
+				ops = append(ops, newDummyJSON("json_parser"))
 				return ops
 			},
 			[]string{
@@ -183,10 +198,10 @@ func TestUpdateOutputIDs(t *testing.T) {
 			"multi_op_rename",
 			func() Config {
 				var ops Config
-				ops = append(ops, operator.Config{Builder: newDummyOpConfig("json_parser", "json_parser")})
-				ops = append(ops, operator.Config{Builder: newDummyOpConfig("json_parser", "json_parser")})
-				ops = append(ops, operator.Config{Builder: newDummyOpConfig("json_parser", "json_parser")})
-				ops = append(ops, operator.Config{Builder: newDummyOpConfig("json_parser", "json_parser")})
+				ops = append(ops, newDummyJSON("json_parser"))
+				ops = append(ops, newDummyJSON("json_parser"))
+				ops = append(ops, newDummyJSON("json_parser"))
+				ops = append(ops, newDummyJSON("json_parser"))
 				return ops
 			},
 			[]string{
@@ -199,11 +214,11 @@ func TestUpdateOutputIDs(t *testing.T) {
 			"different_ops",
 			func() Config {
 				var ops Config
-				ops = append(ops, operator.Config{Builder: newDummyOpConfig("json_parser", "json_parser")})
-				ops = append(ops, operator.Config{Builder: newDummyOpConfig("json_parser", "json_parser")})
-				ops = append(ops, operator.Config{Builder: newDummyOpConfig("json_parser", "json_parser")})
-				ops = append(ops, operator.Config{Builder: newDummyOpConfig("copy", "copy")})
-				ops = append(ops, operator.Config{Builder: newDummyOpConfig("copy", "copy")})
+				ops = append(ops, newDummyJSON("json_parser"))
+				ops = append(ops, newDummyJSON("json_parser"))
+				ops = append(ops, newDummyJSON("json_parser"))
+				ops = append(ops, newDummyCopy("copy"))
+				ops = append(ops, newDummyCopy("copy"))
 				return ops
 			},
 			[]string{
@@ -217,10 +232,10 @@ func TestUpdateOutputIDs(t *testing.T) {
 			"unordered",
 			func() Config {
 				var ops Config
-				ops = append(ops, operator.Config{Builder: newDummyOpConfig("json_parser", "json_parser")})
-				ops = append(ops, operator.Config{Builder: newDummyOpConfig("copy", "copy")})
-				ops = append(ops, operator.Config{Builder: newDummyOpConfig("json_parser", "json_parser")})
-				ops = append(ops, operator.Config{Builder: newDummyOpConfig("copy", "copy")})
+				ops = append(ops, newDummyJSON("json_parser"))
+				ops = append(ops, newDummyCopy("copy"))
+				ops = append(ops, newDummyJSON("json_parser"))
+				ops = append(ops, newDummyCopy("copy"))
 				return ops
 			},
 			[]string{
@@ -233,11 +248,11 @@ func TestUpdateOutputIDs(t *testing.T) {
 			"already_renamed",
 			func() Config {
 				var ops Config
-				ops = append(ops, operator.Config{Builder: newDummyOpConfig("json_parser", "json_parser")})
-				ops = append(ops, operator.Config{Builder: newDummyOpConfig("json_parser", "json_parser")})
-				ops = append(ops, operator.Config{Builder: newDummyOpConfig("json_parser", "json_parser")})
-				ops = append(ops, operator.Config{Builder: newDummyOpConfig("json_parser3", "json_parser")})
-				ops = append(ops, operator.Config{Builder: newDummyOpConfig("json_parser", "json_parser")})
+				ops = append(ops, newDummyJSON("json_parser"))
+				ops = append(ops, newDummyJSON("json_parser"))
+				ops = append(ops, newDummyJSON("json_parser"))
+				ops = append(ops, newDummyJSON("json_parser3"))
+				ops = append(ops, newDummyJSON("json_parser"))
 				return ops
 			},
 			[]string{

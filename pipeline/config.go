@@ -25,7 +25,7 @@ type Config []operator.Config
 
 // BuildOperators builds the operators from the list of configs into operators.
 func (c Config) BuildOperators(bc operator.BuildContext, defaultOperator operator.Operator) ([]operator.Operator, error) {
-	dedeplucateIDs(c)
+	c.dedeplucateIDs()
 	// buildsMulti's key represents an operator's ID that builds multiple operators, e.g. Plugins.
 	// the value is the plugin's first operator's ID.
 	buildsMulti := make(map[string]string)
@@ -53,9 +53,9 @@ func (c Config) BuildOperators(bc operator.BuildContext, defaultOperator operato
 	return operators, nil
 }
 
-func dedeplucateIDs(ops []operator.Config) {
+func (c Config) dedeplucateIDs() {
 	typeMap := make(map[string]int)
-	for _, op := range ops {
+	for _, op := range c {
 		if op.Type() != op.ID() {
 			continue
 		}
@@ -66,8 +66,8 @@ func dedeplucateIDs(ops []operator.Config) {
 		}
 		newID := fmt.Sprintf("%s%d", op.Type(), typeMap[op.Type()])
 
-		for j := 0; j < len(ops); j++ {
-			if newID == ops[j].ID() {
+		for j := 0; j < len(c); j++ {
+			if newID == c[j].ID() {
 				j = 0
 				typeMap[op.Type()]++
 				newID = fmt.Sprintf("%s%d", op.Type(), typeMap[op.Type()])
