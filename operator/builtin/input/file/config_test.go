@@ -706,7 +706,7 @@ func TestMapStructureDecodeConfigWithHook(t *testing.T) {
 			"line_start_pattern": expect.Splitter.Multiline.LineStartPattern,
 			"line_end_pattern":   expect.Splitter.Multiline.LineEndPattern,
 		},
-		"force_flush_period":   "1h",
+		"force_flush_period":   "500ms",
 		"include_file_name":    true,
 		"include_file_path":    false,
 		"start_at":             "end",
@@ -751,7 +751,7 @@ func TestMapStructureDecodeConfig(t *testing.T) {
 		"max_concurrent_files": 1024,
 		"encoding":             "utf16",
 		"force_flush_period": map[string]interface{}{
-			"Duration": time.Hour,
+			"Duration": time.Millisecond * 500,
 		},
 	}
 

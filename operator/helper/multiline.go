@@ -33,7 +33,7 @@ type FlusherConfig struct {
 func NewFlusherConfig() FlusherConfig {
 	return FlusherConfig{
 		// Empty or `0s` means that we will never force flush
-		Period: Duration{Duration: time.Hour},
+		Period: Duration{Duration: time.Millisecond * 500},
 	}
 }
 
