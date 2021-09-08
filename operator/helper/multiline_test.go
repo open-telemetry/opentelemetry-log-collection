@@ -18,6 +18,7 @@ import (
 	"bufio"
 	"bytes"
 	"errors"
+	"fmt"
 	"regexp"
 	"testing"
 	"time"
@@ -486,6 +487,22 @@ func TestNoSplitFunc(t *testing.T) {
 		splitFunc := SplitNone(100)
 		t.Run(tc.Name, tc.RunFunc(splitFunc))
 	}
+}
+
+func TestNoopEncodingError(t *testing.T) {
+	cfg := &MultilineConfig{
+		LineEndPattern: "\n",
+	}
+
+	_, err := cfg.getSplitFunc(encoding.Nop, false, nil, 0)
+	require.Equal(t, err, fmt.Errorf("line_start_pattern or line_end_pattern should not be set when using nop encoding"))
+
+	cfg = &MultilineConfig{
+		LineStartPattern: "\n",
+	}
+
+	_, err = cfg.getSplitFunc(encoding.Nop, false, nil, 0)
+	require.Equal(t, err, fmt.Errorf("line_start_pattern or line_end_pattern should not be set when using nop encoding"))
 }
 
 func TestNewlineSplitFunc_Encodings(t *testing.T) {
