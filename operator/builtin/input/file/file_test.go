@@ -207,22 +207,66 @@ func TestReadExistingLogs(t *testing.T) {
 
 // TestReadUsingNopEncoding tests when nop encoding is set, that the splitfunction returns all bytes unchanged.
 func TestReadUsingNopEncoding(t *testing.T) {
+	tcs := []struct {
+		testName string
+		input    []byte
+		test     func(*testing.T, chan *entry.Entry)
+	}{
+		{
+			"simple",
+			[]byte("testlog1"),
+			func(t *testing.T, c chan *entry.Entry) {
+				waitForMessage(t, c, "testlog1")
+			},
+		},
+		{
+			"longer than maxlogsize",
+			[]byte("testlog1testlog2testlog3"),
+			func(t *testing.T, c chan *entry.Entry) {
+				waitForMessage(t, c, "testlog1")
+				waitForMessage(t, c, "testlog2")
+				waitForMessage(t, c, "testlog3")
+			},
+		},
+		{
+			"doesn't hit max log size before eof",
+			[]byte("testlog1testlog2test"),
+			func(t *testing.T, c chan *entry.Entry) {
+				waitForMessage(t, c, "testlog1")
+				waitForMessage(t, c, "testlog2")
+				waitForMessage(t, c, "test")
+			},
+		},
+		{
+			"special characters",
+			[]byte("testlog1\n\ttestlog2\n\t"),
+			func(t *testing.T, c chan *entry.Entry) {
+				waitForMessage(t, c, "testlog1")
+				waitForMessage(t, c, "\n\ttestlo")
+				waitForMessage(t, c, "g2\n\t")
+			},
+		},
+	}
+
 	t.Parallel()
-	operator, logReceived, tempDir := newTestFileOperator(t, nil, nil)
-	operator.SplitFunc = helper.SplitNone()
-	// Create a file, then start
-	temp := openTemp(t, tempDir)
 
-	_, err := temp.Write([]byte("testlog1\ntestlog2\n"))
-	require.NoError(t, err)
-	require.NoError(t, operator.Start(testutil.NewMockPersister("test")))
-	defer operator.Stop()
+	for _, tc := range tcs {
+		t.Run(tc.testName, func(t *testing.T) {
+			operator, logReceived, tempDir := newTestFileOperator(t, func(cfg *InputConfig) {
+				cfg.MaxLogSize = 8
+				cfg.Encoding.Encoding = "nop"
+			}, nil)
+			// Create a file, then start
+			temp := openTemp(t, tempDir)
 
-	select {
-	case e := <-logReceived:
-		require.Equal(t, []byte("testlog1\ntestlog2\n"), e.Body.([]byte))
-	case <-time.After(3 * time.Second):
-		require.FailNow(t, "Timed out waiting for message", []byte("testlog1\ntestlog2\n"))
+			bytesWritten, err := temp.Write(tc.input)
+			require.Greater(t, bytesWritten, 0)
+			require.NoError(t, err)
+			require.NoError(t, operator.Start(testutil.NewMockPersister("test")))
+			defer operator.Stop()
+
+			tc.test(t, logReceived)
+		})
 	}
 }
 

@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+//go:build linux
 // +build linux
 
 package journald
@@ -43,6 +44,7 @@ func NewJournaldInputConfig(operatorID string) *JournaldInputConfig {
 	return &JournaldInputConfig{
 		InputConfig: helper.NewInputConfig(operatorID, "journald_input"),
 		StartAt:     "end",
+		Priority:    "info",
 	}
 }
 
@@ -53,6 +55,8 @@ type JournaldInputConfig struct {
 	Directory *string  `mapstructure:"directory,omitempty" json:"directory,omitempty" yaml:"directory,omitempty"`
 	Files     []string `mapstructure:"files,omitempty"     json:"files,omitempty"     yaml:"files,omitempty"`
 	StartAt   string   `mapstructure:"start_at,omitempty"  json:"start_at,omitempty"  yaml:"start_at,omitempty"`
+	Units     []string `mapstructure:"units,omitempty"     json:"units,omitempty"     yaml:"units,omitempty"`
+	Priority  string   `mapstructure:"priority,omitempty"  json:"priority,omitempty"  yaml:"priority,omitempty"`
 }
 
 // Build will build a journald input operator from the supplied configuration
@@ -80,6 +84,12 @@ func (c JournaldInputConfig) Build(buildContext operator.BuildContext) ([]operat
 	default:
 		return nil, fmt.Errorf("invalid value '%s' for parameter 'start_at'", c.StartAt)
 	}
+
+	for _, unit := range c.Units {
+		args = append(args, "--unit", unit)
+	}
+
+	args = append(args, "--priority", c.Priority)
 
 	switch {
 	case c.Directory != nil:

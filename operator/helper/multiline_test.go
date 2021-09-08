@@ -174,7 +174,7 @@ func TestLineStartSplitFunc(t *testing.T) {
 			LineStartPattern: tc.Pattern,
 		}
 
-		splitFunc, err := cfg.getSplitFunc(unicode.UTF8, false, tc.Flusher)
+		splitFunc, err := cfg.getSplitFunc(unicode.UTF8, false, tc.Flusher, 0)
 		require.NoError(t, err)
 		t.Run(tc.Name, tc.RunFunc(splitFunc))
 	}
@@ -314,7 +314,7 @@ func TestLineEndSplitFunc(t *testing.T) {
 			LineEndPattern: tc.Pattern,
 		}
 
-		splitFunc, err := cfg.getSplitFunc(unicode.UTF8, false, tc.Flusher)
+		splitFunc, err := cfg.getSplitFunc(unicode.UTF8, false, tc.Flusher, 0)
 		require.NoError(t, err)
 		t.Run(tc.Name, tc.RunFunc(splitFunc))
 	}
@@ -458,28 +458,32 @@ func TestNoSplitFunc(t *testing.T) {
 			},
 		},
 		{
-			Name: "HugeLog10000",
+			Name: "HugeLog300",
 			Raw: func() []byte {
-				return generatedByteSliceOfLength(10000)
+				return generatedByteSliceOfLength(300)
 			}(),
 			ExpectedTokenized: []string{
-				string(generatedByteSliceOfLength(10000)),
+				"abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuv",
+				"wxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqr",
+				"stuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmn",
 			},
 		},
 		{
-			Name: "HugeLog1000000",
+			Name: "EOFBeforeMaxLogSize",
 			Raw: func() []byte {
-				newRaw := generatedByteSliceOfLength(1000000)
-				newRaw = append(newRaw, '\n')
-				return newRaw
+				return generatedByteSliceOfLength(350)
 			}(),
-			ExpectedTokenized: []string{},
-			ExpectedError:     errors.New("bufio.Scanner: token too long"),
+			ExpectedTokenized: []string{
+				"abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuv",
+				"wxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqr",
+				"stuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmn",
+				"opqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijkl",
+			},
 		},
 	}
 
 	for _, tc := range testCases {
-		splitFunc := SplitNone()
+		splitFunc := SplitNone(100)
 		t.Run(tc.Name, tc.RunFunc(splitFunc))
 	}
 }
