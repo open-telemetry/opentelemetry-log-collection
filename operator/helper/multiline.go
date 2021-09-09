@@ -219,7 +219,7 @@ func SplitNone(maxLogSize int) bufio.SplitFunc {
 			return 0, nil, nil
 		}
 
-		if atEOF && len(data) == 0 {
+		if len(data) == 0 {
 			return 0, nil, nil
 		}
 		return len(data), data, nil

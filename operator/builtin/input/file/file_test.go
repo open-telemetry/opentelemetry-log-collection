@@ -258,7 +258,84 @@ func TestReadUsingNopEncoding(t *testing.T) {
 			}, nil)
 			// Create a file, then start
 			temp := openTemp(t, tempDir)
+			bytesWritten, err := temp.Write(tc.input)
+			require.Greater(t, bytesWritten, 0)
+			require.NoError(t, err)
+			require.NoError(t, operator.Start(testutil.NewMockPersister("test")))
+			defer operator.Stop()
 
+			tc.test(t, logReceived)
+		})
+	}
+}
+
+func TestNopEncodingDifferentLogSizes(t *testing.T) {
+	tcs := []struct {
+		testName   string
+		input      []byte
+		test       func(*testing.T, chan *entry.Entry)
+		maxLogSize helper.ByteSize
+	}{
+		{
+			"same size",
+			[]byte("testlog1"),
+			func(t *testing.T, c chan *entry.Entry) {
+				waitForByteMessage(t, c, []byte("testlog1"))
+			},
+			8,
+		},
+		{
+			"massive log size",
+			[]byte("testlog1"),
+			func(t *testing.T, c chan *entry.Entry) {
+				waitForByteMessage(t, c, []byte("testlog1"))
+			},
+			8000000,
+		},
+		{
+			"slightly larger log size",
+			[]byte("testlog1"),
+			func(t *testing.T, c chan *entry.Entry) {
+				waitForByteMessage(t, c, []byte("testlog1"))
+			},
+			9,
+		},
+		{
+			"slightly smaller log size",
+			[]byte("testlog1"),
+			func(t *testing.T, c chan *entry.Entry) {
+				waitForByteMessage(t, c, []byte("testlog"))
+				waitForByteMessage(t, c, []byte("1"))
+			},
+			7,
+		},
+		{
+			"tiny log size",
+			[]byte("testlog1"),
+			func(t *testing.T, c chan *entry.Entry) {
+				waitForByteMessage(t, c, []byte("t"))
+				waitForByteMessage(t, c, []byte("e"))
+				waitForByteMessage(t, c, []byte("s"))
+				waitForByteMessage(t, c, []byte("t"))
+				waitForByteMessage(t, c, []byte("l"))
+				waitForByteMessage(t, c, []byte("o"))
+				waitForByteMessage(t, c, []byte("g"))
+				waitForByteMessage(t, c, []byte("1"))
+			},
+			1,
+		},
+	}
+
+	t.Parallel()
+
+	for _, tc := range tcs {
+		t.Run(tc.testName, func(t *testing.T) {
+			operator, logReceived, tempDir := newTestFileOperator(t, func(cfg *InputConfig) {
+				cfg.MaxLogSize = tc.maxLogSize
+				cfg.Encoding.Encoding = "nop"
+			}, nil)
+			// Create a file, then start
+			temp := openTemp(t, tempDir)
 			bytesWritten, err := temp.Write(tc.input)
 			require.Greater(t, bytesWritten, 0)
 			require.NoError(t, err)
