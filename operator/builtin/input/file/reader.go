@@ -25,6 +25,7 @@ import (
 	"golang.org/x/text/encoding"
 	"golang.org/x/text/transform"
 
+	"github.com/open-telemetry/opentelemetry-log-collection/entry"
 	"github.com/open-telemetry/opentelemetry-log-collection/errors"
 	"github.com/open-telemetry/opentelemetry-log-collection/operator/helper"
 )
@@ -172,7 +173,12 @@ func (r *Reader) emit(ctx context.Context, msgBuf []byte) error {
 		return fmt.Errorf("decode: %s", err)
 	}
 
-	e, err := r.fileInput.NewEntry(msg)
+	var e *entry.Entry
+	if r.fileInput.encoding.Encoding == encoding.Nop {
+		e, err = r.fileInput.NewEntry(msgBuf)
+	} else {
+		e, err = r.fileInput.NewEntry(msg)
+	}
 	if err != nil {
 		return fmt.Errorf("create entry: %s", err)
 	}

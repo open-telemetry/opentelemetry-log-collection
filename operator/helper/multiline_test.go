@@ -421,41 +421,64 @@ func TestNewlineSplitFunc(t *testing.T) {
 	}
 }
 
+type noSplitTestCase struct {
+	Name              string
+	Raw               []byte
+	ExpectedTokenized [][]byte
+}
+
+func (tc noSplitTestCase) RunFunc(splitFunc bufio.SplitFunc) func(t *testing.T) {
+	return func(t *testing.T) {
+		scanner := bufio.NewScanner(bytes.NewReader(tc.Raw))
+		scanner.Split(splitFunc)
+		tokenized := make([][]byte, 0)
+		for {
+			ok := scanner.Scan()
+			if !ok {
+				break
+			}
+			tokenized = append(tokenized, scanner.Bytes())
+		}
+
+		assert.Equal(t, tc.ExpectedTokenized, tokenized)
+	}
+}
+
 func TestNoSplitFunc(t *testing.T) {
-	testCases := []tokenizerTestCase{
+	testCases := []noSplitTestCase{
 		{
 			Name: "OneLogSimple",
 			Raw:  []byte("my log\n"),
-			ExpectedTokenized: []string{
-				"my log\n",
+			ExpectedTokenized: [][]byte{
+				[]byte("my log\n"),
 			},
 		},
 		{
 			Name: "TwoLogsSimple",
 			Raw:  []byte("log1\nlog2\n"),
-			ExpectedTokenized: []string{
-				"log1\nlog2\n",
+			ExpectedTokenized: [][]byte{
+				[]byte("log1\nlog2\n"),
 			},
 		},
 		{
 			Name: "TwoLogsCarriageReturn",
 			Raw:  []byte("log1\r\nlog2\r\n"),
-			ExpectedTokenized: []string{
-				"log1\r\nlog2\r\n",
+			ExpectedTokenized: [][]byte{
+				[]byte("log1\r\nlog2\r\n"),
 			},
 		},
 		{
 			Name:              "NoTailingNewline",
 			Raw:               []byte(`foo`),
-			ExpectedTokenized: []string{"foo"},
+			ExpectedTokenized: [][]byte{[]byte("foo")},
 		},
 		{
 			Name: "HugeLog100",
 			Raw: func() []byte {
 				return generatedByteSliceOfLength(100)
 			}(),
-			ExpectedTokenized: []string{
-				string(generatedByteSliceOfLength(100)),
+			ExpectedTokenized: [][]byte{
+				generatedByteSliceOfLength(100),
 			},
 		},
 		{
@@ -463,10 +486,10 @@ func TestNoSplitFunc(t *testing.T) {
 			Raw: func() []byte {
 				return generatedByteSliceOfLength(300)
 			}(),
-			ExpectedTokenized: []string{
-				"abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuv",
-				"wxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqr",
-				"stuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmn",
+			ExpectedTokenized: [][]byte{
+				[]byte("abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuv"),
+				[]byte("wxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqr"),
+				[]byte("stuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmn"),
 			},
 		},
 		{
@@ -474,11 +497,11 @@ func TestNoSplitFunc(t *testing.T) {
 			Raw: func() []byte {
 				return generatedByteSliceOfLength(350)
 			}(),
-			ExpectedTokenized: []string{
-				"abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuv",
-				"wxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqr",
-				"stuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmn",
-				"opqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijkl",
+			ExpectedTokenized: [][]byte{
+				[]byte("abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuv"),
+				[]byte("wxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqr"),
+				[]byte("stuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmn"),
+				[]byte("opqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijkl"),
 			},
 		},
 	}

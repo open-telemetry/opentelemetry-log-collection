@@ -216,34 +216,34 @@ func TestReadUsingNopEncoding(t *testing.T) {
 			"simple",
 			[]byte("testlog1"),
 			func(t *testing.T, c chan *entry.Entry) {
-				waitForMessage(t, c, "testlog1")
+				waitForByteMessage(t, c, []byte("testlog1"))
 			},
 		},
 		{
 			"longer than maxlogsize",
 			[]byte("testlog1testlog2testlog3"),
 			func(t *testing.T, c chan *entry.Entry) {
-				waitForMessage(t, c, "testlog1")
-				waitForMessage(t, c, "testlog2")
-				waitForMessage(t, c, "testlog3")
+				waitForByteMessage(t, c, []byte("testlog1"))
+				waitForByteMessage(t, c, []byte("testlog2"))
+				waitForByteMessage(t, c, []byte("testlog3"))
 			},
 		},
 		{
 			"doesn't hit max log size before eof",
 			[]byte("testlog1testlog2test"),
 			func(t *testing.T, c chan *entry.Entry) {
-				waitForMessage(t, c, "testlog1")
-				waitForMessage(t, c, "testlog2")
-				waitForMessage(t, c, "test")
+				waitForByteMessage(t, c, []byte("testlog1"))
+				waitForByteMessage(t, c, []byte("testlog2"))
+				waitForByteMessage(t, c, []byte("test"))
 			},
 		},
 		{
 			"special characters",
 			[]byte("testlog1\n\ttestlog2\n\t"),
 			func(t *testing.T, c chan *entry.Entry) {
-				waitForMessage(t, c, "testlog1")
-				waitForMessage(t, c, "\n\ttestlo")
-				waitForMessage(t, c, "g2\n\t")
+				waitForByteMessage(t, c, []byte("testlog1"))
+				waitForByteMessage(t, c, []byte("\n\ttestlo"))
+				waitForByteMessage(t, c, []byte("g2\n\t"))
 			},
 		},
 	}
