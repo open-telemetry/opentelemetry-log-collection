@@ -6,7 +6,7 @@ require (
 	github.com/antonmedv/expr v1.9.0
 	github.com/bmatcuk/doublestar/v3 v3.0.0
 	github.com/jpillora/backoff v1.0.0
-	github.com/json-iterator/go v1.1.11
+	github.com/json-iterator/go v1.1.12
 	github.com/mitchellh/mapstructure v1.4.1
 	github.com/observiq/ctimefmt v1.0.0
 	github.com/observiq/go-syslog/v3 v3.0.2
@@ -34,7 +34,7 @@ require (
 	github.com/google/gofuzz v1.1.0 // indirect
 	github.com/googleapis/gnostic v0.4.1 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
-	github.com/modern-go/reflect2 v1.0.1 // indirect
+	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/stretchr/objx v0.2.0 // indirect
