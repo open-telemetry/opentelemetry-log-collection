@@ -445,6 +445,7 @@ func (tc noSplitTestCase) RunFunc(splitFunc bufio.SplitFunc) func(t *testing.T) 
 }
 
 func TestNoSplitFunc(t *testing.T) {
+	const largeLogSize = 100
 	testCases := []noSplitTestCase{
 		{
 			Name: "OneLogSimple",
@@ -475,7 +476,7 @@ func TestNoSplitFunc(t *testing.T) {
 		{
 			Name: "HugeLog100",
 			Raw: func() []byte {
-				return generatedByteSliceOfLength(100)
+				return generatedByteSliceOfLength(largeLogSize)
 			}(),
 			ExpectedTokenized: [][]byte{
 				generatedByteSliceOfLength(100),
@@ -484,7 +485,7 @@ func TestNoSplitFunc(t *testing.T) {
 		{
 			Name: "HugeLog300",
 			Raw: func() []byte {
-				return generatedByteSliceOfLength(300)
+				return generatedByteSliceOfLength(largeLogSize * 3)
 			}(),
 			ExpectedTokenized: [][]byte{
 				[]byte("abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuv"),
@@ -495,7 +496,7 @@ func TestNoSplitFunc(t *testing.T) {
 		{
 			Name: "EOFBeforeMaxLogSize",
 			Raw: func() []byte {
-				return generatedByteSliceOfLength(350)
+				return generatedByteSliceOfLength(largeLogSize * 3.5)
 			}(),
 			ExpectedTokenized: [][]byte{
 				[]byte("abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuv"),
@@ -507,7 +508,7 @@ func TestNoSplitFunc(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		splitFunc := SplitNone(100)
+		splitFunc := SplitNone(largeLogSize)
 		t.Run(tc.Name, tc.RunFunc(splitFunc))
 	}
 }
