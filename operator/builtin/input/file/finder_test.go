@@ -83,13 +83,6 @@ func TestFinder(t *testing.T) {
 			exclude:  []string{"exclude.log"},
 			expected: []string{"include.log"},
 		},
-		// {
-		// 	name:     "ExcludeEmpty",
-		// 	files:    []string{"include.log", "exclude.log"},
-		// 	include:  []string{"*"},
-		// 	exclude:  []string{"exclude.log"},
-		// 	expected: []string{"include.log", "exclude.log"},
-		// },
 		{
 			name:     "ExcludeMany",
 			files:    []string{"a1.log", "a2.log", "b1.log", "b2.log"},
@@ -125,13 +118,13 @@ func TestFinder(t *testing.T) {
 			exclude:  []string{},
 			expected: []string{"a/1.log", "b/1.log", "c/1.log"},
 		},
-		// {
-		// 	name:     "DoubleStarVaryingDepth",
-		// 	files:    []string{"1.log", "a/1.log", "a/b/1.log", "c/1.log"},
-		// 	include:  []string{"**/*.log"},
-		// 	exclude:  []string{},
-		// 	expected: []string{"1.log", "a/1.log", "a/b/1.log", "c/1.log"},
-		// },
+		{
+			name:     "DoubleStarVaryingDepth",
+			files:    []string{"1.log", "a/1.log", "a/b/1.log", "c/1.log"},
+			include:  []string{"**/*.log"},
+			exclude:  []string{},
+			expected: []string{"1.log", "a/1.log", "a/b/1.log", "c/1.log"},
+		},
 	}
 
 	for _, tc := range cases {

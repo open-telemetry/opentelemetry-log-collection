@@ -15,8 +15,6 @@
 package file
 
 import (
-	"path/filepath"
-
 	"github.com/bmatcuk/doublestar/v3"
 )
 
@@ -29,7 +27,7 @@ type Finder struct {
 func (f Finder) FindFiles() []string {
 	all := make([]string, 0, len(f.Include))
 	for _, include := range f.Include {
-		matches, _ := filepath.Glob(include) // compile error checked in build
+		matches, _ := doublestar.Glob(include) // compile error checked in build
 	INCLUDE:
 		for _, match := range matches {
 			for _, exclude := range f.Exclude {
