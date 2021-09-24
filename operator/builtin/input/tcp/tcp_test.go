@@ -406,6 +406,7 @@ func TestFailToBind(t *testing.T) {
 	defer func() {
 		err := first.Stop()
 		require.NoError(t, err, "expected to stop tcp input operator without error")
+		require.NoError(t, first.Stop(), "expected stopping an already stopped operator to not return an error")
 	}()
 	_, err = startTCP(port)
 	require.Error(t, err, "expected second tcp operator to fail to start")

@@ -211,6 +211,7 @@ func TestFailToBind(t *testing.T) {
 	defer func() {
 		err := first.Stop()
 		require.NoError(t, err, "expected to stop udp input operator without error")
+		require.NoError(t, first.Stop(), "expected stopping an already stopped operator to not return an error")
 	}()
 	_, err = startUDP(port)
 	require.Error(t, err, "expected second udp operator to fail to start")
