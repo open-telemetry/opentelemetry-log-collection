@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/hashicorp/go-multierror"
+
 	"github.com/open-telemetry/opentelemetry-log-collection/entry"
 	"github.com/open-telemetry/opentelemetry-log-collection/operator"
 	"github.com/open-telemetry/opentelemetry-log-collection/operator/helper"
-
-	"github.com/hashicorp/go-multierror"
 )
 
 func init() {
