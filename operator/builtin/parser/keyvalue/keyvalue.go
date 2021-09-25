@@ -40,9 +40,9 @@ func NewKVParserConfig(operatorID string) *KVParserConfig {
 
 // KVParserConfig is the configuration of a key value parser operator.
 type KVParserConfig struct {
-	helper.ParserConfig `yaml:",inline"`
+	helper.ParserConfig `mapstructure:",squash" yaml:",inline"`
 
-	Delimiter string `json:"delimiter" yaml:"delimiter"`
+	Delimiter string `mapstructure:"delimiter" yaml:"delimiter"`
 }
 
 // Build will build a key value parser operator.
