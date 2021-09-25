@@ -39,7 +39,7 @@ func TestTraceParserConfig(t *testing.T) {
 			Name: "spanid",
 			Expect: func() *TraceParserConfig {
 				parseFrom := entry.NewBodyField("app_span_id")
-				preserveTo := entry.NewBodyField("parsed_span_id")
+				preserveTo := entry.NewBodyField("orig_span_id")
 				cfg := helper.SpanIdConfig{}
 				cfg.ParseFrom = &parseFrom
 				cfg.PreserveTo = &preserveTo
@@ -53,7 +53,7 @@ func TestTraceParserConfig(t *testing.T) {
 			Name: "traceid",
 			Expect: func() *TraceParserConfig {
 				parseFrom := entry.NewBodyField("app_trace_id")
-				preserveTo := entry.NewBodyField("parsed_trace_id")
+				preserveTo := entry.NewBodyField("orig_trace_id")
 				cfg := helper.TraceIdConfig{}
 				cfg.ParseFrom = &parseFrom
 				cfg.PreserveTo = &preserveTo
@@ -67,7 +67,7 @@ func TestTraceParserConfig(t *testing.T) {
 			Name: "trace_flags",
 			Expect: func() *TraceParserConfig {
 				parseFrom := entry.NewBodyField("app_trace_flags_id")
-				preserveTo := entry.NewBodyField("parsed_trace_flags_id")
+				preserveTo := entry.NewBodyField("orig_trace_flags_id")
 				cfg := helper.TraceFlagsConfig{}
 				cfg.ParseFrom = &parseFrom
 				cfg.PreserveTo = &preserveTo
