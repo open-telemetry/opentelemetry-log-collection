@@ -32,9 +32,9 @@ func (e *Event) RenderSimple(buffer Buffer) (EventXML, error) {
 	}
 
 	var bufferUsed, propertyCount uint32
-	err := evtRender(0, e.handle, EvtRenderEventXML, buffer.Size(), buffer.FirstByte(), &bufferUsed, &propertyCount)
+	err := evtRender(0, e.handle, EvtRenderEventXML, buffer.SizeBytes(), buffer.FirstByte(), &bufferUsed, &propertyCount)
 	if err == ErrorInsufficientBuffer {
-		buffer.UpdateSize(bufferUsed)
+		buffer.UpdateSizeBytes(bufferUsed)
 		return e.RenderSimple(buffer)
 	}
 
@@ -57,9 +57,9 @@ func (e *Event) RenderFormatted(buffer Buffer, publisher Publisher) (EventXML, e
 	}
 
 	var bufferUsed uint32
-	err := evtFormatMessage(publisher.handle, e.handle, 0, 0, 0, EvtFormatMessageXML, buffer.Size(), buffer.FirstByte(), &bufferUsed)
+	err := evtFormatMessage(publisher.handle, e.handle, 0, 0, 0, EvtFormatMessageXML, buffer.SizeBytes(), buffer.FirstByte(), &bufferUsed)
 	if err == ErrorInsufficientBuffer {
-		buffer.UpdateSize(bufferUsed)
+		buffer.UpdateSizeBytes(bufferUsed)
 		return e.RenderFormatted(buffer, publisher)
 	}
 
