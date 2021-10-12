@@ -75,7 +75,7 @@ func (c SyslogParserConfig) Build(context operator.BuildContext) ([]operator.Ope
 
 	location, err := time.LoadLocation(c.Location)
 	if err != nil {
-		return nil, fmt.Errorf("failed to load location %s (is the time zone database installed?): %w", c.Location, err)
+		return nil, fmt.Errorf("failed to load location %s (is the timezone database installed?): %w", c.Location, err)
 	}
 
 	syslogParser := &SyslogParser{
