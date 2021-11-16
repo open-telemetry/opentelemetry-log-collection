@@ -11,11 +11,10 @@ require (
 	github.com/mitchellh/mapstructure v1.4.3
 	github.com/observiq/ctimefmt v1.0.0
 	github.com/observiq/nanojack v0.0.0-20201106172433-343928847ebc
-	github.com/stretchr/testify v1.7.1
-	go.opentelemetry.io/collector v0.46.0
-	go.uber.org/zap v1.21.0
-	golang.org/x/exp v0.0.0-20200331195152-e8c3332aa8e5 // indirect
-	golang.org/x/sys v0.0.0-20220307203707-22a9840ba4d7
+	github.com/stretchr/testify v1.7.0
+	go.opentelemetry.io/collector v0.42.0
+	go.uber.org/zap v1.20.0
+	golang.org/x/sys v0.0.0-20211205182925-97ca703d548d
 	golang.org/x/text v0.3.7
 	gonum.org/v1/gonum v0.11.0
 	gopkg.in/yaml.v2 v2.4.0
@@ -30,12 +29,15 @@ require (
 )
 
 require (
-	github.com/benbjohnson/clock v1.3.0 // indirect
-	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/evanphx/json-patch v4.12.0+incompatible // indirect
-	github.com/go-logr/logr v1.2.2 // indirect
+	github.com/go-logr/logr v1.2.1 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
+)
+
+require (
+	github.com/benbjohnson/clock v1.3.0 // indirect
+	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/google/go-cmp v0.5.7 // indirect
 	github.com/google/gofuzz v1.1.0 // indirect
 	github.com/googleapis/gnostic v0.5.5 // indirect
