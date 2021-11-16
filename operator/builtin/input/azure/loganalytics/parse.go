@@ -118,22 +118,23 @@ func (l *LogAnalyticsInput) parse(event azhub.Event, records map[string]interfac
 // setType sets the label 'azure_log_analytics_table'
 func (l *LogAnalyticsInput) setType(e *entry.Entry, records map[string]interface{}) (map[string]interface{}, error) {
 	const typeField = "type"
-
 	for key, value := range records {
-		if key == typeField {
-			if v, ok := value.(string); ok {
-				v = strings.ToLower(v)
+		if key != typeField {
+			continue
+		}
 
-				// Set the log table label
-				if err := l.setLabel(e, "azure_log_analytics_table", v); err != nil {
-					return nil, err
-				}
-
-				delete(records, key)
-				return records, nil
-			}
+		v, ok := value.(string)
+		if !ok {
 			return nil, fmt.Errorf("expected '%s' field to be a string", typeField)
 		}
+
+		v = strings.ToLower(v)
+		// Set the log table label
+		if err := l.setLabel(e, "azure_log_analytics_table", v); err != nil {
+			return nil, err
+		}
+		delete(records, key)
+		return records, nil
 	}
 	return nil, fmt.Errorf("expected to find field with name '%s'", typeField)
 }
