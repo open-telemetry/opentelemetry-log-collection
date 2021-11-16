@@ -141,16 +141,21 @@ func (l *LogAnalyticsInput) setType(e *entry.Entry, records map[string]interface
 // setTimestamp set the entry's timestamp using the timegenerated log analytics field
 func (l *LogAnalyticsInput) setTimestamp(e *entry.Entry, records map[string]interface{}) error {
 	for key, value := range records {
-		if key == "timegenerated" {
-			if v, ok := value.(string); ok {
-				t, err := time.Parse("2006-01-02T15:04:05.0000000Z07", v)
-				if err != nil {
-					return errors.Wrap(err, fmt.Sprintf("failed to promote timestamp from %s field", key))
-				}
-				e.Timestamp = t
-				return nil
-			}
+		if key != "timegenerated" {
+			continue
 		}
+		v, ok := value.(string)
+		if !ok {
+			continue
+		}
+
+		t, err := time.Parse("2006-01-02T15:04:05.0000000Z07", v)
+		if err != nil {
+			return errors.Wrap(err, fmt.Sprintf("failed to promote timestamp from %s field", key))
+		}
+
+		e.Timestamp = t
+		return nil
 	}
 	return nil
 }
