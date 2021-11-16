@@ -7,6 +7,7 @@ The `key_value_parser` operator parses the string-type field selected by `parse_
 | Field         | Default             | Description                                                                                                                                                                                                                              |
 | ---           | ---                 | ---                                                                                                                                                                                                                                      |
 | `id`          | `key_value_parser`  | A unique identifier for the operator                                                                                                                                                                                                     |
+| `delimiter`   | `=`                 | The delimiter used for splitting key value pairs                                                                                                                                                                                         |
 | `output`      | Next in pipeline    | The connected operator(s) that will receive all outbound entries                                                                                                                                                                         |
 | `parse_from`  | $                   | A [field](/docs/types/field.md) that indicates the field to be parsed into key value pairs                                                                                                                                               |
 | `parse_to`    | $                   | A [field](/docs/types/field.md) that indicates the field to be parsed as into key value pairs                                                                                                                                            |
@@ -18,7 +19,6 @@ The `key_value_parser` operator parses the string-type field selected by `parse_
 
 
 ### Example Configurations
-
 
 #### Parse the field `message` into key value pairs
 
@@ -38,6 +38,45 @@ Configuration:
   "timestamp": "",
   "body": {
     "message": "name=stanza"
+  }
+}
+```
+
+</td>
+<td>
+
+```json
+{
+  "timestamp": "",
+  "body": {
+    "name": "stanza"
+  }
+}
+```
+
+</td>
+</tr>
+</table>
+
+#### Parse the field `message` into key value pairs, using a non default delimiter
+
+Configuration:
+```yaml
+- type: key_value_parser
+  parse_from: message
+  delimiter: ":"
+```
+
+<table>
+<tr><td> Input body </td> <td> Output body </td></tr>
+<tr>
+<td>
+
+```json
+{
+  "timestamp": "",
+  "body": {
+    "message": "name:stanza"
   }
 }
 ```
