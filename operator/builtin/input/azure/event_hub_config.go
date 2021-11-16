@@ -50,6 +50,8 @@ func (a *AzureConfig) Build(buildContext operator.BuildContext, input helper.Inp
 		a.startAtBeginning = true
 	case "end":
 		a.startAtBeginning = false
+	default:
+		return fmt.Errorf("invalid start_at location '%s'", a.StartAt)
 	}
 
 	return a.validate()
