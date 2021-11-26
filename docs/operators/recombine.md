@@ -11,9 +11,10 @@ The `recombine` operator combines consecutive logs into single logs based on sim
 | `on_error`       | `send`           | The behavior of the operator if it encounters an error. See [on_error](/docs/types/on_error.md). |
 | `is_first_entry` |                  | An [expression](/docs/types/expression.md) that returns true if the entry being processed is the first entry in a multiline series. |
 | `is_last_entry`  |                  | An [expression](/docs/types/expression.md) that returns true if the entry being processed is the last entry in a multiline series. |
-| `combine_field`  | required         | The [field](/docs/types/field.md) from all the entries that will recombined with newlines. |
+| `combine_field`  | required         | The [field](/docs/types/field.md) from all the entries that will recombined. |
+| `combine_with`   | `\n`             | The string that is put between the combined entries. This can be an empty string as well. |
 | `max_batch_size` | 1000             | The maximum number of consecutive entries that will be combined into a single entry. |
-| `overwrite_with` | `oldest`         | Whether to use the fields from the `oldest` or the `newest` entry for all the fields that are not combined with newlines. |
+| `overwrite_with` | `oldest`         | Whether to use the fields from the `oldest` or the `newest` entry for all the fields that are not combined. |
 
 Exactly one of `is_first_entry` and `is_last_entry` must be specified.
 
