@@ -22,40 +22,44 @@ NOTE: this operator is only designed to work with a single input. It does not ke
 
 ### Example Configurations
 
+#### Recombine Kubernetes logs in the CRI format
 
-#### Recombine logs in the CRI format
-
-Logs in the CRI format have a column that indicates whether the log is a partial log (P) or the last log in a series of partial logs (F). Using this column, we can recombine the CRI logs back into complete log messages.
+Kubernetes logs in the CRI format have a tag that indicates whether the log entry is part of a longer log line (P) or the final entry (F). Using this tag, we can recombine the CRI logs back into complete log lines.
 
 Configuration:
+
 ```yaml
 - type: file_input
-  include: 
+  include:
     - ./input.log
-- type: regex_parser 
-  regex: '^(?P<timestamp>[^\s]+) (?P<stream>\w+) (?P<partial>\w) (?P<message>.*)'
+- type: regex_parser
+  regex: '^(?P<timestamp>[^\s]+) (?P<stream>\w+) (?P<logtag>\w) (?P<message>.*)'
 - type: recombine
   combine_field: message
-  is_last_entry: "$body.partial == 'F'"
+  combine_with: ""
+  is_last_entry: "$body.logtag == 'F'"
+  overwrite_with: "newest"
 ```
 
-Input file: 
+Input file:
+
 ```
-2016-10-06T00:17:09.669794202Z stdout F The content of the log entry 1
-2016-10-06T00:17:10.113242941Z stdout P First line of log entry 2
-2016-10-06T00:17:10.113242941Z stdout P Second line of the log entry 2
-2016-10-06T00:17:10.113242941Z stdout F Last line of the log entry 2
+2016-10-06T00:17:09.669794202Z stdout F Single entry log 1
+2016-10-06T00:17:10.113242941Z stdout P This is a very very long line th
+2016-10-06T00:17:10.113242941Z stdout P at is really really long and spa
+2016-10-06T00:17:10.113242941Z stdout F ns across multiple log entries
 ```
 
-Output logs: 
+Output logs:
+
 ```json
 [
   {
     "timestamp": "2020-12-04T13:03:38.41149-05:00",
     "severity": 0,
     "body": {
-      "message": "The content of the log entry 1",
-      "partial": "F",
+      "message": "Single entry log 1",
+      "logtag": "F",
       "stream": "stdout",
       "timestamp": "2016-10-06T00:17:09.669794202Z"
     }
@@ -64,8 +68,8 @@ Output logs:
     "timestamp": "2020-12-04T13:03:38.411664-05:00",
     "severity": 0,
     "body": {
-      "message": "First line of log entry 2\nSecond line of the log entry 2\nLast line of the log entry 2",
-      "partial": "P",
+      "message": "This is a very very long line that is really really long and spans across multiple log entries",
+      "logtag": "F",
       "stream": "stdout",
       "timestamp": "2016-10-06T00:17:10.113242941Z"
     }
