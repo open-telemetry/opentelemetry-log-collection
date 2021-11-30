@@ -76,3 +76,69 @@ Output logs:
   }
 ]
 ```
+
+#### Recombine stack traces into multiline logs
+
+Some apps output multiple log lines which are in fact a single log message. A common example is a stack trace:
+
+```console
+java.lang.Exception: Stack trace
+        at java.lang.Thread.dumpStack(Thread.java:1336)
+        at Main.demo3(Main.java:15)
+        at Main.demo2(Main.java:12)
+        at Main.demo1(Main.java:9)
+        at Main.demo(Main.java:6)
+        at Main.main(Main.java:3)
+```
+
+To recombine such log lines into a single log message, you need a way to tell when a log message starts or ends.
+In the example above, the first line differs from the other lines in not starting with a whitespace.
+This can be expressed with the following configuration:
+
+```yaml
+- type: recombine
+  combine_field: message
+  is_first_entry: $body.message matches "^[^\s]"
+```
+
+Given the following input file:
+
+```
+Log message 1
+Error: java.lang.Exception: Stack trace
+        at java.lang.Thread.dumpStack(Thread.java:1336)
+        at Main.demo3(Main.java:15)
+        at Main.demo2(Main.java:12)
+        at Main.demo1(Main.java:9)
+        at Main.demo(Main.java:6)
+        at Main.main(Main.java:3)
+Another log message
+```
+
+The following logs will be output:
+
+```json
+[
+  {
+    "timestamp": "2020-12-04T13:03:38.41149-05:00",
+    "severity": 0,
+    "body": {
+      "message": "Log message 1",
+    }
+  },
+  {
+    "timestamp": "2020-12-04T13:03:38.41149-05:00",
+    "severity": 0,
+    "body": {
+      "message": "Error: java.lang.Exception: Stack trace\n        at java.lang.Thread.dumpStack(Thread.java:1336)\n        at Main.demo3(Main.java:15)\n        at Main.demo2(Main.java:12)\n        at Main.demo1(Main.java:9)\n        at Main.demo(Main.java:6)\n        at Main.main(Main.java:3)",
+    }
+  },
+  {
+    "timestamp": "2020-12-04T13:03:38.41149-05:00",
+    "severity": 0,
+    "body": {
+      "message": "Another log message",
+    }
+  },
+]
+```
