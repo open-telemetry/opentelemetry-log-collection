@@ -51,7 +51,7 @@ func (c CSVParserConfig) Build(context operator.BuildContext) ([]operator.Operat
 	}
 
 	if c.Header == "" {
-		return nil, fmt.Errorf("Missing required field 'header'")
+		return nil, fmt.Errorf("missing required field 'header'")
 	}
 
 	if c.FieldDelimiter == "" {
@@ -59,7 +59,7 @@ func (c CSVParserConfig) Build(context operator.BuildContext) ([]operator.Operat
 	}
 
 	if len([]rune(c.FieldDelimiter)) != 1 {
-		return nil, fmt.Errorf("Invalid 'delimiter': '%s'", c.FieldDelimiter)
+		return nil, fmt.Errorf("invalid 'delimiter': '%s'", c.FieldDelimiter)
 	}
 
 	fieldDelimiter := []rune(c.FieldDelimiter)[0]
