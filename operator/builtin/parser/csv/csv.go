@@ -17,6 +17,7 @@ import (
 	"context"
 	csvparser "encoding/csv"
 	"fmt"
+	"io"
 	"strings"
 
 	"github.com/open-telemetry/opentelemetry-log-collection/entry"
@@ -39,8 +40,10 @@ func NewCSVParserConfig(operatorID string) *CSVParserConfig {
 type CSVParserConfig struct {
 	helper.ParserConfig `yaml:",inline"`
 
-	Header         string `json:"header" yaml:"header"`
-	FieldDelimiter string `json:"delimiter,omitempty" yaml:"delimiter,omitempty"`
+	Header          string `json:"header" yaml:"header"`
+	HeaderAttribute string `json:"header_attribute" yaml:"header_attribute"`
+	FieldDelimiter  string `json:"delimiter,omitempty" yaml:"delimiter,omitempty"`
+	LazyQuotes      bool   `json:"lazy_quotes,omitempty" yaml:"lazy_quotes,omitempty"`
 }
 
 // Build will build a csv parser operator.
@@ -50,8 +53,12 @@ func (c CSVParserConfig) Build(context operator.BuildContext) ([]operator.Operat
 		return nil, err
 	}
 
-	if c.Header == "" {
-		return nil, fmt.Errorf("Missing required field 'header'")
+	if c.Header == "" && c.HeaderAttribute == "" {
+		return nil, fmt.Errorf("missing required field 'header' or 'header_attribute'")
+	}
+
+	if c.Header != "" && c.HeaderAttribute != "" {
+		return nil, fmt.Errorf("only one header parameter can be set: 'header' or 'header_attribute'")
 	}
 
 	if c.FieldDelimiter == "" {
@@ -59,23 +66,25 @@ func (c CSVParserConfig) Build(context operator.BuildContext) ([]operator.Operat
 	}
 
 	if len([]rune(c.FieldDelimiter)) != 1 {
-		return nil, fmt.Errorf("Invalid 'delimiter': '%s'", c.FieldDelimiter)
+		return nil, fmt.Errorf("invalid 'delimiter': '%s'", c.FieldDelimiter)
 	}
 
 	fieldDelimiter := []rune(c.FieldDelimiter)[0]
 
-	if !strings.Contains(c.Header, c.FieldDelimiter) {
+	if c.HeaderAttribute == "" && !strings.Contains(c.Header, c.FieldDelimiter) {
 		return nil, fmt.Errorf("missing field delimiter in header")
 	}
 
-	numFields := len(strings.Split(c.Header, c.FieldDelimiter))
+	headers := strings.Split(c.Header, c.FieldDelimiter)
 
-	delimiterStr := string([]rune{fieldDelimiter})
 	csvParser := &CSVParser{
-		ParserOperator: parserOperator,
-		header:         strings.Split(c.Header, delimiterStr),
-		fieldDelimiter: fieldDelimiter,
-		numFields:      numFields,
+		ParserOperator:  parserOperator,
+		header:          headers,
+		headerAttribute: c.HeaderAttribute,
+		fieldDelimiter:  fieldDelimiter,
+		lazyQuotes:      c.LazyQuotes,
+
+		parse: generateParseFunc(headers, fieldDelimiter, c.LazyQuotes),
 	}
 
 	return []operator.Operator{csvParser}, nil
@@ -84,40 +93,67 @@ func (c CSVParserConfig) Build(context operator.BuildContext) ([]operator.Operat
 // CSVParser is an operator that parses csv in an entry.
 type CSVParser struct {
 	helper.ParserOperator
-	header         []string
 	fieldDelimiter rune
-	numFields      int
+	header         []string
+
+	headerAttribute string
+	lazyQuotes      bool
+	parse           parseFunc
 }
+
+type parseFunc func(interface{}) (interface{}, error)
 
 // Process will parse an entry for csv.
-func (r *CSVParser) Process(ctx context.Context, entry *entry.Entry) error {
-	return r.ParserOperator.ProcessWith(ctx, entry, r.parse)
+func (r *CSVParser) Process(ctx context.Context, e *entry.Entry) error {
+	if r.headerAttribute != "" {
+		h, ok := e.Attributes[r.headerAttribute]
+		if !ok {
+			err := fmt.Errorf("failed to read dynamic header attribute %s", r.headerAttribute)
+			r.Error(err)
+			return err
+		}
+		headers := strings.Split(h, string([]rune{r.fieldDelimiter}))
+		r.parse = generateParseFunc(headers, r.fieldDelimiter, r.lazyQuotes)
+	}
+	return r.ParserOperator.ProcessWith(ctx, e, r.parse)
 }
 
-// parse will parse a value using the supplied csv header.
-func (r *CSVParser) parse(value interface{}) (interface{}, error) {
-	var csvLine string
-	switch val := value.(type) {
-	case string:
-		csvLine = val
-	default:
-		return nil, fmt.Errorf("type '%T' cannot be parsed as csv", value)
+// generateParseFunc returns a parse function for a given header, allowing
+// each entry to have a potentially unique set of fields when using dynamic
+// field names retrieved from an entry's attribute
+func generateParseFunc(headers []string, fieldDelimiter rune, lazyQuotes bool) parseFunc {
+	return func(value interface{}) (interface{}, error) {
+		var csvLine string
+		switch t := value.(type) {
+		case string:
+			csvLine += t
+		case []byte:
+			csvLine += string(t)
+		default:
+			return nil, fmt.Errorf("type '%T' cannot be parsed as csv", value)
+		}
+
+		reader := csvparser.NewReader(strings.NewReader(csvLine))
+		reader.Comma = fieldDelimiter
+		reader.FieldsPerRecord = len(headers)
+		reader.LazyQuotes = lazyQuotes
+		parsedValues := make(map[string]interface{})
+
+		for {
+			body, err := reader.Read()
+			if err == io.EOF {
+				break
+			}
+
+			if err != nil {
+				return nil, err
+			}
+
+			for i, key := range headers {
+				parsedValues[key] = body[i]
+			}
+		}
+
+		return parsedValues, nil
 	}
-
-	reader := csvparser.NewReader(strings.NewReader(csvLine))
-	reader.Comma = r.fieldDelimiter
-	reader.FieldsPerRecord = r.numFields
-	parsedValues := make(map[string]interface{})
-
-	record, err := reader.Read()
-
-	if err != nil {
-		return nil, err
-	}
-
-	for i, key := range r.header {
-		parsedValues[key] = record[i]
-	}
-
-	return parsedValues, nil
 }
