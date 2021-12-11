@@ -72,14 +72,14 @@ func TestInputJournald(t *testing.T) {
 	require.NoError(t, err)
 	defer op.Stop()
 
-	expected := map[string]interface{}{
+	expectedBody := "run-docker-netns-4f76d707d45f.mount: Succeeded."
+	expectedAttributes := map[string]string{
 		"_BOOT_ID":                   "c4fa36de06824d21835c05ff80c54468",
 		"_CAP_EFFECTIVE":             "0",
 		"_TRANSPORT":                 "journal",
 		"_UID":                       "1000",
 		"_EXE":                       "/usr/lib/systemd/systemd",
 		"_AUDIT_LOGINUID":            "1000",
-		"MESSAGE":                    "run-docker-netns-4f76d707d45f.mount: Succeeded.",
 		"_PID":                       "13894",
 		"_CMDLINE":                   "/lib/systemd/systemd --user",
 		"_MACHINE_ID":                "d777d00e7caf45fbadedceba3975520d",
@@ -111,7 +111,8 @@ func TestInputJournald(t *testing.T) {
 
 	select {
 	case e := <-received:
-		require.Equal(t, expected, e.Body)
+		require.Equal(t, expectedAttributes, e.Attributes)
+		require.Equal(t, expectedBody, e.Body)
 	case <-time.After(time.Second):
 		require.FailNow(t, "Timed out waiting for entry to be read")
 	}

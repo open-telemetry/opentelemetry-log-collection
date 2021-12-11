@@ -222,9 +222,15 @@ func (operator *JournaldInput) parseJournalEntry(line []byte) (*entry.Entry, str
 		return nil, "", errors.New("journald field for cursor is not a string")
 	}
 
-	entry, err := operator.NewEntry(body)
+	entry, err := operator.NewEntry(body["MESSAGE"])
 	if err != nil {
 		return nil, "", fmt.Errorf("failed to create entry: %s", err)
+	}
+
+	delete(body, "MESSAGE")
+
+	for k, v := range body {
+		entry.AddAttribute(k, v.(string))
 	}
 
 	entry.Timestamp = time.Unix(0, timestampInt*1000) // in microseconds
