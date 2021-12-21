@@ -103,6 +103,9 @@ type parseFunc func(interface{}) (interface{}, error)
 
 // Process will parse an entry for csv.
 func (r *CSVParser) Process(ctx context.Context, e *entry.Entry) error {
+	parse := r.parse
+
+	// If we have a headerAttribute set we need to dynamically generate our parser function
 	if r.headerAttribute != "" {
 		h, ok := e.Attributes[r.headerAttribute]
 		if !ok {
@@ -111,9 +114,10 @@ func (r *CSVParser) Process(ctx context.Context, e *entry.Entry) error {
 			return err
 		}
 		headers := strings.Split(h, string([]rune{r.fieldDelimiter}))
-		r.parse = generateParseFunc(headers, r.fieldDelimiter, r.lazyQuotes)
+		parse = generateParseFunc(headers, r.fieldDelimiter, r.lazyQuotes)
 	}
-	return r.ParserOperator.ProcessWith(ctx, e, r.parse)
+
+	return r.ParserOperator.ProcessWith(ctx, e, parse)
 }
 
 // generateParseFunc returns a parse function for a given header, allowing
