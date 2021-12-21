@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.0] - 2021-12-21
+
+### Added
+- `force_flush_period` setting to `recombine` operator, to prevent recombine taking to long to process ([PR325](https://github.com/open-telemetry/opentelemetry-log-collection/pull/325))
+- `lazy_quotes` setting to `csv` parser operator. When enabled will preserve internal quotes in a csv field ([PR324](https://github.com/open-telemetry/opentelemetry-log-collection/pull/324))
+- `header_attribute` setting to `csv` parser operator. When set will dynamically parse the csv headers from the specified attribute on a log entry. ([PR335](https://github.com/open-telemetry/opentelemetry-log-collection/pull/335))
+
+### Changed
+- Updated CSV Parser to use idiomatic Go errors ([PR323](https://github.com/open-telemetry/opentelemetry-log-collection/pull/323))
+
 ## [0.23.0] - 2020-11-30
 
 
