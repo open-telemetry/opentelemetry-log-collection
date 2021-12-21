@@ -54,29 +54,27 @@ func (c CSVParserConfig) Build(context operator.BuildContext) ([]operator.Operat
 		return nil, err
 	}
 
-	if c.Header == "" && c.HeaderAttribute == "" {
-		return nil, errors.New("missing required field 'header' or 'header_attribute'")
-	}
-
-	if c.Header != "" && c.HeaderAttribute != "" {
-		return nil, errors.New("only one header parameter can be set: 'header' or 'header_attribute'")
-	}
-
 	if c.FieldDelimiter == "" {
 		c.FieldDelimiter = ","
 	}
+
+	fieldDelimiter := []rune(c.FieldDelimiter)[0]
 
 	if len([]rune(c.FieldDelimiter)) != 1 {
 		return nil, fmt.Errorf("invalid 'delimiter': '%s'", c.FieldDelimiter)
 	}
 
-	fieldDelimiter := []rune(c.FieldDelimiter)[0]
-
-	if c.HeaderAttribute == "" && !strings.Contains(c.Header, c.FieldDelimiter) {
+	headers := make([]string, 0)
+	switch {
+	case c.Header == "" && c.HeaderAttribute == "":
+		return nil, errors.New("missing required field 'header' or 'header_attribute'")
+	case c.Header != "" && c.HeaderAttribute != "":
+		return nil, errors.New("only one header parameter can be set: 'header' or 'header_attribute'")
+	case c.Header != "" && !strings.Contains(c.Header, c.FieldDelimiter):
 		return nil, errors.New("missing field delimiter in header")
+	case c.Header != "":
+		headers = strings.Split(c.Header, c.FieldDelimiter)
 	}
-
-	headers := strings.Split(c.Header, c.FieldDelimiter)
 
 	csvParser := &CSVParser{
 		ParserOperator:  parserOperator,

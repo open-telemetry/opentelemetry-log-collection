@@ -541,21 +541,6 @@ func TestParserCSV(t *testing.T) {
 			false,
 			false,
 		},
-		// {
-		// 	"parse-with-lazy-quotes",
-		// 	func(p *CSVParserConfig) {
-		// 		p.Header = "name,age,height,number"
-		// 		p.FieldDelimiter = ","
-		// 		p.LazyQuotes = true
-		// 	},
-		// 	`stanza "log parser",1,6ft,5`,
-		// 	map[string]interface{}{
-		// 		"name":   `stanza "log parser"`,
-		// 		"age":    "1",
-		// 		"height": "6ft",
-		// 		"number": "5",
-		// 	},
-		// },
 	}
 
 	for _, tc := range cases {
