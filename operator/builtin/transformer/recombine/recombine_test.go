@@ -37,6 +37,14 @@ func TestRecombineOperator(t *testing.T) {
 		return e
 	}
 
+	entryWithBodyAttr := func(ts time.Time, body interface{}, Attr map[string]string) *entry.Entry {
+		e := entryWithBody(ts, body)
+		for k, v := range Attr {
+			e.AddAttribute(k, v)
+		}
+		return e
+	}
+
 	cases := []struct {
 		name           string
 		config         *RecombineOperatorConfig
@@ -140,6 +148,27 @@ func TestRecombineOperator(t *testing.T) {
 				entryWithBody(t1, "test2"),
 			},
 			[]*entry.Entry{entryWithBody(t1, "test1test2")},
+		},
+		{
+			"fourEntriesTwoSourceIdentifier",
+			func() *RecombineOperatorConfig {
+				cfg := NewRecombineOperatorConfig("")
+				cfg.CombineField = entry.NewBodyField()
+				cfg.IsLastEntry = "$body == 'end'"
+				cfg.OutputIDs = []string{"fake"}
+				cfg.SourceIdentifier = entry.NewAttributeField("file.name")
+				return cfg
+			}(),
+			[]*entry.Entry{
+				entryWithBodyAttr(t1, "file1", map[string]string{"file.name": "file1"}),
+				entryWithBodyAttr(t1, "file2", map[string]string{"file.name": "file2"}),
+				entryWithBodyAttr(t2, "end", map[string]string{"file.name": "file1"}),
+				entryWithBodyAttr(t2, "end", map[string]string{"file.name": "file2"}),
+			},
+			[]*entry.Entry{
+				entryWithBodyAttr(t1, "file1\nend", map[string]string{"file.name": "file1"}),
+				entryWithBodyAttr(t1, "file2\nend", map[string]string{"file.name": "file2"}),
+			},
 		},
 	}
 
