@@ -16,7 +16,7 @@ The `recombine` operator combines consecutive logs into single logs based on sim
 | `max_batch_size`     | 1000             | The maximum number of consecutive entries that will be combined into a single entry. |
 | `overwrite_with`     | `oldest`         | Whether to use the fields from the `oldest` or the `newest` entry for all the fields that are not combined. |
 | `force_flush_period` | `5s`             | Flush timeout after which entries will be flushed aborting the wait for their sub parts to be merged with. |
-| `source_identifier`  |                  | The [field](/docs/types/field.md) to separate one source of logs from others when combining them. (i.e., `$attributes["file.path"]`) |
+| `source_identifier`  | `$attibutes["file.path"]` | The [field](/docs/types/field.md) to separate one source of logs from others when combining them. |
 
 Exactly one of `is_first_entry` and `is_last_entry` must be specified.
 

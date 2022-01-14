@@ -156,18 +156,18 @@ func TestRecombineOperator(t *testing.T) {
 				cfg.CombineField = entry.NewBodyField()
 				cfg.IsLastEntry = "$body == 'end'"
 				cfg.OutputIDs = []string{"fake"}
-				cfg.SourceIdentifier = entry.NewAttributeField("file.name")
+				cfg.SourceIdentifier = entry.NewAttributeField("file.path")
 				return cfg
 			}(),
 			[]*entry.Entry{
-				entryWithBodyAttr(t1, "file1", map[string]string{"file.name": "file1"}),
-				entryWithBodyAttr(t1, "file2", map[string]string{"file.name": "file2"}),
-				entryWithBodyAttr(t2, "end", map[string]string{"file.name": "file1"}),
-				entryWithBodyAttr(t2, "end", map[string]string{"file.name": "file2"}),
+				entryWithBodyAttr(t1, "file1", map[string]string{"file.path": "file1"}),
+				entryWithBodyAttr(t1, "file2", map[string]string{"file.path": "file2"}),
+				entryWithBodyAttr(t2, "end", map[string]string{"file.path": "file1"}),
+				entryWithBodyAttr(t2, "end", map[string]string{"file.path": "file2"}),
 			},
 			[]*entry.Entry{
-				entryWithBodyAttr(t1, "file1\nend", map[string]string{"file.name": "file1"}),
-				entryWithBodyAttr(t1, "file2\nend", map[string]string{"file.name": "file2"}),
+				entryWithBodyAttr(t1, "file1\nend", map[string]string{"file.path": "file1"}),
+				entryWithBodyAttr(t1, "file2\nend", map[string]string{"file.path": "file2"}),
 			},
 		},
 	}

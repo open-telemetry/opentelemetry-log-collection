@@ -38,9 +38,11 @@ func NewRecombineOperatorConfig(operatorID string) *RecombineOperatorConfig {
 	return &RecombineOperatorConfig{
 		TransformerConfig: helper.NewTransformerConfig(operatorID, "recombine"),
 		MaxBatchSize:      1000,
+		MaxSources:        1000,
 		CombineWith:       "\n",
 		OverwriteWith:     "oldest",
 		ForceFlushTimeout: 5 * time.Second,
+		SourceIdentifier:  entry.NewAttributeField("file.path"),
 	}
 }
 
@@ -55,6 +57,7 @@ type RecombineOperatorConfig struct {
 	SourceIdentifier         entry.Field   `json:"source_identifier"  yaml:"source_identifier"`
 	OverwriteWith            string        `json:"overwrite_with"     yaml:"overwrite_with"`
 	ForceFlushTimeout        time.Duration `json:"force_flush_period" yaml:"force_flush_period"`
+	MaxSources               int           `json:"max_sources"        yaml:"max_sources"`
 }
 
 // Build creates a new RecombineOperator from a config
@@ -107,7 +110,7 @@ func (c *RecombineOperatorConfig) Build(bc operator.BuildContext) ([]operator.Op
 		matchFirstLine:      matchesFirst,
 		prog:                prog,
 		maxBatchSize:        c.MaxBatchSize,
-		batchSize:           0,
+		maxSources:          c.MaxSources,
 		overwriteWithOldest: overwriteWithOldest,
 		batchMap:            make(map[string][]*entry.Entry),
 		combineField:        c.CombineField,
@@ -128,7 +131,7 @@ type RecombineOperator struct {
 	matchFirstLine      bool
 	prog                *vm.Program
 	maxBatchSize        int
-	batchSize           int
+	maxSources          int
 	overwriteWithOldest bool
 	combineField        entry.Field
 	combineWith         string
@@ -159,7 +162,7 @@ func (r *RecombineOperator) flushLoop() {
 				if timeSinceLastEntry < r.forceFlushTimeout {
 					continue
 				}
-				if err := r.flushSource(source); err != nil {
+				if err := r.flushSource(context.Background(), source); err != nil {
 					r.Errorf("there was error flushing combined logs %s", err)
 				}
 			}
@@ -186,6 +189,8 @@ func (r *RecombineOperator) Stop() error {
 	return nil
 }
 
+const DefaultSourceIdentifier = "DefaultSourceIdentifier"
+
 func (r *RecombineOperator) Process(ctx context.Context, e *entry.Entry) error {
 	// Lock the recombine operator because process can't run concurrently
 	r.Lock()
@@ -206,32 +211,29 @@ func (r *RecombineOperator) Process(ctx context.Context, e *entry.Entry) error {
 	// this is guaranteed to be a boolean because of expr.AsBool
 	matches := m.(bool)
 	var s string
-	if r.sourceIdentifier.FieldInterface != nil {
-		err := e.Read(r.sourceIdentifier, &s)
-		if err != nil {
-			r.Warn("entry does not contain the source_identifier, so it may be pooled with other sources")
-			s = "DefaultSourceIdentifier"
-		}
-	} else {
-		s = "DefaultSourceIdentifier"
+	err = e.Read(r.sourceIdentifier, &s)
+	if err != nil {
+		r.Warn("entry does not contain the source_identifier, so it may be pooled with other sources")
+		s = DefaultSourceIdentifier
 	}
+
 	// This is the first entry in the next batch
 	if matches && r.matchIndicatesFirst() {
 		// Flush the existing batch
-		err := r.flushSource(s)
+		err := r.flushSource(ctx, s)
 		if err != nil {
 			return err
 		}
 
 		// Add the current log to the new batch
-		r.addToBatch(ctx, e)
+		r.addToBatch(ctx, e, s)
 		return nil
 	}
 
 	// This is the last entry in a complete batch
 	if matches && r.matchIndicatesLast() {
-		r.addToBatch(ctx, e)
-		err := r.flushSource(s)
+		r.addToBatch(ctx, e, s)
+		err := r.flushSource(ctx, s)
 		if err != nil {
 			return err
 		}
@@ -240,7 +242,7 @@ func (r *RecombineOperator) Process(ctx context.Context, e *entry.Entry) error {
 
 	// This is neither the first entry of a new log,
 	// nor the last entry of a log, so just add it to the batch
-	r.addToBatch(ctx, e)
+	r.addToBatch(ctx, e, s)
 	return nil
 }
 
@@ -253,48 +255,42 @@ func (r *RecombineOperator) matchIndicatesLast() bool {
 }
 
 // addToBatch adds the current entry to the current batch of entries that will be combined
-func (r *RecombineOperator) addToBatch(_ context.Context, e *entry.Entry) {
-	var s string
-
-	if r.sourceIdentifier.FieldInterface != nil {
-		err := e.Read(r.sourceIdentifier, &s)
-		if err != nil {
-			r.Warn("entry does not contain the source_identifier, so it may be pooled with other sources")
-			s = "DefaultSourceIdentifier"
-		}
-	} else {
-		s = "DefaultSourceIdentifier"
-	}
-	if r.batchSize >= r.maxBatchSize {
+func (r *RecombineOperator) addToBatch(ctx context.Context, e *entry.Entry, source string) {
+	if len(r.batchMap[source]) >= r.maxBatchSize {
 		r.Error("Batch size exceeds max batch size. Flushing logs that have not been recombined")
-		r.flushUncombined(context.Background())
-	} else {
-		r.batchSize += 1
-		if _, ok := r.batchMap[s]; !ok {
-			r.batchMap[s] = []*entry.Entry{e}
-		} else {
-			r.batchMap[s] = append(r.batchMap[s], e)
+		err := r.flushSource(ctx, source)
+		if err != nil {
+			r.Errorf("there was error flushing combined logs %s", err)
 		}
+	}
+
+	if _, ok := r.batchMap[source]; !ok {
+		r.batchMap[source] = []*entry.Entry{e}
+	} else {
+		r.batchMap[source] = append(r.batchMap[source], e)
+	}
+
+	if len(r.batchMap) > r.maxSources {
+		r.Error("Batched source exceeds max source size. Flushing all batched logs. Consider increasing max_sources parameter")
+		r.flushUncombined(ctx)
 	}
 }
 
-// flushUncombined flushes all the logs in the batch individually to the
+// flushUncombined flushes all the logs in the batchMap by source to the
 // next output in the pipeline. This is only used when there is an error
 // or at shutdown to avoid dropping the logs.
 func (r *RecombineOperator) flushUncombined(ctx context.Context) {
-	for _, entries := range r.batchMap {
-		for _, entry := range entries {
-			r.Write(ctx, entry)
+	for source := range r.batchMap {
+		if err := r.flushSource(ctx, source); err != nil {
+			r.Errorf("there was error flushing combined logs %s", err)
 		}
 	}
 	r.batchMap = make(map[string][]*entry.Entry)
-	r.batchSize = 0
-	r.ticker.Reset(r.forceFlushTimeout)
 }
 
 // flushSource combines the entries currently in the batch into a single entry,
 // then forwards them to the next operator in the pipeline
-func (r *RecombineOperator) flushSource(source string) error {
+func (r *RecombineOperator) flushSource(ctx context.Context, source string) error {
 	// Skip flushing a combined log if the batch is empty
 	if len(r.batchMap[source]) == 0 {
 		return nil
@@ -333,10 +329,8 @@ func (r *RecombineOperator) flushSource(source string) error {
 		return err
 	}
 
-	r.Write(context.Background(), base)
+	r.Write(ctx, base)
 
-	r.batchSize -= len(r.batchMap[source])
-	r.batchMap[source] = []*entry.Entry{}
-
+	delete(r.batchMap, source)
 	return nil
 }
