@@ -156,11 +156,11 @@ func (r *RecombineOperator) flushLoop() {
 			for source, entries := range r.batchMap {
 				lastEntryTs := entries[len(entries)-1].Timestamp
 				timeSinceLastEntry := timeNow.Sub(lastEntryTs)
-				if timeSinceLastEntry > r.forceFlushTimeout {
-					err := r.flushSource(source)
-					if err != nil {
-						r.Errorf("there was error flushing combined logs %s", err)
-					}
+				if timeSinceLastEntry < r.forceFlushTimeout {
+					continue
+				}
+				if err := r.flushSource(source); err != nil {
+					r.Errorf("there was error flushing combined logs %s", err)
 				}
 			}
 
