@@ -150,13 +150,12 @@ func TestRecombineOperator(t *testing.T) {
 			[]*entry.Entry{entryWithBody(t1, "test1test2")},
 		},
 		{
-			"fourEntriesTwoSourceIdentifier",
+			"TestDefaultSourceIdentifier",
 			func() *RecombineOperatorConfig {
 				cfg := NewRecombineOperatorConfig("")
 				cfg.CombineField = entry.NewBodyField()
 				cfg.IsLastEntry = "$body == 'end'"
 				cfg.OutputIDs = []string{"fake"}
-				cfg.SourceIdentifier = entry.NewAttributeField("file.path")
 				return cfg
 			}(),
 			[]*entry.Entry{
@@ -168,6 +167,76 @@ func TestRecombineOperator(t *testing.T) {
 			[]*entry.Entry{
 				entryWithBodyAttr(t1, "file1\nend", map[string]string{"file.path": "file1"}),
 				entryWithBodyAttr(t1, "file2\nend", map[string]string{"file.path": "file2"}),
+			},
+		},
+		{
+			"TestCustomSourceIdentifier",
+			func() *RecombineOperatorConfig {
+				cfg := NewRecombineOperatorConfig("")
+				cfg.CombineField = entry.NewBodyField()
+				cfg.IsLastEntry = "$body == 'end'"
+				cfg.OutputIDs = []string{"fake"}
+				cfg.SourceIdentifier = entry.NewAttributeField("custom_source")
+				return cfg
+			}(),
+			[]*entry.Entry{
+				entryWithBodyAttr(t1, "file1", map[string]string{"custom_source": "file1"}),
+				entryWithBodyAttr(t1, "file2", map[string]string{"custom_source": "file2"}),
+				entryWithBodyAttr(t2, "end", map[string]string{"custom_source": "file1"}),
+				entryWithBodyAttr(t2, "end", map[string]string{"custom_source": "file2"}),
+			},
+			[]*entry.Entry{
+				entryWithBodyAttr(t1, "file1\nend", map[string]string{"custom_source": "file1"}),
+				entryWithBodyAttr(t1, "file2\nend", map[string]string{"custom_source": "file2"}),
+			},
+		},
+		{
+			"TestMaxSources",
+			func() *RecombineOperatorConfig {
+				cfg := NewRecombineOperatorConfig("")
+				cfg.CombineField = entry.NewBodyField()
+				cfg.IsLastEntry = "$body == 'end'"
+				cfg.OutputIDs = []string{"fake"}
+				cfg.MaxSources = 1
+				return cfg
+			}(),
+			[]*entry.Entry{
+				entryWithBodyAttr(t1, "file1", map[string]string{"file.path": "file1"}),
+				entryWithBodyAttr(t2, "end", map[string]string{"file.path": "file1"}),
+				entryWithBodyAttr(t1, "file2", map[string]string{"file.path": "file2"}),
+				entryWithBodyAttr(t1, "file3", map[string]string{"file.path": "file3"}),
+				entryWithBodyAttr(t2, "end", map[string]string{"file.path": "file2"}),
+				entryWithBodyAttr(t2, "end", map[string]string{"file.path": "file3"}),
+			},
+			[]*entry.Entry{
+				entryWithBodyAttr(t1, "file1\nend", map[string]string{"file.path": "file1"}),
+				entryWithBodyAttr(t1, "file2", map[string]string{"file.path": "file2"}),
+				entryWithBodyAttr(t1, "file3", map[string]string{"file.path": "file3"}),
+				entryWithBodyAttr(t2, "end", map[string]string{"file.path": "file2"}),
+				entryWithBodyAttr(t2, "end", map[string]string{"file.path": "file3"}),
+			},
+		},
+		{
+			"TestMaxBatchSize",
+			func() *RecombineOperatorConfig {
+				cfg := NewRecombineOperatorConfig("")
+				cfg.CombineField = entry.NewBodyField()
+				cfg.IsLastEntry = "$body == 'end'"
+				cfg.OutputIDs = []string{"fake"}
+				cfg.MaxBatchSize = 2
+				return cfg
+			}(),
+			[]*entry.Entry{
+				entryWithBodyAttr(t1, "file1_event1", map[string]string{"file.path": "file1"}),
+				entryWithBodyAttr(t2, "end", map[string]string{"file.path": "file1"}),
+				entryWithBodyAttr(t1, "file2_event1", map[string]string{"file.path": "file2"}),
+				entryWithBodyAttr(t2, "file2_event2", map[string]string{"file.path": "file2"}),
+				entryWithBodyAttr(t2, "end", map[string]string{"file.path": "file2"}),
+			},
+			[]*entry.Entry{
+				entryWithBodyAttr(t1, "file1_event1\nend", map[string]string{"file.path": "file1"}),
+				entryWithBodyAttr(t1, "file2_event1\nfile2_event2", map[string]string{"file.path": "file2"}),
+				entryWithBodyAttr(t2, "end", map[string]string{"file.path": "file2"}),
 			},
 		},
 	}

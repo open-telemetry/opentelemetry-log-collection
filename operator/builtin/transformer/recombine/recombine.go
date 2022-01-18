@@ -217,6 +217,10 @@ func (r *RecombineOperator) Process(ctx context.Context, e *entry.Entry) error {
 		s = DefaultSourceIdentifier
 	}
 
+	if s == "" {
+		s = DefaultSourceIdentifier
+	}
+
 	// This is the first entry in the next batch
 	if matches && r.matchIndicatesFirst() {
 		// Flush the existing batch
@@ -256,23 +260,20 @@ func (r *RecombineOperator) matchIndicatesLast() bool {
 
 // addToBatch adds the current entry to the current batch of entries that will be combined
 func (r *RecombineOperator) addToBatch(ctx context.Context, e *entry.Entry, source string) {
-	if len(r.batchMap[source]) >= r.maxBatchSize {
-		r.Error("Batch size exceeds max batch size. Flushing logs that have not been recombined")
-		err := r.flushSource(ctx, source)
-		if err != nil {
-			r.Errorf("there was error flushing combined logs %s", err)
-		}
-	}
-
 	if _, ok := r.batchMap[source]; !ok {
 		r.batchMap[source] = []*entry.Entry{e}
-	} else {
-		r.batchMap[source] = append(r.batchMap[source], e)
+		if len(r.batchMap) > r.maxSources {
+			r.Error("Batched source exceeds max source size. Flushing all batched logs. Consider increasing max_sources parameter")
+			r.flushUncombined(ctx)
+		}
+		return
 	}
 
-	if len(r.batchMap) > r.maxSources {
-		r.Error("Batched source exceeds max source size. Flushing all batched logs. Consider increasing max_sources parameter")
-		r.flushUncombined(ctx)
+	r.batchMap[source] = append(r.batchMap[source], e)
+	if len(r.batchMap[source]) >= r.maxBatchSize {
+		if err := r.flushSource(ctx, source); err != nil {
+			r.Errorf("there was error flushing combined logs %s", err)
+		}
 	}
 }
 
