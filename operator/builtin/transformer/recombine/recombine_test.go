@@ -203,17 +203,10 @@ func TestRecombineOperator(t *testing.T) {
 			[]*entry.Entry{
 				entryWithBodyAttr(t1, "file1", map[string]string{"file.path": "file1"}),
 				entryWithBodyAttr(t2, "end", map[string]string{"file.path": "file1"}),
-				entryWithBodyAttr(t1, "file2", map[string]string{"file.path": "file2"}),
-				entryWithBodyAttr(t1, "file3", map[string]string{"file.path": "file3"}),
-				entryWithBodyAttr(t2, "end", map[string]string{"file.path": "file2"}),
-				entryWithBodyAttr(t2, "end", map[string]string{"file.path": "file3"}),
 			},
 			[]*entry.Entry{
-				entryWithBodyAttr(t1, "file1\nend", map[string]string{"file.path": "file1"}),
-				entryWithBodyAttr(t1, "file2", map[string]string{"file.path": "file2"}),
-				entryWithBodyAttr(t1, "file3", map[string]string{"file.path": "file3"}),
-				entryWithBodyAttr(t2, "end", map[string]string{"file.path": "file2"}),
-				entryWithBodyAttr(t2, "end", map[string]string{"file.path": "file3"}),
+				entryWithBodyAttr(t1, "file1", map[string]string{"file.path": "file1"}),
+				entryWithBodyAttr(t2, "end", map[string]string{"file.path": "file1"}),
 			},
 		},
 		{

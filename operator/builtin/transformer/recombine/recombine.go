@@ -262,7 +262,7 @@ func (r *RecombineOperator) matchIndicatesLast() bool {
 func (r *RecombineOperator) addToBatch(ctx context.Context, e *entry.Entry, source string) {
 	if _, ok := r.batchMap[source]; !ok {
 		r.batchMap[source] = []*entry.Entry{e}
-		if len(r.batchMap) > r.maxSources {
+		if len(r.batchMap) >= r.maxSources {
 			r.Error("Batched source exceeds max source size. Flushing all batched logs. Consider increasing max_sources parameter")
 			r.flushUncombined(ctx)
 		}
