@@ -222,12 +222,35 @@ func (operator *JournaldInput) parseJournalEntry(line []byte) (*entry.Entry, str
 		return nil, "", errors.New("journald field for cursor is not a string")
 	}
 
-	entry, err := operator.NewEntry(body)
+	msg, ok := body["MESSAGE"]
+	if !ok {
+		return nil, "", errors.New("journald body missing MESSAGE field")
+	}
+	delete(body, "MESSAGE")
+
+	entry, err := operator.NewEntry(msg)
 	if err != nil {
 		return nil, "", fmt.Errorf("failed to create entry: %s", err)
 	}
-
 	entry.Timestamp = time.Unix(0, timestampInt*1000) // in microseconds
+
+	for k, v := range body {
+		switch k {
+		case "PRIORITY":
+			if err := addSeverity(entry, v); err != nil {
+				return nil, "", err
+			}
+		default:
+			str, ok := v.(string)
+			if !ok {
+				// attributes only supports strings at the moment
+				// https://github.com/open-telemetry/opentelemetry-log-collection/issues/190
+				continue
+			}
+			entry.AddAttribute(k, str)
+		}
+	}
+
 	return entry, cursorString, nil
 }
 
@@ -235,5 +258,42 @@ func (operator *JournaldInput) parseJournalEntry(line []byte) (*entry.Entry, str
 func (operator *JournaldInput) Stop() error {
 	operator.cancel()
 	operator.wg.Wait()
+	return nil
+}
+
+var severityMapping = [...]entry.Severity{
+	0: entry.Fatal,
+	1: entry.Error3,
+	2: entry.Error2,
+	3: entry.Error,
+	4: entry.Warn,
+	5: entry.Info2,
+	6: entry.Info,
+	7: entry.Debug,
+}
+
+var severityText = [...]string{
+	0: "emerg",
+	1: "alert",
+	2: "crit",
+	3: "err",
+	4: "warning",
+	5: "notice",
+	6: "info",
+	7: "debug",
+}
+
+func addSeverity(e *entry.Entry, sev interface{}) error {
+	sevInt, err := strconv.Atoi(sev.(string))
+	if err != nil {
+		return fmt.Errorf("severity field is not an int")
+	}
+
+	if sevInt < 0 || sevInt > 7 {
+		return fmt.Errorf("invalid severity '%d'", sevInt)
+	}
+
+	e.Severity = severityMapping[sevInt]
+	e.SeverityText = severityText[sevInt]
 	return nil
 }

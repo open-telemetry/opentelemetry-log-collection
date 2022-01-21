@@ -4,7 +4,7 @@ The `journald_input` operator reads logs from the systemd journal using the `jou
 
 By default, `journalctl` will read from `/run/journal` or `/var/log/journal`. If either `directory` or `files` are set, `journalctl` will instead read from those.
 
-The `journald_input` operator will use the `__REALTIME_TIMESTAMP` field of the journald entry as the parsed entry's timestamp. All other fields are added to the entry's body as returned by `journalctl`.
+The `journald_input` operator will use the `__REALTIME_TIMESTAMP` field of the journald entry as the parsed entry's timestamp, the `PRIORITY` field of the journald entry as the parsed entry's severity, the `MESSAGE` field of the journald entry as the parsed entry's body. All other fields are added to the entry's attributes as returned by `journalctl`.
 
 ### Configuration Fields
 
@@ -16,7 +16,6 @@ The `journald_input` operator will use the `__REALTIME_TIMESTAMP` field of the j
 | `files`           |                  | A list of journal files to read entries from. |
 | `units`           |                  | A list of units to read entries from. |
 | `priority`        | `info`           | Filter output by message priorities or priority ranges. |
-| `write_to`        | `$body`          | The body [field](/docs/types/field.md) written to when creating a new log entry. |
 | `start_at`        | `end`            | At startup, where to start reading logs from the file. Options are `beginning` or `end`. |
 | `attributes`      | {}               | A map of `key: value` pairs to add to the entry's attributes. |
 | `resource`        | {}               | A map of `key: value` pairs to add to the entry's resource. |
@@ -45,13 +44,14 @@ Output entry sample:
 ```json
 "entry": {
   "timestamp": "2020-04-16T11:05:49.516168-04:00",
-  "body": {
+  "severity": 9,
+  "severity_text": "info",
+  "body": "var-lib-docker-overlay2-bff8130ef3f66eeb81ce2102f1ac34cfa7a10fcbd1b8ae27c6c5a1543f64ddb7-merged.mount: Succeeded.",
+  "attributes": {
     "CODE_FILE": "../src/core/unit.c",
     "CODE_FUNC": "unit_log_success",
     "CODE_LINE": "5487",
-    "MESSAGE": "var-lib-docker-overlay2-bff8130ef3f66eeb81ce2102f1ac34cfa7a10fcbd1b8ae27c6c5a1543f64ddb7-merged.mount: Succeeded.",
     "MESSAGE_ID": "7ad2d189f7e94e70a38c781354912448",
-    "PRIORITY": "6",
     "SYSLOG_FACILITY": "3",
     "SYSLOG_IDENTIFIER": "systemd",
     "USER_INVOCATION_ID": "de9283b4fd634213a50f5abe71b4d951",
