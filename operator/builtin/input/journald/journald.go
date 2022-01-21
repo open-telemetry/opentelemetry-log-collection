@@ -20,6 +20,7 @@ package journald
 import (
 	"bufio"
 	"context"
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"io"
@@ -241,13 +242,9 @@ func (operator *JournaldInput) parseJournalEntry(line []byte) (*entry.Entry, str
 				return nil, "", err
 			}
 		default:
-			str, ok := v.(string)
-			if !ok {
-				// attributes only supports strings at the moment
-				// https://github.com/open-telemetry/opentelemetry-log-collection/issues/190
-				continue
+			if val := convertField(v); val != "" {
+				entry.AddAttribute(k, val)
 			}
-			entry.AddAttribute(k, str)
 		}
 	}
 
@@ -296,4 +293,18 @@ func addSeverity(e *entry.Entry, sev interface{}) error {
 	e.Severity = severityMapping[sevInt]
 	e.SeverityText = severityText[sevInt]
 	return nil
+}
+
+func convertField(val interface{}) string {
+	// attributes only supports strings at the moment
+	// in future, these should return AttributeValue types
+	// https://github.com/open-telemetry/opentelemetry-log-collection/issues/190
+	switch v := val.(type) {
+	case []byte:
+		return base64.StdEncoding.EncodeToString(v)
+	case nil:
+		return ""
+	default:
+		return fmt.Sprintf("%v", val)
+	}
 }
