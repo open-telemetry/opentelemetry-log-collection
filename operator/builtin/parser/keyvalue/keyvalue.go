@@ -80,8 +80,6 @@ func (kv *KVParser) parse(value interface{}) (interface{}, error) {
 	switch m := value.(type) {
 	case string:
 		return kv.parser(m, kv.delimiter)
-	case []byte:
-		return kv.parser(string(m), kv.delimiter)
 	default:
 		return nil, fmt.Errorf("type %T cannot be parsed as key value pairs", value)
 	}

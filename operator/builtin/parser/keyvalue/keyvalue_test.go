@@ -113,13 +113,6 @@ func TestKVParserStringFailure(t *testing.T) {
 	require.Contains(t, err.Error(), fmt.Sprintf("expected '%s' to split by '%s' into two items, got", "invalid", parser.delimiter))
 }
 
-func TestKVParserByteFailure(t *testing.T) {
-	parser := newTestParser(t)
-	_, err := parser.parse([]byte("invalid"))
-	require.Error(t, err)
-	require.Contains(t, err.Error(), fmt.Sprintf("expected '%s' to split by '%s' into two items, got", "invalid", parser.delimiter))
-}
-
 func TestKVParserInvalidType(t *testing.T) {
 	parser := newTestParser(t)
 	_, err := parser.parse([]int{})
