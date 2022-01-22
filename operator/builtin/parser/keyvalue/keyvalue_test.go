@@ -96,6 +96,26 @@ func TestBuild(t *testing.T) {
 			}(),
 			false,
 		},
+		{
+			"same-delimiter-and-pair-delimiter",
+			func() *KVParserConfig {
+				cfg := basicConfig()
+				cfg.Delimiter = "|"
+				cfg.PairDelimiter = cfg.Delimiter
+				return cfg
+			}(),
+			true,
+		},
+		{
+			"unset-delimiter",
+			func() *KVParserConfig {
+				cfg := basicConfig()
+				cfg.Delimiter = ""
+				cfg.PairDelimiter = "!"
+				return cfg
+			}(),
+			true,
+		},
 	}
 
 	for _, tc := range cases {
@@ -131,11 +151,12 @@ func TestKVImplementations(t *testing.T) {
 
 func TestKVParser(t *testing.T) {
 	cases := []struct {
-		name        string
-		configure   func(*KVParserConfig)
-		inputBody   interface{}
-		outputBody  interface{}
-		expectError bool
+		name           string
+		configure      func(*KVParserConfig)
+		inputBody      interface{}
+		outputBody     interface{}
+		expectError    bool
+		expectBuildErr bool
 	}{
 		{
 			"simple",
@@ -145,6 +166,7 @@ func TestKVParser(t *testing.T) {
 				"name": "stanza",
 				"age":  "2",
 			},
+			false,
 			false,
 		},
 		{
@@ -160,6 +182,7 @@ func TestKVParser(t *testing.T) {
 				"age":  "2",
 			},
 			false,
+			false,
 		},
 		{
 			"parse-to",
@@ -174,6 +197,7 @@ func TestKVParser(t *testing.T) {
 				},
 			},
 			false,
+			false,
 		},
 		{
 			"preserve-to",
@@ -187,6 +211,7 @@ func TestKVParser(t *testing.T) {
 				"age":  "10",
 				"test": "name=stanza age=10",
 			},
+			false,
 			false,
 		},
 		{
@@ -208,6 +233,7 @@ func TestKVParser(t *testing.T) {
 				"orig": "name=stanza age=10",
 			},
 			false,
+			false,
 		},
 		{
 			"user-agent",
@@ -216,6 +242,7 @@ func TestKVParser(t *testing.T) {
 			map[string]interface{}{
 				"requestClientApplication": `Mozilla/5.0 (Windows NT 6.1; WOW64; rv:40.0) Gecko/20100101 Firefox/40.0`,
 			},
+			false,
 			false,
 		},
 		{
@@ -227,6 +254,7 @@ func TestKVParser(t *testing.T) {
 				"age":  "2",
 			},
 			false,
+			false,
 		},
 		{
 			"single-quotes-removed",
@@ -236,6 +264,7 @@ func TestKVParser(t *testing.T) {
 				"description": "stanza deployment number 5",
 				"x":           "y",
 			},
+			false,
 			false,
 		},
 		{
@@ -247,6 +276,7 @@ func TestKVParser(t *testing.T) {
 				"age":  "2",
 			},
 			false,
+			false,
 		},
 		{
 			"leading-and-trailing-space",
@@ -256,6 +286,7 @@ func TestKVParser(t *testing.T) {
 				"name": "stanza",
 				"age":  "2",
 			},
+			false,
 			false,
 		},
 		{
@@ -276,6 +307,7 @@ func TestKVParser(t *testing.T) {
 				},
 			},
 			false,
+			false,
 		},
 		{
 			"double-delimiter",
@@ -289,6 +321,7 @@ func TestKVParser(t *testing.T) {
 				"key":  "value",
 			},
 			false,
+			false,
 		},
 		{
 			"pair-delimiter",
@@ -301,6 +334,7 @@ func TestKVParser(t *testing.T) {
 				"age":  "2",
 				"key":  "value",
 			},
+			false,
 			false,
 		},
 		{
@@ -320,6 +354,7 @@ func TestKVParser(t *testing.T) {
 				"translated_port":   "57112",
 				"translated_src_ip": "96.63.176.3",
 			},
+			false,
 			false,
 		},
 		{
@@ -357,6 +392,7 @@ func TestKVParser(t *testing.T) {
 				"n":        "3412158",
 			},
 			false,
+			false,
 		},
 		{
 			"missing-delimiter",
@@ -364,6 +400,7 @@ func TestKVParser(t *testing.T) {
 			`test text`,
 			nil,
 			true,
+			false,
 		},
 		{
 			"invalid-pair",
@@ -371,12 +408,36 @@ func TestKVParser(t *testing.T) {
 			`test=text=abc`,
 			map[string]interface{}{},
 			true,
+			false,
 		},
 		{
 			"empty-input",
 			func(kv *KVParserConfig) {},
 			"",
 			nil,
+			true,
+			false,
+		},
+		{
+			"same-delimiter-and-pair-delimiter",
+			func(kv *KVParserConfig) {
+				kv.Delimiter = "!"
+				kv.PairDelimiter = kv.Delimiter
+			},
+			"a=b c=d",
+			nil,
+			false,
+			true,
+		},
+		{
+			"unset-delimiter",
+			func(kv *KVParserConfig) {
+				kv.Delimiter = ""
+				kv.PairDelimiter = "!"
+			},
+			"a=b c=d",
+			nil,
+			false,
 			true,
 		},
 	}
@@ -388,6 +449,10 @@ func TestKVParser(t *testing.T) {
 			tc.configure(cfg)
 
 			ops, err := cfg.Build(testutil.NewBuildContext(t))
+			if tc.expectBuildErr {
+				require.Error(t, err)
+				return
+			}
 			require.NoError(t, err)
 			op := ops[0]
 
@@ -399,10 +464,11 @@ func TestKVParser(t *testing.T) {
 			err = op.Process(context.Background(), entry)
 			if tc.expectError {
 				require.Error(t, err)
-			} else {
-				require.NoError(t, err)
-				fake.ExpectBody(t, tc.outputBody)
+				return
 			}
+			require.NoError(t, err)
+			fake.ExpectBody(t, tc.outputBody)
+
 		})
 	}
 }

@@ -100,6 +100,14 @@ func TestKVParserConfig(t *testing.T) {
 				return cfg
 			}(),
 		},
+		{
+			Name: "pair_delimiter",
+			Expect: func() *KVParserConfig {
+				cfg := defaultCfg()
+				cfg.PairDelimiter = ";"
+				return cfg
+			}(),
+		},
 	}
 
 	for _, tc := range cases {

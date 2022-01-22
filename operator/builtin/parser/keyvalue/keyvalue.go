@@ -16,6 +16,7 @@ package keyvalue
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -54,8 +55,12 @@ func (c KVParserConfig) Build(context operator.BuildContext) ([]operator.Operato
 		return nil, err
 	}
 
+	if c.Delimiter == c.PairDelimiter {
+		return nil, errors.New("delimiter and pair_delimiter cannot be the same value")
+	}
+
 	if len(c.Delimiter) == 0 {
-		return nil, fmt.Errorf("delimiter is a required parameter")
+		return nil, errors.New("delimiter is a required parameter")
 	}
 
 	// split on whitespace by default, if pair delimiter is set, use
