@@ -18,11 +18,8 @@ import (
 	"context"
 	"fmt"
 	"testing"
-	"time"
 
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"go.uber.org/zap"
 
 	"github.com/open-telemetry/opentelemetry-log-collection/entry"
 	"github.com/open-telemetry/opentelemetry-log-collection/operator"
@@ -91,6 +88,15 @@ func TestBuild(t *testing.T) {
 			}(),
 			true,
 		},
+		{
+			"pair-delimiter",
+			func() *KVParserConfig {
+				cfg := basicConfig()
+				cfg.PairDelimiter = "|"
+				return cfg
+			}(),
+			false,
+		},
 	}
 
 	for _, tc := range cases {
@@ -120,150 +126,136 @@ func TestKVParserInvalidType(t *testing.T) {
 	require.Contains(t, err.Error(), "type []int cannot be parsed as key value pairs")
 }
 
-func NewFakeKVOperator() (*KVParser, *testutil.Operator) {
-	mock := testutil.Operator{}
-	logger, _ := zap.NewProduction()
-	return &KVParser{
-		ParserOperator: helper.ParserOperator{
-			TransformerOperator: helper.TransformerOperator{
-				WriterOperator: helper.WriterOperator{
-					BasicOperator: helper.BasicOperator{
-						OperatorID:    "test",
-						OperatorType:  "key_value_parser",
-						SugaredLogger: logger.Sugar(),
-					},
-					OutputOperators: []operator.Operator{&mock},
-				},
-			},
-			ParseFrom: entry.NewBodyField("testfield"),
-			ParseTo:   entry.NewBodyField("testparsed"),
-		},
-	}, &mock
-}
-
 func TestKVImplementations(t *testing.T) {
 	require.Implements(t, (*operator.Operator)(nil), new(KVParser))
 }
 
 func TestKVParser(t *testing.T) {
 	cases := []struct {
-		name          string
-		inputBody     map[string]interface{}
-		expectedBody  map[string]interface{}
-		delimiter     string
-		errorExpected bool
+		name        string
+		configure   func(*KVParserConfig)
+		inputBody   interface{}
+		outputBody  interface{}
+		expectError bool
 	}{
 		{
 			"simple",
+			func(kv *KVParserConfig) {},
+			"name=stanza age=2",
 			map[string]interface{}{
-				"testfield": "name=stanza age=2",
+				"name": "stanza",
+				"age":  "2",
+			},
+			false,
+		},
+		{
+			"parse-from",
+			func(kv *KVParserConfig) {
+				kv.ParseFrom = entry.NewBodyField("test")
 			},
 			map[string]interface{}{
-				"testparsed": map[string]interface{}{
+				"test": "name=otel age=2",
+			},
+			map[string]interface{}{
+				"name": "otel",
+				"age":  "2",
+			},
+			false,
+		},
+		{
+			"parse-to",
+			func(kv *KVParserConfig) {
+				kv.ParseTo = entry.NewBodyField("test")
+			},
+			"name=stanza age=10",
+			map[string]interface{}{
+				"test": map[string]interface{}{
 					"name": "stanza",
-					"age":  "2",
+					"age":  "10",
 				},
 			},
-			"=",
+			false,
+		},
+		{
+			"preserve-to",
+			func(kv *KVParserConfig) {
+				preserveTo := entry.NewBodyField("test")
+				kv.PreserveTo = &preserveTo
+			},
+			"name=stanza age=10",
+			map[string]interface{}{
+				"name": "stanza",
+				"age":  "10",
+				"test": "name=stanza age=10",
+			},
+			false,
+		},
+		{
+			"from-to-preserve",
+			func(kv *KVParserConfig) {
+				kv.ParseFrom = entry.NewBodyField("from")
+				kv.ParseTo = entry.NewBodyField("to")
+				orig := entry.NewBodyField("orig")
+				kv.PreserveTo = &orig
+			},
+			map[string]interface{}{
+				"from": "name=stanza age=10",
+			},
+			map[string]interface{}{
+				"to": map[string]interface{}{
+					"name": "stanza",
+					"age":  "10",
+				},
+				"orig": "name=stanza age=10",
+			},
 			false,
 		},
 		{
 			"user-agent",
+			func(kv *KVParserConfig) {},
+			`requestClientApplication="Mozilla/5.0 (Windows NT 6.1; WOW64; rv:40.0) Gecko/20100101 Firefox/40.0"`,
 			map[string]interface{}{
-				"testfield": `requestClientApplication="Mozilla/5.0 (Windows NT 6.1; WOW64; rv:40.0) Gecko/20100101 Firefox/40.0"`,
+				"requestClientApplication": `Mozilla/5.0 (Windows NT 6.1; WOW64; rv:40.0) Gecko/20100101 Firefox/40.0`,
 			},
-			map[string]interface{}{
-				"testparsed": map[string]interface{}{
-					"requestClientApplication": `Mozilla/5.0 (Windows NT 6.1; WOW64; rv:40.0) Gecko/20100101 Firefox/40.0`,
-				},
-			},
-			"=",
-			false,
-		},
-		{
-			"dell-sonic-wall",
-			map[string]interface{}{
-				"testfield": `id=LVM_Sonicwall sn=22255555 time="2021-09-22 16:30:31" fw=14.165.177.10 pri=6 c=1024 gcat=2 m=97 msg="Web site hit" srcMac=6c:0b:84:3f:fa:63 src=192.168.50.2:52006:X0 srcZone=LAN natSrc=14.165.177.10:58457 dstMac=08:b2:58:46:30:54 dst=15.159.150.83:443:X1 dstZone=WAN natDst=15.159.150.83:443 proto=tcp/https sent=1422 rcvd=5993 rule="6 (LAN->WAN)" app=48 dstname=example.space.dev.com arg=/ code=27 Category="Information Technology/Computers" note="Policy: a0, Info: 888 " n=3412158`,
-			},
-			map[string]interface{}{
-				"testparsed": map[string]interface{}{
-					"id":       "LVM_Sonicwall",
-					"sn":       "22255555",
-					"time":     "2021-09-22 16:30:31",
-					"fw":       "14.165.177.10",
-					"pri":      "6",
-					"c":        "1024",
-					"gcat":     "2",
-					"m":        "97",
-					"msg":      "Web site hit",
-					"srcMac":   "6c:0b:84:3f:fa:63",
-					"src":      "192.168.50.2:52006:X0",
-					"srcZone":  "LAN",
-					"natSrc":   "14.165.177.10:58457",
-					"dstMac":   "08:b2:58:46:30:54",
-					"dst":      "15.159.150.83:443:X1",
-					"dstZone":  "WAN",
-					"natDst":   "15.159.150.83:443",
-					"proto":    "tcp/https",
-					"sent":     "1422",
-					"rcvd":     "5993",
-					"rule":     "6 (LAN->WAN)",
-					"app":      "48",
-					"dstname":  "example.space.dev.com",
-					"arg":      "/",
-					"code":     "27",
-					"Category": "Information Technology/Computers",
-					"note":     "Policy: a0, Info: 888",
-					"n":        "3412158",
-				},
-			},
-			"=",
 			false,
 		},
 		{
 			"double-quotes-removed",
+			func(kv *KVParserConfig) {},
+			"name=\"stanza\" age=2",
 			map[string]interface{}{
-				"testfield": "name=\"stanza\" age=2",
+				"name": "stanza",
+				"age":  "2",
 			},
-			map[string]interface{}{
-				"testparsed": map[string]interface{}{
-					"name": "stanza",
-					"age":  "2",
-				},
-			},
-			"=",
 			false,
 		},
 		{
 			"double-quotes-spaces-removed",
+			func(kv *KVParserConfig) {},
+			`name=" stanza " age=2`,
 			map[string]interface{}{
-				"testfield": `name=" stanza " age=2`,
+				"name": "stanza",
+				"age":  "2",
 			},
-			map[string]interface{}{
-				"testparsed": map[string]interface{}{
-					"name": "stanza",
-					"age":  "2",
-				},
-			},
-			"=",
 			false,
 		},
 		{
 			"leading-and-trailing-space",
+			func(kv *KVParserConfig) {},
+			`" name "=" stanza " age=2`,
 			map[string]interface{}{
-				"testfield": `" name "=" stanza " age=2`,
+				"name": "stanza",
+				"age":  "2",
 			},
-			map[string]interface{}{
-				"testparsed": map[string]interface{}{
-					"name": "stanza",
-					"age":  "2",
-				},
-			},
-			"=",
 			false,
 		},
 		{
-			"bar-delimiter",
+			"delimiter",
+			func(kv *KVParserConfig) {
+				kv.Delimiter = "|"
+				kv.ParseFrom = entry.NewBodyField("testfield")
+				kv.ParseTo = entry.NewBodyField("testparsed")
+			},
 			map[string]interface{}{
 				"testfield": `name|" stanza " age|2     key|value`,
 			},
@@ -274,191 +266,134 @@ func TestKVParser(t *testing.T) {
 					"key":  "value",
 				},
 			},
-			"|",
 			false,
 		},
 		{
 			"double-delimiter",
-			map[string]interface{}{
-				"testfield": `name==" stanza " age==2     key==value`,
+			func(kv *KVParserConfig) {
+				kv.Delimiter = "=="
 			},
+			`name==" stanza " age==2     key==value`,
 			map[string]interface{}{
-				"testparsed": map[string]interface{}{
-					"name": "stanza",
-					"age":  "2",
-					"key":  "value",
-				},
+				"name": "stanza",
+				"age":  "2",
+				"key":  "value",
 			},
-			"==",
 			false,
 		},
 		{
-			"bar-delimiter",
-			map[string]interface{}{
-				"testfield": `test/value a/b 2/text`,
+			"pair-delimiter",
+			func(kv *KVParserConfig) {
+				kv.PairDelimiter = "|"
 			},
+			`name=stanza|age=2     | key=value`,
 			map[string]interface{}{
-				"testparsed": map[string]interface{}{
-					"test": "value",
-					"a":    "b",
-					"2":    "text",
-				},
+				"name": "stanza",
+				"age":  "2",
+				"key":  "value",
 			},
-			"/",
 			false,
 		},
 		{
 			"large",
+			func(kv *KVParserConfig) {},
+			"name=stanza age=1 job=\"software engineering\" location=\"grand rapids michigan\" src=\"10.3.3.76\" dst=172.217.0.10 protocol=udp sport=57112 dport=443 translated_src_ip=96.63.176.3 translated_port=57112",
 			map[string]interface{}{
-				"testfield": "name=stanza age=1 job=\"software engineering\" location=\"grand rapids michigan\" src=\"10.3.3.76\" dst=172.217.0.10 protocol=udp sport=57112 dport=443 translated_src_ip=96.63.176.3 translated_port=57112",
+				"age":               "1",
+				"dport":             "443",
+				"dst":               "172.217.0.10",
+				"job":               "software engineering",
+				"location":          "grand rapids michigan",
+				"name":              "stanza",
+				"protocol":          "udp",
+				"sport":             "57112",
+				"src":               "10.3.3.76",
+				"translated_port":   "57112",
+				"translated_src_ip": "96.63.176.3",
 			},
+			false,
+		},
+		{
+			"dell-sonic-wall",
+			func(kv *KVParserConfig) {},
+			`id=LVM_Sonicwall sn=22255555 time="2021-09-22 16:30:31" fw=14.165.177.10 pri=6 c=1024 gcat=2 m=97 msg="Web site hit" srcMac=6c:0b:84:3f:fa:63 src=192.168.50.2:52006:X0 srcZone=LAN natSrc=14.165.177.10:58457 dstMac=08:b2:58:46:30:54 dst=15.159.150.83:443:X1 dstZone=WAN natDst=15.159.150.83:443 proto=tcp/https sent=1422 rcvd=5993 rule="6 (LAN->WAN)" app=48 dstname=example.space.dev.com arg=/ code=27 Category="Information Technology/Computers" note="Policy: a0, Info: 888 " n=3412158`,
 			map[string]interface{}{
-				"testparsed": map[string]interface{}{
-					"age":               "1",
-					"dport":             "443",
-					"dst":               "172.217.0.10",
-					"job":               "software engineering",
-					"location":          "grand rapids michigan",
-					"name":              "stanza",
-					"protocol":          "udp",
-					"sport":             "57112",
-					"src":               "10.3.3.76",
-					"translated_port":   "57112",
-					"translated_src_ip": "96.63.176.3",
-				},
+				"id":       "LVM_Sonicwall",
+				"sn":       "22255555",
+				"time":     "2021-09-22 16:30:31",
+				"fw":       "14.165.177.10",
+				"pri":      "6",
+				"c":        "1024",
+				"gcat":     "2",
+				"m":        "97",
+				"msg":      "Web site hit",
+				"srcMac":   "6c:0b:84:3f:fa:63",
+				"src":      "192.168.50.2:52006:X0",
+				"srcZone":  "LAN",
+				"natSrc":   "14.165.177.10:58457",
+				"dstMac":   "08:b2:58:46:30:54",
+				"dst":      "15.159.150.83:443:X1",
+				"dstZone":  "WAN",
+				"natDst":   "15.159.150.83:443",
+				"proto":    "tcp/https",
+				"sent":     "1422",
+				"rcvd":     "5993",
+				"rule":     "6 (LAN->WAN)",
+				"app":      "48",
+				"dstname":  "example.space.dev.com",
+				"arg":      "/",
+				"code":     "27",
+				"Category": "Information Technology/Computers",
+				"note":     "Policy: a0, Info: 888",
+				"n":        "3412158",
 			},
-			"=",
 			false,
 		},
 		{
 			"missing-delimiter",
-			map[string]interface{}{
-				"testfield": `test text`,
-			},
-			map[string]interface{}{},
-			"/",
+			func(kv *KVParserConfig) {},
+			`test text`,
+			nil,
 			true,
 		},
 		{
 			"invalid-pair",
-			map[string]interface{}{
-				"testfield": `test=text=abc`,
-			},
+			func(kv *KVParserConfig) {},
+			`test=text=abc`,
 			map[string]interface{}{},
-			"=",
 			true,
 		},
 		{
 			"empty-input",
-			map[string]interface{}{
-				"testfield": "",
-			},
-			map[string]interface{}{},
-			"=",
+			func(kv *KVParserConfig) {},
+			"",
+			nil,
 			true,
 		},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			input := entry.New()
-			input.Body = tc.inputBody
+			cfg := NewKVParserConfig("test")
+			cfg.OutputIDs = []string{"fake"}
+			tc.configure(cfg)
 
-			output := entry.New()
-			output.Body = tc.expectedBody
+			ops, err := cfg.Build(testutil.NewBuildContext(t))
+			require.NoError(t, err)
+			op := ops[0]
 
-			parser, mockOutput := NewFakeKVOperator()
-			parser.delimiter = tc.delimiter
-			mockOutput.On("Process", mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
-				e := args[1].(*entry.Entry)
-				require.Equal(t, tc.expectedBody, e.Body)
-			}).Return(nil)
+			fake := testutil.NewFakeOutput(t)
+			op.SetOutputs([]operator.Operator{fake})
 
-			err := parser.Process(context.Background(), input)
-			if tc.errorExpected {
+			entry := entry.New()
+			entry.Body = tc.inputBody
+			err = op.Process(context.Background(), entry)
+			if tc.expectError {
 				require.Error(t, err)
-				return
+			} else {
+				require.NoError(t, err)
+				fake.ExpectBody(t, tc.outputBody)
 			}
-			require.NoError(t, err)
-		})
-	}
-}
-
-func TestKVParserWithEmbeddedTimeParser(t *testing.T) {
-	testTime := time.Unix(1136214245, 0)
-	cases := []struct {
-		name          string
-		inputBody     map[string]interface{}
-		expectedBody  map[string]interface{}
-		errorExpected bool
-		preserveTo    *entry.Field
-	}{
-		{
-			"simple",
-			map[string]interface{}{
-				"testfield": "timestamp=1136214245",
-			},
-			map[string]interface{}{
-				"testparsed": map[string]interface{}{},
-			},
-			false,
-			nil,
-		},
-		{
-			"preserve",
-			map[string]interface{}{
-				"testfield": "timestamp=1136214245",
-			},
-			map[string]interface{}{
-				"testparsed":         map[string]interface{}{},
-				"original_timestamp": "1136214245",
-			},
-			false,
-			func() *entry.Field {
-				f := entry.NewBodyField("original_timestamp")
-				return &f
-			}(),
-		},
-		{
-			"preserve-multi-fields",
-			map[string]interface{}{
-				"testfield": "superkey=superval timestamp=1136214245",
-			},
-			map[string]interface{}{
-				"testparsed": map[string]interface{}{
-					"superkey": "superval",
-				},
-			},
-			false,
-			nil,
-		},
-	}
-
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
-			input := entry.New()
-			input.Body = tc.inputBody
-
-			output := entry.New()
-			output.Body = tc.expectedBody
-
-			parser, mockOutput := NewFakeKVOperator()
-			parser.delimiter = "="
-			parseFrom := entry.NewBodyField("testparsed", "timestamp")
-			parser.ParserOperator.TimeParser = &helper.TimeParser{
-				ParseFrom:  &parseFrom,
-				LayoutType: "epoch",
-				Layout:     "s",
-				PreserveTo: tc.preserveTo,
-			}
-			mockOutput.On("Process", mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
-				e := args[1].(*entry.Entry)
-				require.Equal(t, tc.expectedBody, e.Body)
-				require.Equal(t, testTime, e.Timestamp)
-			}).Return(nil)
-
-			err := parser.Process(context.Background(), input)
-			require.NoError(t, err)
 		})
 	}
 }
