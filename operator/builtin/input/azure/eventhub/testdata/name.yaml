@@ -1,0 +1,2 @@
+type: azure_event_hub_input
+name: "name-otel"

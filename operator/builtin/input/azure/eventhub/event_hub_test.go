@@ -19,9 +19,16 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/open-telemetry/opentelemetry-log-collection/operator"
 	"github.com/open-telemetry/opentelemetry-log-collection/operator/builtin/input/azure"
 	"github.com/open-telemetry/opentelemetry-log-collection/testutil"
 )
+
+func TestInit(t *testing.T) {
+	builder, ok := operator.DefaultRegistry.Lookup("azure_event_hub_input")
+	require.True(t, ok, "expected azure_event_hub_input to be registered")
+	require.Equal(t, "azure_event_hub_input", builder().Type())
+}
 
 func TestBuild(t *testing.T) {
 	cases := []struct {
