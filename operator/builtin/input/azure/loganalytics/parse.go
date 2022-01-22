@@ -23,10 +23,11 @@ import (
 	"time"
 
 	azhub "github.com/Azure/azure-event-hubs-go/v3"
+	"go.uber.org/zap"
+
 	"github.com/open-telemetry/opentelemetry-log-collection/entry"
 	"github.com/open-telemetry/opentelemetry-log-collection/errors"
 	"github.com/open-telemetry/opentelemetry-log-collection/operator/builtin/input/azure"
-	"go.uber.org/zap"
 )
 
 // handleBatchedEvents handles an event received by an Event Hub consumer.

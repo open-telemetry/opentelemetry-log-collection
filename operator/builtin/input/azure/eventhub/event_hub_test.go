@@ -17,9 +17,10 @@ package eventhub
 import (
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/open-telemetry/opentelemetry-log-collection/operator/builtin/input/azure"
 	"github.com/open-telemetry/opentelemetry-log-collection/testutil"
-	"github.com/stretchr/testify/require"
 )
 
 func TestBuild(t *testing.T) {

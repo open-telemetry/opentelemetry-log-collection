@@ -20,6 +20,7 @@ import (
 	"fmt"
 
 	"github.com/Azure/azure-event-hubs-go/v3/persist"
+
 	"github.com/open-telemetry/opentelemetry-log-collection/operator"
 )
 

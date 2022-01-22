@@ -18,8 +18,9 @@ import (
 	"context"
 
 	azhub "github.com/Azure/azure-event-hubs-go/v3"
-	"github.com/open-telemetry/opentelemetry-log-collection/operator/builtin/input/azure"
 	"go.uber.org/zap"
+
+	"github.com/open-telemetry/opentelemetry-log-collection/operator/builtin/input/azure"
 )
 
 // handleEvent handles an event received by an Event Hub consumer.

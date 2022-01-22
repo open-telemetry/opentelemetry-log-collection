@@ -18,6 +18,7 @@ import (
 	"context"
 
 	jsoniter "github.com/json-iterator/go"
+
 	"github.com/open-telemetry/opentelemetry-log-collection/operator"
 	"github.com/open-telemetry/opentelemetry-log-collection/operator/builtin/input/azure"
 	"github.com/open-telemetry/opentelemetry-log-collection/operator/helper"

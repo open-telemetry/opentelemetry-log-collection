@@ -20,6 +20,7 @@ import (
 
 	azhub "github.com/Azure/azure-event-hubs-go/v3"
 	"github.com/mitchellh/mapstructure"
+
 	"github.com/open-telemetry/opentelemetry-log-collection/entry"
 )
 
