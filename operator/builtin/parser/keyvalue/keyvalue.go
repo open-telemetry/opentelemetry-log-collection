@@ -33,8 +33,9 @@ func init() {
 // NewKVParserConfig creates a new key value parser config with default values
 func NewKVParserConfig(operatorID string) *KVParserConfig {
 	return &KVParserConfig{
-		ParserConfig: helper.NewParserConfig(operatorID, "key_value_parser"),
-		Delimiter:    "=",
+		ParserConfig:  helper.NewParserConfig(operatorID, "key_value_parser"),
+		Delimiter:     "=",
+		PairDelimiter: "",
 	}
 }
 
@@ -42,7 +43,8 @@ func NewKVParserConfig(operatorID string) *KVParserConfig {
 type KVParserConfig struct {
 	helper.ParserConfig `mapstructure:",squash" yaml:",inline"`
 
-	Delimiter string `mapstructure:"delimiter" yaml:"delimiter"`
+	Delimiter     string `mapstructure:"delimiter" yaml:"delimiter"`
+	PairDelimiter string `mapstructure:"pair_delimiter" yaml:"pair_delimiter"`
 }
 
 // Build will build a key value parser operator.
@@ -56,9 +58,19 @@ func (c KVParserConfig) Build(context operator.BuildContext) ([]operator.Operato
 		return nil, fmt.Errorf("delimiter is a required parameter")
 	}
 
+	// split on whitespace by default, if pair delimiter is set, use
+	// strings.Split()
+	pairSplitFunc := splitStringByWhitespace
+	if c.PairDelimiter != "" {
+		pairSplitFunc = func(input string) []string {
+			return strings.Split(input, c.PairDelimiter)
+		}
+	}
+
 	kvParser := &KVParser{
 		ParserOperator: parserOperator,
 		delimiter:      c.Delimiter,
+		pairSplitFunc:  pairSplitFunc,
 	}
 
 	return []operator.Operator{kvParser}, nil
@@ -67,7 +79,8 @@ func (c KVParserConfig) Build(context operator.BuildContext) ([]operator.Operato
 // KVParser is an operator that parses key value pairs.
 type KVParser struct {
 	helper.ParserOperator
-	delimiter string
+	delimiter     string
+	pairSplitFunc func(input string) []string
 }
 
 // Process will parse an entry for key value pairs.
@@ -93,7 +106,7 @@ func (kv *KVParser) parser(input string, delimiter string) (map[string]interface
 	parsed := make(map[string]interface{})
 
 	var err error
-	for _, raw := range splitStringByWhitespace(input) {
+	for _, raw := range kv.pairSplitFunc(input) {
 		m := strings.Split(raw, delimiter)
 		if len(m) != 2 {
 			e := fmt.Errorf("expected '%s' to split by '%s' into two items, got %d", raw, delimiter, len(m))
