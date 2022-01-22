@@ -15,10 +15,77 @@
 package azure
 
 import (
+	"context"
+	"fmt"
+	"sync"
 	"testing"
+	"time"
 
+	"github.com/Azure/azure-event-hubs-go/v3/persist"
 	"github.com/stretchr/testify/require"
 )
+
+type mockPersisterDB struct {
+	data map[string][]byte
+	wg   sync.WaitGroup
+}
+
+func (p *mockPersisterDB) Get(ctx context.Context, key string) ([]byte, error) {
+	p.wg.Add(1)
+	defer p.wg.Done()
+
+	data, ok := p.data[key]
+	if !ok {
+		return nil, fmt.Errorf("failed to lookup key %s", key)
+	}
+	return data, nil
+}
+
+func (p *mockPersisterDB) Set(ctx context.Context, key string, data []byte) error {
+	p.wg.Add(1)
+	defer p.wg.Done()
+
+	p.data[key] = data
+	return nil
+}
+
+func (p *mockPersisterDB) Delete(ctx context.Context, key string) error {
+	return nil
+}
+
+func TestReadWrite(t *testing.T) {
+	mockDB := mockPersisterDB{}
+	mockDB.data = make(map[string][]byte)
+
+	persiter := Persister{
+		DB: &mockDB,
+	}
+
+	inputCP := persist.Checkpoint{
+		Offset:         "abc",
+		SequenceNumber: 10,
+		EnqueueTime:    time.Now().Local(),
+	}
+
+	err := persiter.Write(
+		"namespace-otel",
+		"name-otel",
+		"group-otel",
+		"partition-otel",
+		inputCP,
+	)
+	require.NoError(t, err)
+
+	outputCP, err := persiter.Read(
+		"namespace-otel",
+		"name-otel",
+		"group-otel",
+		"partition-otel",
+	)
+	require.NoError(t, err)
+
+	require.Equal(t, inputCP, outputCP)
+}
 
 func TestPersistenceKey(t *testing.T) {
 	type TestKey struct {

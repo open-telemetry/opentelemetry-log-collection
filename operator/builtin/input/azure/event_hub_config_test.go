@@ -18,7 +18,83 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+
+	"github.com/open-telemetry/opentelemetry-log-collection/operator/helper"
+	"github.com/open-telemetry/opentelemetry-log-collection/testutil"
 )
+
+func TestBuild(t *testing.T) {
+	cases := []struct {
+		name        string
+		inputConfig AzureConfig
+		h           helper.InputConfig
+		expectErr   bool
+	}{
+		{
+			"valid",
+			AzureConfig{
+				Namespace:        "namespace-otel",
+				Name:             "name-otel",
+				Group:            "group-otel",
+				ConnectionString: "connection-string-otel",
+				StartAt:          "end",
+				PrefetchCount:    1000,
+			},
+			helper.NewInputConfig("test", "test"),
+			false,
+		},
+		{
+			"start-at-beginning",
+			AzureConfig{
+				Namespace:        "namespace-otel",
+				Name:             "name-otel",
+				Group:            "group-otel",
+				ConnectionString: "connection-string-otel",
+				StartAt:          "beginning",
+				PrefetchCount:    1000,
+			},
+			helper.NewInputConfig("test", "test"),
+			false,
+		},
+		{
+			"invalid-start-at",
+			AzureConfig{
+				Namespace:        "namespace-otel",
+				Name:             "name-otel",
+				Group:            "group-otel",
+				ConnectionString: "connection-string-otel",
+				StartAt:          "bad",
+				PrefetchCount:    1000,
+			},
+			helper.NewInputConfig("test", "test"),
+			true,
+		},
+		{
+			"invalid-input-config",
+			AzureConfig{
+				Namespace:        "namespace-otel",
+				Name:             "name-otel",
+				Group:            "group-otel",
+				ConnectionString: "connection-string-otel",
+				StartAt:          "end",
+				PrefetchCount:    1000,
+			},
+			helper.InputConfig{},
+			true,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := tc.inputConfig.Build(testutil.NewBuildContext(t), tc.h)
+			if tc.expectErr {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+		})
+	}
+}
 
 func TestValidate(t *testing.T) {
 	cases := []struct {
