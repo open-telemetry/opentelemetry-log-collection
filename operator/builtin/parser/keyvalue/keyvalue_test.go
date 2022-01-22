@@ -34,6 +34,12 @@ func newTestParser(t *testing.T) *KVParser {
 	return op.(*KVParser)
 }
 
+func TestInit(t *testing.T) {
+	builder, ok := operator.DefaultRegistry.Lookup("key_value_parser")
+	require.True(t, ok, "expected key_value_parser to be registered")
+	require.Equal(t, "key_value_parser", builder().Type())
+}
+
 func TestKVParserConfigBuild(t *testing.T) {
 	config := NewKVParserConfig("test")
 	ops, err := config.Build(testutil.NewBuildContext(t))
@@ -468,7 +474,6 @@ func TestKVParser(t *testing.T) {
 			}
 			require.NoError(t, err)
 			fake.ExpectBody(t, tc.outputBody)
-
 		})
 	}
 }
@@ -496,4 +501,11 @@ func TestSplitStringByWhitespace(t *testing.T) {
 			require.Equal(t, tc.output, splitStringByWhitespace(tc.intput))
 		})
 	}
+}
+
+func TestCleanString(t *testing.T) {
+	t.Run("empty", func(t *testing.T) {
+		x := ""
+		require.Equal(t, x, cleanString(x))
+	})
 }
