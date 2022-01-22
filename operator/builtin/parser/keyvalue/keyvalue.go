@@ -128,7 +128,7 @@ func (kv *KVParser) parser(input string, delimiter string) (map[string]interface
 func splitStringByWhitespace(input string) []string {
 	quoted := false
 	raw := strings.FieldsFunc(input, func(r rune) bool {
-		if r == '"' {
+		if r == '"' || r == '\'' {
 			quoted = !quoted
 		}
 		return !quoted && r == ' '
@@ -136,13 +136,27 @@ func splitStringByWhitespace(input string) []string {
 	return raw
 }
 
-// trim leading and trailing space
+// remove surrounding quotes and trim leading and trailing space
 func cleanString(input string) string {
-	if len(input) > 0 && input[0] == '"' {
+	if len(input) < 1 {
+		return input
+	}
+
+	if input[0] == '"' {
 		input = input[1:]
 	}
-	if len(input) > 0 && input[len(input)-1] == '"' {
+
+	if input[len(input)-1] == '"' {
 		input = input[:len(input)-1]
 	}
+
+	if input[0] == '\'' {
+		input = input[1:]
+	}
+
+	if input[len(input)-1] == '\'' {
+		input = input[:len(input)-1]
+	}
+
 	return strings.TrimSpace(input)
 }

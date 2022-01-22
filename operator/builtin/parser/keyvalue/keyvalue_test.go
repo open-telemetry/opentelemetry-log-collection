@@ -229,6 +229,16 @@ func TestKVParser(t *testing.T) {
 			false,
 		},
 		{
+			"single-quotes-removed",
+			func(kv *KVParserConfig) {},
+			"description='stanza deployment number 5' x=y",
+			map[string]interface{}{
+				"description": "stanza deployment number 5",
+				"x":           "y",
+			},
+			false,
+		},
+		{
 			"double-quotes-spaces-removed",
 			func(kv *KVParserConfig) {},
 			`name=" stanza " age=2`,
