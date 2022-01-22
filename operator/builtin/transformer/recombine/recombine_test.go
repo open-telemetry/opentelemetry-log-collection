@@ -37,6 +37,14 @@ func TestRecombineOperator(t *testing.T) {
 		return e
 	}
 
+	entryWithBodyAttr := func(ts time.Time, body interface{}, Attr map[string]string) *entry.Entry {
+		e := entryWithBody(ts, body)
+		for k, v := range Attr {
+			e.AddAttribute(k, v)
+		}
+		return e
+	}
+
 	cases := []struct {
 		name           string
 		config         *RecombineOperatorConfig
@@ -125,6 +133,105 @@ func TestRecombineOperator(t *testing.T) {
 				entryWithBody(t2, "test1\ntest2"),
 			},
 		},
+		{
+			"CombineWithEmptyString",
+			func() *RecombineOperatorConfig {
+				cfg := NewRecombineOperatorConfig("")
+				cfg.CombineField = entry.NewBodyField()
+				cfg.CombineWith = ""
+				cfg.IsLastEntry = "$body == 'test2'"
+				cfg.OutputIDs = []string{"fake"}
+				return cfg
+			}(),
+			[]*entry.Entry{
+				entryWithBody(t1, "test1"),
+				entryWithBody(t1, "test2"),
+			},
+			[]*entry.Entry{entryWithBody(t1, "test1test2")},
+		},
+		{
+			"TestDefaultSourceIdentifier",
+			func() *RecombineOperatorConfig {
+				cfg := NewRecombineOperatorConfig("")
+				cfg.CombineField = entry.NewBodyField()
+				cfg.IsLastEntry = "$body == 'end'"
+				cfg.OutputIDs = []string{"fake"}
+				return cfg
+			}(),
+			[]*entry.Entry{
+				entryWithBodyAttr(t1, "file1", map[string]string{"file.path": "file1"}),
+				entryWithBodyAttr(t1, "file2", map[string]string{"file.path": "file2"}),
+				entryWithBodyAttr(t2, "end", map[string]string{"file.path": "file1"}),
+				entryWithBodyAttr(t2, "end", map[string]string{"file.path": "file2"}),
+			},
+			[]*entry.Entry{
+				entryWithBodyAttr(t1, "file1\nend", map[string]string{"file.path": "file1"}),
+				entryWithBodyAttr(t1, "file2\nend", map[string]string{"file.path": "file2"}),
+			},
+		},
+		{
+			"TestCustomSourceIdentifier",
+			func() *RecombineOperatorConfig {
+				cfg := NewRecombineOperatorConfig("")
+				cfg.CombineField = entry.NewBodyField()
+				cfg.IsLastEntry = "$body == 'end'"
+				cfg.OutputIDs = []string{"fake"}
+				cfg.SourceIdentifier = entry.NewAttributeField("custom_source")
+				return cfg
+			}(),
+			[]*entry.Entry{
+				entryWithBodyAttr(t1, "file1", map[string]string{"custom_source": "file1"}),
+				entryWithBodyAttr(t1, "file2", map[string]string{"custom_source": "file2"}),
+				entryWithBodyAttr(t2, "end", map[string]string{"custom_source": "file1"}),
+				entryWithBodyAttr(t2, "end", map[string]string{"custom_source": "file2"}),
+			},
+			[]*entry.Entry{
+				entryWithBodyAttr(t1, "file1\nend", map[string]string{"custom_source": "file1"}),
+				entryWithBodyAttr(t1, "file2\nend", map[string]string{"custom_source": "file2"}),
+			},
+		},
+		{
+			"TestMaxSources",
+			func() *RecombineOperatorConfig {
+				cfg := NewRecombineOperatorConfig("")
+				cfg.CombineField = entry.NewBodyField()
+				cfg.IsLastEntry = "$body == 'end'"
+				cfg.OutputIDs = []string{"fake"}
+				cfg.MaxSources = 1
+				return cfg
+			}(),
+			[]*entry.Entry{
+				entryWithBodyAttr(t1, "file1", map[string]string{"file.path": "file1"}),
+				entryWithBodyAttr(t2, "end", map[string]string{"file.path": "file1"}),
+			},
+			[]*entry.Entry{
+				entryWithBodyAttr(t1, "file1", map[string]string{"file.path": "file1"}),
+				entryWithBodyAttr(t2, "end", map[string]string{"file.path": "file1"}),
+			},
+		},
+		{
+			"TestMaxBatchSize",
+			func() *RecombineOperatorConfig {
+				cfg := NewRecombineOperatorConfig("")
+				cfg.CombineField = entry.NewBodyField()
+				cfg.IsLastEntry = "$body == 'end'"
+				cfg.OutputIDs = []string{"fake"}
+				cfg.MaxBatchSize = 2
+				return cfg
+			}(),
+			[]*entry.Entry{
+				entryWithBodyAttr(t1, "file1_event1", map[string]string{"file.path": "file1"}),
+				entryWithBodyAttr(t1, "file2_event1", map[string]string{"file.path": "file2"}),
+				entryWithBodyAttr(t2, "end", map[string]string{"file.path": "file1"}),
+				entryWithBodyAttr(t2, "file2_event2", map[string]string{"file.path": "file2"}),
+				entryWithBodyAttr(t2, "end", map[string]string{"file.path": "file2"}),
+			},
+			[]*entry.Entry{
+				entryWithBodyAttr(t1, "file1_event1\nend", map[string]string{"file.path": "file1"}),
+				entryWithBodyAttr(t1, "file2_event1\nfile2_event2", map[string]string{"file.path": "file2"}),
+				entryWithBodyAttr(t2, "end", map[string]string{"file.path": "file2"}),
+			},
+		},
 	}
 
 	for _, tc := range cases {
@@ -186,4 +293,79 @@ func TestRecombineOperator(t *testing.T) {
 			require.FailNow(t, "Entry was not flushed on shutdown")
 		}
 	})
+}
+
+func BenchmarkRecombine(b *testing.B) {
+	cfg := NewRecombineOperatorConfig("")
+	cfg.CombineField = entry.NewBodyField()
+	cfg.IsFirstEntry = "false"
+	cfg.OutputIDs = []string{"fake"}
+	ops, err := cfg.Build(testutil.NewBuildContext(b))
+	require.NoError(b, err)
+	recombine := ops[0].(*RecombineOperator)
+
+	fake := testutil.NewFakeOutput(b)
+	require.NoError(b, recombine.SetOutputs([]operator.Operator{fake}))
+	recombine.Start(nil)
+
+	go func() {
+		for {
+			<-fake.Received
+		}
+	}()
+
+	e := entry.New()
+	e.Timestamp = time.Now()
+	e.Body = "body"
+
+	ctx := context.Background()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		require.NoError(b, recombine.Process(ctx, e))
+		require.NoError(b, recombine.Process(ctx, e))
+		require.NoError(b, recombine.Process(ctx, e))
+		require.NoError(b, recombine.Process(ctx, e))
+		require.NoError(b, recombine.Process(ctx, e))
+		recombine.flushUncombined(ctx)
+	}
+}
+
+func TestTimeout(t *testing.T) {
+	t.Parallel()
+
+	cfg := NewRecombineOperatorConfig("")
+	cfg.CombineField = entry.NewBodyField()
+	cfg.IsFirstEntry = "false"
+	cfg.OutputIDs = []string{"fake"}
+	cfg.ForceFlushTimeout = 70 * time.Millisecond
+	ops, err := cfg.Build(testutil.NewBuildContext(t))
+	require.NoError(t, err)
+	recombine := ops[0].(*RecombineOperator)
+
+	fake := testutil.NewFakeOutput(t)
+	require.NoError(t, recombine.SetOutputs([]operator.Operator{fake}))
+	recombine.Start(nil)
+
+	e := entry.New()
+	e.Timestamp = time.Now()
+	e.Body = "body"
+
+	ctx := context.Background()
+
+	require.NoError(t, recombine.Process(ctx, e))
+	select {
+	case <-fake.Received:
+		t.Logf("We shouldn't receive an entry before timeout")
+		t.FailNow()
+	case <-time.After(50 * time.Millisecond):
+	}
+
+	select {
+	case <-fake.Received:
+	case <-time.After(5 * time.Second):
+		t.Logf("The entry should be flushed by now")
+		t.FailNow()
+	}
+
+	require.NoError(t, recombine.Stop())
 }
