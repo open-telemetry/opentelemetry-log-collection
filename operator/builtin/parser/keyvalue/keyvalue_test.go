@@ -23,7 +23,6 @@ import (
 
 	"github.com/open-telemetry/opentelemetry-log-collection/entry"
 	"github.com/open-telemetry/opentelemetry-log-collection/operator"
-	"github.com/open-telemetry/opentelemetry-log-collection/operator/helper"
 	"github.com/open-telemetry/opentelemetry-log-collection/testutil"
 )
 
@@ -420,26 +419,5 @@ func TestSplitStringByWhitespace(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			require.Equal(t, tc.output, splitStringByWhitespace(tc.intput))
 		})
-	}
-}
-
-func BenchmarkParse(b *testing.B) {
-	input := "name=stanza age=1 job=\"software engineering\" location=\"grand rapids michigan\" timestamp=1136214245 src=\"10.3.3.76\" dst=172.217.0.10 protocol=udp sport=57112 dport=443 translated_src_ip=96.63.176.3 translated_port=57112"
-
-	kv := KVParser{
-		delimiter: "=",
-	}
-
-	timeParseFrom := entry.NewBodyField("timestamp")
-	kv.ParserOperator.TimeParser = &helper.TimeParser{
-		ParseFrom:  &timeParseFrom,
-		LayoutType: "epoch",
-		Layout:     "s",
-	}
-
-	for n := 0; n < b.N; n++ {
-		if _, err := kv.parse(input); err != nil {
-			b.Fatal(err)
-		}
 	}
 }
