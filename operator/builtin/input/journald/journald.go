@@ -53,11 +53,13 @@ func NewJournaldInputConfig(operatorID string) *JournaldInputConfig {
 type JournaldInputConfig struct {
 	helper.InputConfig `mapstructure:",squash" yaml:",inline"`
 
-	Directory *string  `mapstructure:"directory,omitempty" json:"directory,omitempty" yaml:"directory,omitempty"`
-	Files     []string `mapstructure:"files,omitempty"     json:"files,omitempty"     yaml:"files,omitempty"`
-	StartAt   string   `mapstructure:"start_at,omitempty"  json:"start_at,omitempty"  yaml:"start_at,omitempty"`
-	Units     []string `mapstructure:"units,omitempty"     json:"units,omitempty"     yaml:"units,omitempty"`
-	Priority  string   `mapstructure:"priority,omitempty"  json:"priority,omitempty"  yaml:"priority,omitempty"`
+	Directory      *string           `mapstructure:"directory,omitempty" json:"directory,omitempty" yaml:"directory,omitempty"`
+	Files          []string          `mapstructure:"files,omitempty"     json:"files,omitempty"     yaml:"files,omitempty"`
+	StartAt        string            `mapstructure:"start_at,omitempty"  json:"start_at,omitempty"  yaml:"start_at,omitempty"`
+	Units          []string          `mapstructure:"units,omitempty"     json:"units,omitempty"     yaml:"units,omitempty"`
+	Priority       string            `mapstructure:"priority,omitempty"  json:"priority,omitempty"  yaml:"priority,omitempty"`
+	ResourceFields map[string]string `mapstructure:"resource_fields,omitempty"  json:"resource_fields,omitempty"  yaml:"resource_fields,omitempty"`
+	Fields         map[string]string `mapstructure:"fields,omitempty"  json:"fields,omitempty"  yaml:"fields,omitempty"`
 }
 
 // Build will build a journald input operator from the supplied configuration
@@ -101,6 +103,20 @@ func (c JournaldInputConfig) Build(buildContext operator.BuildContext) ([]operat
 		}
 	}
 
+	fields := defaultAttributeMapping
+	if c.Fields != nil {
+		for k, v := range c.Fields {
+			fields[k] = v
+		}
+	}
+
+	resource_fields := defaultResourceMapping
+	if c.ResourceFields != nil {
+		for k, v := range c.ResourceFields {
+			resource_fields[k] = v
+		}
+	}
+
 	journaldInput := &JournaldInput{
 		InputOperator: inputOperator,
 		newCmd: func(ctx context.Context, cursor []byte) cmd {
@@ -110,7 +126,9 @@ func (c JournaldInputConfig) Build(buildContext operator.BuildContext) ([]operat
 			return exec.CommandContext(ctx, "journalctl", args...) // #nosec - ...
 			// journalctl is an executable that is required for this operator to function
 		},
-		json: jsoniter.ConfigFastest,
+		json:            jsoniter.ConfigFastest,
+		fields:          fields,
+		resource_fields: resource_fields,
 	}
 	return []operator.Operator{journaldInput}, nil
 }
@@ -119,7 +137,9 @@ func (c JournaldInputConfig) Build(buildContext operator.BuildContext) ([]operat
 type JournaldInput struct {
 	helper.InputOperator
 
-	newCmd func(ctx context.Context, cursor []byte) cmd
+	newCmd          func(ctx context.Context, cursor []byte) cmd
+	fields          map[string]string
+	resource_fields map[string]string
 
 	persister operator.Persister
 	json      jsoniter.API
@@ -236,10 +256,18 @@ func (operator *JournaldInput) parseJournalEntry(line []byte) (*entry.Entry, str
 	entry.Timestamp = time.Unix(0, timestampInt*1000) // in microseconds
 
 	for k, v := range body {
-		switch k {
-		case "PRIORITY":
+		switch {
+		case k == "PRIORITY":
 			if err := addSeverity(entry, v); err != nil {
 				return nil, "", err
+			}
+		case hasFieldMapping(operator.fields, k):
+			if val := convertField(v); val != "" {
+				entry.AddAttribute(operator.fields[k], val)
+			}
+		case hasFieldMapping(operator.resource_fields, k):
+			if val := convertField(v); val != "" {
+				entry.AddResourceKey(operator.resource_fields[k], val)
 			}
 		default:
 			if val := convertField(v); val != "" {

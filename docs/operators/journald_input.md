@@ -19,6 +19,8 @@ The `journald_input` operator will use the `__REALTIME_TIMESTAMP` field of the j
 | `start_at`        | `end`            | At startup, where to start reading logs from the file. Options are `beginning` or `end`. |
 | `attributes`      | {}               | A map of `key: value` pairs to add to the entry's attributes. |
 | `resource`        | {}               | A map of `key: value` pairs to add to the entry's resource. |
+| `fields`          | Semantic Conventions | A map of journald fields to attributes. |
+| `resource_fields` | Semantic Conventions | A map of journald fields to resource attributes. |
 
 ### Example Configurations
 ```yaml
@@ -48,9 +50,9 @@ Output entry sample:
   "severity_text": "info",
   "body": "var-lib-docker-overlay2-bff8130ef3f66eeb81ce2102f1ac34cfa7a10fcbd1b8ae27c6c5a1543f64ddb7-merged.mount: Succeeded.",
   "attributes": {
-    "CODE_FILE": "../src/core/unit.c",
-    "CODE_FUNC": "unit_log_success",
-    "CODE_LINE": "5487",
+    "code.filepath": "../src/core/unit.c",
+    "code.function": "unit_log_success",
+    "code.lineno": "5487",
     "MESSAGE_ID": "7ad2d189f7e94e70a38c781354912448",
     "SYSLOG_FACILITY": "3",
     "SYSLOG_IDENTIFIER": "systemd",
@@ -60,13 +62,8 @@ Output entry sample:
     "_AUDIT_SESSION": "299",
     "_BOOT_ID": "c4fa36de06824d21835c05ff80c54468",
     "_CAP_EFFECTIVE": "0",
-    "_CMDLINE": "/lib/systemd/systemd --user",
-    "_COMM": "systemd",
-    "_EXE": "/usr/lib/systemd/systemd",
     "_GID": "1000",
-    "_HOSTNAME": "testhost",
     "_MACHINE_ID": "d777d00e7caf45fbadedceba3975520d",
-    "_PID": "18667",
     "_SELINUX_CONTEXT": "unconfined\n",
     "_SOURCE_REALTIME_TIMESTAMP": "1587049549515868",
     "_SYSTEMD_CGROUP": "/user.slice/user-1000.slice/user@1000.service/init.scope",
@@ -80,6 +77,13 @@ Output entry sample:
     "_UID": "1000",
     "__CURSOR": "s=b1e713b587ae4001a9ca482c4b12c005;i=1efec9;b=c4fa36de06824d21835c05ff80c54468;m=a001b7ec5a;t=5a369c4a3cd88;x=f9717e0b5608807b",
     "__MONOTONIC_TIMESTAMP": "687223598170"
+  },
+  "resource": {
+    "host.name": "testhost",
+    "process.pid": "18667",
+    "process.command_line": "/lib/systemd/systemd --user",
+    "process.command": "systemd",
+    "process.executable.path": "/usr/lib/systemd/systemd"
   }
 }
 ```
