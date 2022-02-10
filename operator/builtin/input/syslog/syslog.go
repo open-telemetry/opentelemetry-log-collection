@@ -33,76 +33,104 @@ func NewSyslogInputConfig(operatorID string) *SyslogInputConfig {
 	}
 }
 
-type BaseSyslogInputConfig struct {
-	helper.InputConfig `yaml:",inline"`
-	Tcp                *tcp.TCPInputConfig `json:"tcp" yaml:"tcp"`
-	Udp                *udp.UDPInputConfig `json:"udp" yaml:"udp"`
-}
-
 type SyslogInputConfig struct {
-	syslog.SyslogParserConfig `yaml:"-"`
-	helper.InputConfig        `yaml:",inline"`
-	Tcp                       *tcp.TCPInputConfig `json:"tcp" yaml:"tcp"`
-	Udp                       *udp.UDPInputConfig `json:"udp" yaml:"udp"`
+	helper.InputConfig      `yaml:",inline"`
+	syslog.SyslogBaseConfig `yaml:",inline"`
+	Tcp                     *tcp.TCPBaseConfig `json:"tcp" yaml:"tcp"`
+	Udp                     *udp.UDPBaseConfig `json:"udp" yaml:"udp"`
 }
 
 func (c SyslogInputConfig) Build(context operator.BuildContext) ([]operator.Operator, error) {
-	if c.Tcp == nil && c.Udp == nil {
-		return nil, fmt.Errorf("need tcp config or udp config")
+	inputBase, err := c.InputConfig.Build(context)
+	if err != nil {
+		return nil, err
 	}
+
 	parentID := c.InputConfig.ID()
 	if parentID == "" {
 		parentID = c.InputConfig.Type()
 	}
-	subContext := context.WithSubNamespace(parentID)
-	if c.Tcp == nil && c.Udp == nil {
-		return nil, fmt.Errorf("need tcp config or udp config")
-	}
 
-	c.SyslogParserConfig.OutputIDs = c.OutputIDs
-	ops, err := c.SyslogParserConfig.Build(subContext)
+	syslogParserCfg := syslog.NewSyslogParserConfig(parentID + "_internal_tcp")
+	syslogParserCfg.SyslogBaseConfig = c.SyslogBaseConfig
+	syslogParserCfg.SetID(parentID + "_internal_parser")
+	syslogParserCfg.OutputIDs = c.OutputIDs
+	parserOps, err := syslogParserCfg.Build(context)
 	if err != nil {
 		return nil, fmt.Errorf("failed to resolve syslog config: %s", err)
 	}
+	syslogParser := parserOps[0]
 
 	if c.Tcp != nil {
-		c.Tcp.OutputIDs = []string{ops[0].ID()}
-		inputOps, err := c.Tcp.Build(subContext)
+		tcpInputCfg := tcp.NewTCPInputConfig(parentID + "_internal_tcp")
+		tcpInputCfg.TCPBaseConfig = *c.Tcp
+		tcpInputCfg.OutputIDs = []string{syslogParser.ID()}
+		inputOps, err := tcpInputCfg.Build(context)
 		if err != nil {
 			return nil, fmt.Errorf("failed to resolve tcp config: %s", err)
 		}
-		ops = append(inputOps, ops...)
+		inputOp := inputOps[0]
+		if err := inputOp.SetOutputs([]operator.Operator{syslogParser}); err != nil {
+			return nil, fmt.Errorf("failed to set outputs")
+		}
+
+		syslogInput := &SyslogInput{
+			InputOperator: inputBase,
+			tcp:           inputOp.(*tcp.TCPInput),
+			parser:        syslogParser.(*syslog.SyslogParser),
+		}
+		return []operator.Operator{syslogInput}, nil
 	}
 
 	if c.Udp != nil {
-		c.Udp.OutputIDs = []string{ops[0].ID()}
-		inputOps, err := c.Udp.Build(context)
+		udpInputCfg := udp.NewUDPInputConfig(parentID + "_internal_udp")
+		udpInputCfg.UDPBaseConfig = *c.Udp
+		udpInputCfg.OutputIDs = []string{syslogParser.ID()}
+		inputOps, err := udpInputCfg.Build(context)
 		if err != nil {
 			return nil, fmt.Errorf("failed to resolve upd config: %s", err)
 		}
-		ops = append(inputOps, ops...)
+		inputOp := inputOps[0]
+
+		if err := inputOp.SetOutputs([]operator.Operator{syslogParser}); err != nil {
+			return nil, fmt.Errorf("failed to set outputs")
+		}
+
+		syslogInput := &SyslogInput{
+			InputOperator: inputBase,
+			udp:           inputOp.(*udp.UDPInput),
+			parser:        syslogParser.(*syslog.SyslogParser),
+		}
+		return []operator.Operator{syslogInput}, nil
 	}
 
-	return ops, nil
+	return nil, fmt.Errorf("need tcp config or udp config")
 }
 
-func (c *SyslogInputConfig) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	parserCfg := syslog.NewSyslogParserConfig("syslog_parser")
+// SyslogInput is an operator that listens for log entries over tcp.
+type SyslogInput struct {
+	helper.InputOperator
+	tcp    *tcp.TCPInput
+	udp    *udp.UDPInput
+	parser *syslog.SyslogParser
+}
 
-	err := unmarshal(parserCfg)
-	if err != nil {
+// Start will start listening for log entries over tcp or udp.
+func (t *SyslogInput) Start(p operator.Persister) error {
+	t.parser.SetOutputIDs(t.OutputIDs)
+	if err := t.parser.SetOutputs(t.WriterOperator.OutputOperators); err != nil {
 		return err
 	}
-	c.SyslogParserConfig = *parserCfg
-
-	base := &BaseSyslogInputConfig{}
-	err = unmarshal(base)
-	if err != nil {
-		return err
+	if t.tcp != nil {
+		return t.tcp.Start(p)
 	}
+	return t.udp.Start(p)
+}
 
-	c.InputConfig = base.InputConfig
-	c.Tcp = base.Tcp
-	c.Udp = base.Udp
-	return nil
+// Stop will stop listening for messages.
+func (t *SyslogInput) Stop() error {
+	if t.tcp != nil {
+		return t.tcp.Stop()
+	}
+	return t.udp.Stop()
 }
