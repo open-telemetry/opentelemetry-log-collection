@@ -41,19 +41,15 @@ type SyslogInputConfig struct {
 }
 
 func (c SyslogInputConfig) Build(context operator.BuildContext) ([]operator.Operator, error) {
+
 	inputBase, err := c.InputConfig.Build(context)
 	if err != nil {
 		return nil, err
 	}
 
-	parentID := c.InputConfig.ID()
-	if parentID == "" {
-		parentID = c.InputConfig.Type()
-	}
-
-	syslogParserCfg := syslog.NewSyslogParserConfig(parentID + "_internal_tcp")
+	syslogParserCfg := syslog.NewSyslogParserConfig(inputBase.ID() + "_internal_tcp")
 	syslogParserCfg.SyslogBaseConfig = c.SyslogBaseConfig
-	syslogParserCfg.SetID(parentID + "_internal_parser")
+	syslogParserCfg.SetID(inputBase.ID() + "_internal_parser")
 	syslogParserCfg.OutputIDs = c.OutputIDs
 	parserOps, err := syslogParserCfg.Build(context)
 	if err != nil {
@@ -62,14 +58,16 @@ func (c SyslogInputConfig) Build(context operator.BuildContext) ([]operator.Oper
 	syslogParser := parserOps[0]
 
 	if c.Tcp != nil {
-		tcpInputCfg := tcp.NewTCPInputConfig(parentID + "_internal_tcp")
+		tcpInputCfg := tcp.NewTCPInputConfig(inputBase.ID() + "_internal_tcp")
 		tcpInputCfg.TCPBaseConfig = *c.Tcp
-		tcpInputCfg.OutputIDs = []string{syslogParser.ID()}
+
 		inputOps, err := tcpInputCfg.Build(context)
 		if err != nil {
 			return nil, fmt.Errorf("failed to resolve tcp config: %s", err)
 		}
 		inputOp := inputOps[0]
+
+		inputOp.SetOutputIDs([]string{syslogParser.ID()})
 		if err := inputOp.SetOutputs([]operator.Operator{syslogParser}); err != nil {
 			return nil, fmt.Errorf("failed to set outputs")
 		}
@@ -83,15 +81,16 @@ func (c SyslogInputConfig) Build(context operator.BuildContext) ([]operator.Oper
 	}
 
 	if c.Udp != nil {
-		udpInputCfg := udp.NewUDPInputConfig(parentID + "_internal_udp")
+		udpInputCfg := udp.NewUDPInputConfig(inputBase.ID() + "_internal_udp")
 		udpInputCfg.UDPBaseConfig = *c.Udp
-		udpInputCfg.OutputIDs = []string{syslogParser.ID()}
+
 		inputOps, err := udpInputCfg.Build(context)
 		if err != nil {
 			return nil, fmt.Errorf("failed to resolve upd config: %s", err)
 		}
 		inputOp := inputOps[0]
 
+		inputOp.SetOutputIDs([]string{syslogParser.ID()})
 		if err := inputOp.SetOutputs([]operator.Operator{syslogParser}); err != nil {
 			return nil, fmt.Errorf("failed to set outputs")
 		}
