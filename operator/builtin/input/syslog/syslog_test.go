@@ -23,7 +23,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v2"
 
-	"github.com/open-telemetry/opentelemetry-log-collection/operator"
 	"github.com/open-telemetry/opentelemetry-log-collection/operator/builtin/input/tcp"
 	"github.com/open-telemetry/opentelemetry-log-collection/operator/builtin/input/udp"
 	"github.com/open-telemetry/opentelemetry-log-collection/operator/builtin/parser/syslog"
@@ -125,37 +124,6 @@ func TestSyslogIDs(t *testing.T) {
 		require.Equal(t, []string{"$.fake"}, syslogInputOp.parser.GetOutputIDs())
 		require.Equal(t, []string{"$.fake"}, syslogInputOp.GetOutputIDs())
 	})
-}
-
-func TestStartConnectsOutputs(t *testing.T) {
-	// Configure the operator without a specified output
-	cfg := NewSyslogInputConfig("test_syslog")
-	cfg.SyslogBaseConfig = syslog.NewSyslogParserConfig("test_syslog_parser").SyslogBaseConfig
-	cfg.Protocol = "RFC3164"
-	cfg.Tcp = &tcp.NewTCPInputConfig("test_syslog_tcp").TCPBaseConfig
-	cfg.Tcp.ListenAddress = ":14201"
-	bc := testutil.NewBuildContext(t)
-	ops, err := cfg.Build(bc)
-	require.NoError(t, err)
-	syslogInputOp := ops[0].(*SyslogInput)
-	require.Equal(t, []string{}, syslogInputOp.parser.GetOutputIDs())
-	require.Nil(t, syslogInputOp.parser.OutputOperators)
-
-	// Simulate the pipeline assigning a default output ID to the top level operator
-	defaultOutput := testutil.NewMockOperator("$.fake")
-	syslogInputOp.SetOutputIDs([]string{defaultOutput.ID()})
-	require.NoError(t, syslogInputOp.SetOutputs([]operator.Operator{defaultOutput}))
-
-	// Confirm that top level operator has output, but internal parser does not
-	require.Equal(t, []string{"$.fake"}, syslogInputOp.GetOutputIDs())
-	require.Equal(t, []operator.Operator{defaultOutput}, syslogInputOp.OutputOperators)
-	require.Equal(t, []string{}, syslogInputOp.parser.GetOutputIDs())
-	require.Nil(t, syslogInputOp.parser.OutputOperators)
-
-	// Start and confirm internal parser was hooked up to top level output
-	syslogInputOp.Start(testutil.NewMockPersister(""))
-	require.Equal(t, []string{"$.fake"}, syslogInputOp.parser.GetOutputIDs())
-	require.Equal(t, []operator.Operator{defaultOutput}, syslogInputOp.parser.OutputOperators)
 }
 
 func NewSyslogInputConfigWithTcp(syslogCfg *syslog.SyslogBaseConfig) *SyslogInputConfig {

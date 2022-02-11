@@ -117,10 +117,6 @@ type SyslogInput struct {
 
 // Start will start listening for log entries over tcp or udp.
 func (t *SyslogInput) Start(p operator.Persister) error {
-	t.parser.SetOutputIDs(t.OutputIDs)
-	if err := t.parser.SetOutputs(t.WriterOperator.OutputOperators); err != nil {
-		return err
-	}
 	if t.tcp != nil {
 		return t.tcp.Start(p)
 	}
@@ -133,4 +129,10 @@ func (t *SyslogInput) Stop() error {
 		return t.tcp.Stop()
 	}
 	return t.udp.Stop()
+}
+
+// SetOutputs will set the outputs of the internal syslog parser.
+func (t *SyslogInput) SetOutputs(operators []operator.Operator) error {
+	t.parser.SetOutputIDs(t.GetOutputIDs())
+	return t.parser.SetOutputs(operators)
 }
