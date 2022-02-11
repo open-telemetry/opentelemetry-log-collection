@@ -57,6 +57,8 @@ type UDPInputConfig struct {
 	helper.InputConfig `yaml:",inline"`
 	UDPBaseConfig      `yaml:",inline"`
 }
+
+// UDPBaseConfig is the details configuration of a udp input operator.
 type UDPBaseConfig struct {
 	ListenAddress string                 `mapstructure:"listen_address,omitempty"        json:"listen_address,omitempty"       yaml:"listen_address,omitempty"`
 	AddAttributes bool                   `mapstructure:"add_attributes,omitempty"        json:"add_attributes,omitempty"       yaml:"add_attributes,omitempty"`
