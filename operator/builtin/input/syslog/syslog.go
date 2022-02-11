@@ -41,7 +41,6 @@ type SyslogInputConfig struct {
 }
 
 func (c SyslogInputConfig) Build(context operator.BuildContext) ([]operator.Operator, error) {
-
 	inputBase, err := c.InputConfig.Build(context)
 	if err != nil {
 		return nil, err
