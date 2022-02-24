@@ -199,30 +199,28 @@ func (f *InputOperator) makeReaders(filesPaths []string) []*Reader {
 	// Exclude any empty fingerprints or duplicate fingerprints to avoid doubling up on copy-truncate files
 OUTER:
 	for i := 0; i < len(fps); i++ {
-		if i < len(fps) {
-			fp := fps[i]
-			if len(fp.FirstBytes) == 0 {
+		fp := fps[i]
+		if len(fp.FirstBytes) == 0 {
+			if err := files[i].Close(); err != nil {
+				f.Errorf("problem closing file", "file", files[i].Name())
+			}
+			// Empty file, don't read it until we can compare its fingerprint
+			fps = append(fps[:i], fps[i+1:]...)
+			files = append(files[:i], files[i+1:]...)
+			i--
+			continue
+		}
+		for j := i + 1; j < len(fps); j++ {
+			fp2 := fps[j]
+			if fp.StartsWith(fp2) || fp2.StartsWith(fp) {
+				// Exclude
 				if err := files[i].Close(); err != nil {
 					f.Errorf("problem closing file", "file", files[i].Name())
 				}
-				// Empty file, don't read it until we can compare its fingerprint
 				fps = append(fps[:i], fps[i+1:]...)
 				files = append(files[:i], files[i+1:]...)
 				i--
-				continue
-			}
-			for j := i + 1; j < len(fps); j++ {
-				fp2 := fps[j]
-				if fp.StartsWith(fp2) || fp2.StartsWith(fp) {
-					// Exclude
-					if err := files[i].Close(); err != nil {
-						f.Errorf("problem closing file", "file", files[i].Name())
-					}
-					fps = append(fps[:i], fps[i+1:]...)
-					files = append(files[:i], files[i+1:]...)
-					i--
-					continue OUTER
-				}
+				continue OUTER
 			}
 		}
 	}
