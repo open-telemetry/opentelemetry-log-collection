@@ -120,6 +120,7 @@ func (c *RecombineOperatorConfig) Build(logger *zap.SugaredLogger) (operator.Ope
 		ticker:              time.NewTicker(c.ForceFlushTimeout),
 		chClose:             make(chan struct{}),
 		sourceIdentifier:    c.SourceIdentifier,
+		firstLineMatched:    make(map[string]bool),
 	}, nil
 }
 
@@ -138,6 +139,9 @@ type RecombineOperator struct {
 	forceFlushTimeout   time.Duration
 	chClose             chan struct{}
 	sourceIdentifier    entry.Field
+
+	// firstLineMatched keeps information if any entry matched first line
+	firstLineMatched map[string]bool
 
 	sync.Mutex
 	batchMap map[string][]*entry.Entry
@@ -220,17 +224,26 @@ func (r *RecombineOperator) Process(ctx context.Context, e *entry.Entry) error {
 		s = DefaultSourceIdentifier
 	}
 
-	// This is the first entry in the next batch
-	if matches && r.matchIndicatesFirst() {
-		// Flush the existing batch
-		err := r.flushSource(s)
-		if err != nil {
-			return err
+	// For first entry verification
+	if r.matchIndicatesFirst() {
+		// If entry matches, set firstLineMatched for source to true
+		if !r.firstLineMatched[s] && matches {
+			r.firstLineMatched[s] = true
 		}
 
-		// Add the current log to the new batch
-		r.addToBatch(ctx, e, s)
-		return nil
+		// This is the first entry in the next batch
+		// or any entry if there wasn't any matching entry before
+		if matches || !r.firstLineMatched[s] {
+			// Flush the existing batch
+			err := r.flushSource(s)
+			if err != nil {
+				return err
+			}
+
+			// Add the current log to the new batch
+			r.addToBatch(ctx, e, s)
+			return nil
+		}
 	}
 
 	// This is the last entry in a complete batch

@@ -134,6 +134,55 @@ func TestRecombineOperator(t *testing.T) {
 			},
 		},
 		{
+			"EntriesNonMatchingForFirstEntry",
+			func() *RecombineOperatorConfig {
+				cfg := NewRecombineOperatorConfig("")
+				cfg.CombineField = entry.NewBodyField()
+				cfg.IsFirstEntry = "$body == 'test1'"
+				cfg.OutputIDs = []string{"fake"}
+				cfg.OverwriteWith = "newest"
+				return cfg
+			}(),
+			[]*entry.Entry{
+				entryWithBody(t1, "test2"),
+				entryWithBody(t2, "test3"),
+				entryWithBody(t2, "test4"),
+				entryWithBody(t2, "test5"),
+			},
+			[]*entry.Entry{
+				entryWithBody(t1, "test2"),
+				entryWithBody(t2, "test3"),
+				entryWithBody(t2, "test4"),
+			},
+		},
+		{
+			"EntriesMatchingForFirstEntryOneFileOnly",
+			func() *RecombineOperatorConfig {
+				cfg := NewRecombineOperatorConfig("")
+				cfg.CombineField = entry.NewBodyField()
+				cfg.IsFirstEntry = "$body == 'file1'"
+				cfg.OutputIDs = []string{"fake"}
+				cfg.OverwriteWith = "newest"
+				return cfg
+			}(),
+			[]*entry.Entry{
+				entryWithBodyAttr(t1, "file1", map[string]string{"file.path": "file1"}),
+				entryWithBodyAttr(t1, "file3", map[string]string{"file.path": "file1"}),
+				entryWithBodyAttr(t1, "file1", map[string]string{"file.path": "file1"}),
+				entryWithBodyAttr(t2, "file2", map[string]string{"file.path": "file1"}),
+				entryWithBodyAttr(t1, "file1", map[string]string{"file.path": "file1"}),
+				entryWithBodyAttr(t2, "file2", map[string]string{"file.path": "file2"}),
+				entryWithBodyAttr(t2, "file3", map[string]string{"file.path": "file2"}),
+				entryWithBodyAttr(t2, "file4", map[string]string{"file.path": "file2"}),
+			},
+			[]*entry.Entry{
+				entryWithBodyAttr(t1, "file1\nfile3", map[string]string{"file.path": "file1"}),
+				entryWithBodyAttr(t2, "file1\nfile2", map[string]string{"file.path": "file1"}),
+				entryWithBodyAttr(t2, "file2", map[string]string{"file.path": "file2"}),
+				entryWithBodyAttr(t2, "file3", map[string]string{"file.path": "file2"}),
+			},
+		},
+		{
 			"CombineWithEmptyString",
 			func() *RecombineOperatorConfig {
 				cfg := NewRecombineOperatorConfig("")
