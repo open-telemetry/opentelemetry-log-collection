@@ -83,7 +83,7 @@ func TestRestructureOperator(t *testing.T) {
 					&OpAdd{
 						Field: entry.NewBodyField("new"),
 						program: func() *vm.Program {
-							vm, err := expr.Compile(`$.key + "_suffix"`)
+							vm, err := expr.Compile(`body.key + "_suffix"`)
 							require.NoError(t, err)
 							return vm
 						}(),
@@ -232,11 +232,11 @@ func TestRestructureSerializeRoundtrip(t *testing.T) {
 			op: Op{&OpAdd{
 				Field: entry.NewBodyField("new"),
 				ValueExpr: func() *string {
-					s := `$.key + "_suffix"`
+					s := `body.key + "_suffix"`
 					return &s
 				}(),
 				program: func() *vm.Program {
-					vm, err := expr.Compile(`$.key + "_suffix"`)
+					vm, err := expr.Compile(`body.key + "_suffix"`)
 					require.NoError(t, err)
 					return vm
 				}(),
@@ -301,7 +301,7 @@ ops:
       value: "val"
   - add:
       field: "message_suffix"
-      value_expr: "$.message + \"_suffix\""
+      value_expr: "body.message + \"_suffix\""
   - remove: "message"
   - retain:
       - "message_retain"
@@ -324,7 +324,7 @@ ops:
   },{
     "add": {
       "field": "message_suffix",
-      "value_expr": "$.message + \"_suffix\""
+      "value_expr": "body.message + \"_suffix\""
     }
   },{
     "remove": "message"
@@ -362,11 +362,11 @@ ops:
 				{&OpAdd{
 					Field: entry.NewBodyField("message_suffix"),
 					ValueExpr: func() *string {
-						s := `$.message + "_suffix"`
+						s := `body.message + "_suffix"`
 						return &s
 					}(),
 					program: func() *vm.Program {
-						vm, err := expr.Compile(`$.message + "_suffix"`)
+						vm, err := expr.Compile(`body.message + "_suffix"`)
 						require.NoError(t, err)
 						return vm
 					}(),

@@ -360,7 +360,7 @@ func TestBodyFieldUnmarshalYAMLFailure(t *testing.T) {
 }
 
 func TestBodyFieldFromJSONDot(t *testing.T) {
-	jsonDot := "$.test"
+	jsonDot := "body.test"
 	bodyField := fromJSONDot(jsonDot)
 	expectedField := BodyField{Keys: []string{"test"}}
 	require.Equal(t, expectedField, bodyField)

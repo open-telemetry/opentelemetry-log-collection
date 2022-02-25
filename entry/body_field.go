@@ -211,7 +211,7 @@ func (f BodyField) MarshalYAML() (interface{}, error) {
 func fromJSONDot(value string) BodyField {
 	keys := strings.Split(value, ".")
 
-	if keys[0] == "$" || keys[0] == BodyPrefix {
+	if keys[0] == BodyPrefix {
 		keys = keys[1:]
 	}
 

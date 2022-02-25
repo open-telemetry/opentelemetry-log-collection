@@ -1,3 +1,3 @@
 type: move
 from: nested
-to: $body
+to: body
