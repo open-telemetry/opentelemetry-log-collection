@@ -147,7 +147,6 @@ func TestRecombineOperator(t *testing.T) {
 				entryWithBody(t1, "test2"),
 				entryWithBody(t2, "test3"),
 				entryWithBody(t2, "test4"),
-				entryWithBody(t2, "test5"),
 			},
 			[]*entry.Entry{
 				entryWithBody(t1, "test2"),
@@ -173,7 +172,6 @@ func TestRecombineOperator(t *testing.T) {
 				entryWithBodyAttr(t1, "file1", map[string]string{"file.path": "file1"}),
 				entryWithBodyAttr(t2, "file2", map[string]string{"file.path": "file2"}),
 				entryWithBodyAttr(t2, "file3", map[string]string{"file.path": "file2"}),
-				entryWithBodyAttr(t2, "file4", map[string]string{"file.path": "file2"}),
 			},
 			[]*entry.Entry{
 				entryWithBodyAttr(t1, "file1\nfile3", map[string]string{"file.path": "file1"}),
@@ -312,7 +310,7 @@ func TestRecombineOperator(t *testing.T) {
 	t.Run("FlushesOnShutdown", func(t *testing.T) {
 		cfg := NewRecombineOperatorConfig("")
 		cfg.CombineField = entry.NewBodyField()
-		cfg.IsFirstEntry = "false"
+		cfg.IsFirstEntry = "true"
 		cfg.OutputIDs = []string{"fake"}
 		op, err := cfg.Build(testutil.Logger(t))
 		require.NoError(t, err)
@@ -384,7 +382,7 @@ func TestTimeout(t *testing.T) {
 
 	cfg := NewRecombineOperatorConfig("")
 	cfg.CombineField = entry.NewBodyField()
-	cfg.IsFirstEntry = "false"
+	cfg.IsFirstEntry = "true"
 	cfg.OutputIDs = []string{"fake"}
 	cfg.ForceFlushTimeout = 100 * time.Millisecond
 	op, err := cfg.Build(testutil.Logger(t))
