@@ -24,7 +24,7 @@ require (
 	k8s.io/client-go v0.23.4
 )
 
-require go.uber.org/multierr v1.7.0
+require go.uber.org/multierr v1.8.0
 
 require (
 	github.com/benbjohnson/clock v1.3.0 // indirect
