@@ -234,14 +234,11 @@ func (r *RecombineOperator) Process(ctx context.Context, e *entry.Entry) error {
 		return nil
 	// This is the last entry in a complete batch
 	case matches && r.matchIndicatesLast():
-		r.addToBatch(ctx, e, s)
-		err := r.flushSource(s)
-		if err != nil {
-			return err
-		}
-		return nil
+		fallthrough
 	// When matching on first entry, never batch partial first. Just emit immediately
 	case !matches && r.matchIndicatesFirst() && len(r.batchMap[s]) == 0:
+		r.addToBatch(ctx, e, s)
+		return r.flushSource(s)
 		r.addToBatch(ctx, e, s)
 		err := r.flushSource(s)
 		if err != nil {
