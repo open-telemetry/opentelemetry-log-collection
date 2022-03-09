@@ -579,6 +579,17 @@ func TestParserCSVMultiline(t *testing.T) {
 		expected map[string]interface{}
 	}{
 		{
+			"no_newlines",
+			"aaaa,bbbb,cccc,dddd,eeee",
+			map[string]interface{}{
+				"A": "aaaa",
+				"B": "bbbb",
+				"C": "cccc",
+				"D": "dddd",
+				"E": "eeee",
+			},
+		},
+		{
 			"first_field",
 			"aa\naa,bbbb,cccc,dddd,eeee",
 			map[string]interface{}{
@@ -718,6 +729,43 @@ func TestParserCSVMultiline(t *testing.T) {
 				"B": "\nbb\nbb\n",
 				"C": "cc\ncc\n",
 				"D": "\ndddd\n",
+				"E": "eeee",
+			},
+		},
+		{
+			"literal_return",
+			`aaaa,bb
+bb,cccc,dd
+dd,eeee`,
+			map[string]interface{}{
+				"A": "aaaa",
+				"B": "bb\nbb",
+				"C": "cccc",
+				"D": "dd\ndd",
+				"E": "eeee",
+			},
+		},
+		{
+			"return_in_quotes",
+			`aaaa,"bbbb","cc
+cc",dddd,eeee`,
+			map[string]interface{}{
+				"A": "aaaa",
+				"B": "bbbb",
+				"C": "cc\ncc",
+				"D": "dddd",
+				"E": "eeee",
+			},
+		},
+		{
+			"return_in_double_quotes",
+			`aaaa,"""bbbb""","""cc
+cc""",dddd,eeee`,
+			map[string]interface{}{
+				"A": "aaaa",
+				"B": "\"bbbb\"",
+				"C": "\"cc\ncc\"",
+				"D": "dddd",
 				"E": "eeee",
 			},
 		},
