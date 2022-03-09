@@ -163,8 +163,8 @@ func generateParseFunc(headers []string, fieldDelimiter rune, lazyQuotes bool) p
 
 		/*
 			This parser is parsing a single value, which came from a single log entry.
-			Therefore, if there are multiple lines they should be joined.
-			Each subsequent line contains a continuation of the last field in the previous body.
+			Therefore, if there are multiple lines here, it should be assumed that each
+			subsequent line contains a continuation of the last field in the previous line.
 
 			Given an file w/ headers "A,B,C,D,E"
 			and contents "aa,b\nb,cc,d\nd,ee",
