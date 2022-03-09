@@ -10,13 +10,13 @@ require (
 	github.com/json-iterator/go v1.1.12
 	github.com/mitchellh/mapstructure v1.4.3
 	github.com/observiq/ctimefmt v1.0.0
-	github.com/observiq/go-syslog/v3 v3.0.2
+	github.com/observiq/go-syslog/v3 v3.1.0
 	github.com/observiq/nanojack v0.0.0-20201106172433-343928847ebc
 	github.com/stretchr/testify v1.7.0
 	go.opentelemetry.io/collector v0.46.0
 	go.uber.org/zap v1.21.0
 	golang.org/x/exp v0.0.0-20200331195152-e8c3332aa8e5 // indirect
-	golang.org/x/sys v0.0.0-20220114195835-da31bd327af9
+	golang.org/x/sys v0.0.0-20220307203707-22a9840ba4d7
 	golang.org/x/text v0.3.7
 	gonum.org/v1/gonum v0.9.3
 	gopkg.in/yaml.v2 v2.4.0
@@ -25,7 +25,7 @@ require (
 	k8s.io/client-go v0.23.4
 )
 
-require go.uber.org/multierr v1.7.0
+require go.uber.org/multierr v1.8.0
 
 require (
 	github.com/benbjohnson/clock v1.3.0 // indirect
