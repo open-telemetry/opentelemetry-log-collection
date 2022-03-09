@@ -166,8 +166,7 @@ func generateParseFunc(headers []string, fieldDelimiter rune, lazyQuotes bool) p
 			Therefore, if there are multiple lines here, it should be assumed that each
 			subsequent line contains a continuation of the last field in the previous line.
 
-			Given an file w/ headers "A,B,C,D,E"
-			and contents "aa,b\nb,cc,d\nd,ee",
+			Given a file w/ headers "A,B,C,D,E" and contents "aa,b\nb,cc,d\nd,ee",
 			expect reader.Read() to return bodies:
 			- ["aa","b"]
 			- ["b","cc","d"]
@@ -181,7 +180,7 @@ func generateParseFunc(headers []string, fieldDelimiter rune, lazyQuotes bool) p
 			// The first element of the next line is a continuation of the previous line's last element
 			joinedLine[len(joinedLine)-1] += "\n" + nextLine[0]
 
-			// The rest of the elements are separate elements
+			// The remainder are separate elements
 			for n := 1; n < len(nextLine); n++ {
 				joinedLine = append(joinedLine, nextLine[n])
 			}
