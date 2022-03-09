@@ -711,7 +711,7 @@ func TestParserCSVMultiline(t *testing.T) {
 			},
 		},
 		{
-			"empty_lines",
+			"empty_lines_unquoted",
 			"aa\n\naa,bbbb,c\n\nccc,dddd,eee\n\ne",
 			map[string]interface{}{
 				"A": "aa\naa",
@@ -722,12 +722,23 @@ func TestParserCSVMultiline(t *testing.T) {
 			},
 		},
 		{
+			"empty_lines_quoted",
+			"\"aa\n\naa\",bbbb,\"c\n\nccc\",dddd,\"eee\n\ne\"",
+			map[string]interface{}{
+				"A": "aa\n\naa",
+				"B": "bbbb",
+				"C": "c\n\nccc",
+				"D": "dddd",
+				"E": "eee\n\ne",
+			},
+		},
+		{
 			"everything",
-			"\n\na\na\n\naa,\n\nbb\nbb\n\n,cc\ncc\n\n,\ndddd\n,eeee\n\n",
+			"\n\na\na\n\naa,\n\nbb\nbb\n\n,\"cc\ncc\n\n\",\ndddd\n,eeee\n\n",
 			map[string]interface{}{
 				"A": "a\na\naa",
 				"B": "\nbb\nbb\n",
-				"C": "cc\ncc\n",
+				"C": "cc\ncc\n\n",
 				"D": "\ndddd\n",
 				"E": "eeee",
 			},
@@ -747,8 +758,7 @@ dd,eeee`,
 		},
 		{
 			"return_in_quotes",
-			`aaaa,"bbbb","cc
-cc",dddd,eeee`,
+			"aaaa,\"bbbb\",\"cc\ncc\",dddd,eeee",
 			map[string]interface{}{
 				"A": "aaaa",
 				"B": "bbbb",
