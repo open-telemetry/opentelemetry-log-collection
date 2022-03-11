@@ -163,7 +163,7 @@ func TestRecombineOperator(t *testing.T) {
 			func() *RecombineOperatorConfig {
 				cfg := NewRecombineOperatorConfig("")
 				cfg.CombineField = entry.NewBodyField()
-				cfg.IsFirstEntry = "$body == 'file1'"
+				cfg.IsFirstEntry = "body == 'file1'"
 				cfg.OutputIDs = []string{"fake"}
 				cfg.OverwriteWith = "newest"
 				return cfg
