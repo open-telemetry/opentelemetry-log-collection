@@ -67,7 +67,7 @@ func TestGoldenConfig(t *testing.T) {
 				}
 				return cfg
 			}(),
-			false,
+			true,
 		},
 	}
 	for _, tc := range cases {

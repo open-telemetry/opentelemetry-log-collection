@@ -201,9 +201,9 @@ func TestFieldFromString(t *testing.T) {
 		expectedError bool
 	}{
 		{
-			"SimpleBody",
-			"test",
-			Field{BodyField{[]string{"test"}}},
+			"Body",
+			"body",
+			Field{BodyField{[]string{}}},
 			false,
 		},
 		{
@@ -229,6 +229,72 @@ func TestFieldFromString(t *testing.T) {
 			"attributes.test.bar",
 			Field{},
 			true,
+		},
+		{
+			"SimpleResource",
+			"resource.test",
+			Field{ResourceField{"test"}},
+			false,
+		},
+		{
+			"ResourceTooManyFields",
+			"resource.test.bar",
+			Field{},
+			true,
+		},
+		{
+			"DeprecatedBodyPrefix",
+			"$body.test",
+			Field{BodyField{[]string{"test"}}},
+			false,
+		},
+		{
+			"DeprecatedBodyPrefixBracketed",
+			"$body['test.foo']",
+			Field{BodyField{[]string{"test.foo"}}},
+			false,
+		},
+		{
+			"DeprecatedBodyPrefixDoubleBracketed",
+			"$body['test.foo']['bar']",
+			Field{BodyField{[]string{"test.foo", "bar"}}},
+			false,
+		},
+		{
+			"DeprecatedBodyShorthand",
+			"$.test",
+			Field{BodyField{[]string{"test"}}},
+			false,
+		},
+		{
+			"DeprecatedBodyShorthandBracketed",
+			"$['test.foo']",
+			Field{BodyField{[]string{"test.foo"}}},
+			false,
+		},
+		{
+			"DeprecatedAttributesPrefix",
+			"$attributes.test",
+			Field{AttributeField{"test"}},
+			false,
+		},
+		{
+			"DeprecatedAttributesPrefixBracketed",
+			"$attributes['test.foo']",
+			Field{AttributeField{"test.foo"}},
+			false,
+		},
+		{
+			"DeprecatedResourcePrefix",
+			"$resource.test",
+			Field{ResourceField{"test"}},
+			false,
+		},
+		{
+			"DeprecatedResourcePrefixBracketed",
+			"$resource['test.foo']",
+			Field{ResourceField{"test.foo"}},
+			false,
 		},
 	}
 

@@ -261,7 +261,7 @@ func TestRestructureSerializeRoundtrip(t *testing.T) {
 			name: "Flatten",
 			op: Op{&OpFlatten{
 				Field: entry.BodyField{
-					Keys: []string{"nested"},
+					Keys: []string{"body", "nested"},
 				},
 			}},
 		},
@@ -297,18 +297,18 @@ id: my_restructure
 output: test_output
 ops:
   - add:
-      field: "message"
+      field: "body.message"
       value: "val"
   - add:
-      field: "message_suffix"
+      field: "body.message_suffix"
       value_expr: "body.message + \"_suffix\""
-  - remove: "message"
+  - remove: "body.message"
   - retain:
-      - "message_retain"
-  - flatten: "message_flatten"
+      - "body.message_retain"
+  - flatten: "body.message_flatten"
   - move:
-      from: "message1"
-      to: "message2"
+      from: "body.message1"
+      to: "body.message2"
 `
 
 	configJSON := `
@@ -318,26 +318,26 @@ ops:
   "output": "test_output",
   "ops": [{
     "add": {
-      "field": "message",
+      "field": "body.message",
       "value": "val"
     }
   },{
     "add": {
-      "field": "message_suffix",
+      "field": "body.message_suffix",
       "value_expr": "body.message + \"_suffix\""
     }
   },{
-    "remove": "message"
+    "remove": "body.message"
   },{
     "retain": [
-      "message_retain"
+      "body.message_retain"
     ]
   },{
-    "flatten": "message_flatten"
+    "flatten": "body.message_flatten"
   },{
     "move": {
-      "from": "message1",
-      "to": "message2"
+      "from": "body.message1",
+      "to": "body.message2"
     }
   }]
 }`

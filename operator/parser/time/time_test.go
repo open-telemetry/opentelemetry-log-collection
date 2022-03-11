@@ -58,7 +58,7 @@ func TestBuild(t *testing.T) {
 			"basic",
 			func() (*TimeParserConfig, error) {
 				cfg := NewTimeParserConfig("test_id")
-				parseFrom, err := entry.NewField("app_time")
+				parseFrom, err := entry.NewField("body.app_time")
 				if err != nil {
 					return cfg, err
 				}
@@ -97,7 +97,7 @@ func TestProcess(t *testing.T) {
 			"promote",
 			func() (*TimeParserConfig, error) {
 				cfg := NewTimeParserConfig("test_id")
-				parseFrom, err := entry.NewField("app_time")
+				parseFrom, err := entry.NewField("body.app_time")
 				if err != nil {
 					return nil, err
 				}
@@ -122,7 +122,7 @@ func TestProcess(t *testing.T) {
 			"promote-and-preserve",
 			func() (*TimeParserConfig, error) {
 				cfg := NewTimeParserConfig("test_id")
-				parseFrom, err := entry.NewField("app_time")
+				parseFrom, err := entry.NewField("body.app_time")
 				if err != nil {
 					return nil, err
 				}

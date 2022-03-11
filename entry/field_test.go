@@ -30,12 +30,12 @@ func TestFieldUnmarshalJSON(t *testing.T) {
 	}{
 		{
 			"SimpleField",
-			[]byte(`"test1"`),
+			[]byte(`"body.test1"`),
 			NewBodyField("test1"),
 		},
 		{
 			"ComplexField",
-			[]byte(`"test1.test2"`),
+			[]byte(`"body.test1.test2"`),
 			NewBodyField("test1", "test2"),
 		},
 		{
@@ -73,12 +73,12 @@ func TestFieldMarshalJSON(t *testing.T) {
 		{
 			"SimpleField",
 			NewBodyField("test1"),
-			[]byte(`"test1"`),
+			[]byte(`"body.test1"`),
 		},
 		{
 			"ComplexField",
 			NewBodyField("test1", "test2"),
-			[]byte(`"test1.test2"`),
+			[]byte(`"body.test1.test2"`),
 		},
 		{
 			"BodyLong",
@@ -104,29 +104,24 @@ func TestFieldUnmarshalYAML(t *testing.T) {
 		expected Field
 	}{
 		{
+			"Root",
+			[]byte(`"body"`),
+			NewBodyField(),
+		},
+		{
 			"SimpleField",
-			[]byte(`"test1"`),
+			[]byte(`"body.test1"`),
 			NewBodyField("test1"),
 		},
 		{
 			"UnquotedField",
-			[]byte(`test1`),
+			[]byte(`body.test1`),
 			NewBodyField("test1"),
 		},
 		{
 			"ComplexField",
-			[]byte(`"test1.test2"`),
-			NewBodyField("test1", "test2"),
-		},
-		{
-			"ComplexFieldWithRoot",
 			[]byte(`"body.test1.test2"`),
 			NewBodyField("test1", "test2"),
-		},
-		{
-			"BodyLong",
-			[]byte(`"body"`),
-			NewBodyField(),
 		},
 	}
 
@@ -156,19 +151,19 @@ func TestFieldMarshalYAML(t *testing.T) {
 		expected string
 	}{
 		{
+			"Body",
+			NewBodyField(),
+			"body\n",
+		},
+		{
 			"SimpleField",
 			NewBodyField("test1"),
-			"test1\n",
+			"body.test1\n",
 		},
 		{
 			"ComplexField",
 			NewBodyField("test1", "test2"),
-			"test1.test2\n",
-		},
-		{
-			"Body",
-			NewBodyField(),
-			"body\n",
+			"body.test1.test2\n",
 		},
 		{
 			"FieldWithDots",
