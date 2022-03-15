@@ -469,9 +469,10 @@ func TestNewlineSplitFunc(t *testing.T) {
 		},
 		{
 			Name: "LogsWithFlusherWithLogStartingWithWhiteChars",
-			Raw:  []byte("\nLOGEND 333"),
+			Raw:  []byte("\nLOGEND 333\nAnother one"),
 			ExpectedTokenized: []string{
 				"LOGEND 333",
+				"Another one",
 			},
 			Flusher: &Flusher{
 				forcePeriod:        time.Nanosecond,
