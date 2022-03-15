@@ -168,6 +168,19 @@ func TestLineStartSplitFunc(t *testing.T) {
 				lastForcedFlush: time.Now(),
 			},
 		},
+		{
+			Name:    "LogsWithFlusherWithMultipleLogsInBuffer",
+			Pattern: `^LOGSTART \d+`,
+			Raw:     []byte("LOGPART log1\nLOGSTART 123\nLOGPART log1\t   \n"),
+			ExpectedTokenized: []string{
+				"LOGPART log1",
+				"LOGSTART 123\nLOGPART log1",
+			},
+			Flusher: &Flusher{
+				force:           true,
+				lastForcedFlush: time.Now(),
+			},
+		},
 	}
 
 	for _, tc := range testCases {
@@ -302,6 +315,19 @@ func TestLineEndSplitFunc(t *testing.T) {
 			Raw:     []byte("LOGPART log1\nLOGPART log1\t   \n"),
 			ExpectedTokenized: []string{
 				"LOGPART log1\nLOGPART log1",
+			},
+			Flusher: &Flusher{
+				force:           true,
+				lastForcedFlush: time.Now(),
+			},
+		},
+		{
+			Name:    "LogsWithFlusherWithMultipleLogsInBuffer",
+			Pattern: `^LOGEND.*$`,
+			Raw:     []byte("LOGPART log1\nLOGEND\nLOGPART log1\t   \n"),
+			ExpectedTokenized: []string{
+				"LOGPART log1\nLOGEND",
+				"LOGPART log1",
 			},
 			Flusher: &Flusher{
 				force:           true,
