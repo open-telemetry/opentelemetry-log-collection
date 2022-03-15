@@ -80,6 +80,11 @@ func (f *Flusher) UpdateDataChangeTime(length int) {
 	f.lastDataChange = time.Now()
 }
 
+// Flushed reset data length
+func (f *Flusher) Flushed() {
+	f.UpdateDataChangeTime(-1)
+}
+
 // EnableForceFlush sets data length to 1 and doesn't touch lastDataChange
 func (f *Flusher) EnableForceFlush() {
 	f.previousDataLength = 1
@@ -159,14 +164,14 @@ func NewLineStartSplitFunc(re *regexp.Regexp, flushAtEOF bool, force *Flusher) b
 				advance = len(data)
 				if force != nil {
 					// Inform flusher that we just flushed
-					force.UpdateDataChangeTime(-1)
+					force.Flushed()
 				}
 				return
 			}
 			if force != nil {
 				if force.ShouldFlush() {
 					// Inform flusher that we just flushed
-					force.UpdateDataChangeTime(-1)
+					force.Flushed()
 					token = trimWhitespaces(data)
 					advance = len(data)
 					return
@@ -187,7 +192,7 @@ func NewLineStartSplitFunc(re *regexp.Regexp, flushAtEOF bool, force *Flusher) b
 			if len(token) > 0 {
 				if force != nil {
 					// Inform flusher that we just flushed
-					force.UpdateDataChangeTime(-1)
+					force.Flushed()
 				}
 				return
 			}
@@ -197,7 +202,7 @@ func NewLineStartSplitFunc(re *regexp.Regexp, flushAtEOF bool, force *Flusher) b
 			if force != nil {
 				if force.ShouldFlush() {
 					// Inform flusher that we just flushed
-					force.UpdateDataChangeTime(-1)
+					force.Flushed()
 					token = trimWhitespaces(data)
 					advance = len(data)
 					return
@@ -216,7 +221,7 @@ func NewLineStartSplitFunc(re *regexp.Regexp, flushAtEOF bool, force *Flusher) b
 			advance = len(data)
 			if force != nil {
 				// Inform flusher that we just flushed
-				force.UpdateDataChangeTime(-1)
+				force.Flushed()
 			}
 			return
 		}
@@ -227,7 +232,7 @@ func NewLineStartSplitFunc(re *regexp.Regexp, flushAtEOF bool, force *Flusher) b
 			if force != nil {
 				if force.ShouldFlush() {
 					// Inform flusher that we just flushed
-					force.UpdateDataChangeTime(-1)
+					force.Flushed()
 					token = trimWhitespaces(data)
 					advance = len(data)
 					return
@@ -245,7 +250,7 @@ func NewLineStartSplitFunc(re *regexp.Regexp, flushAtEOF bool, force *Flusher) b
 		err = nil
 		if force != nil {
 			// Inform flusher that we just flushed
-			force.UpdateDataChangeTime(-1)
+			force.Flushed()
 		}
 		return
 	}
@@ -281,14 +286,14 @@ func NewLineEndSplitFunc(re *regexp.Regexp, flushAtEOF bool, force *Flusher) buf
 				advance = len(data)
 				if force != nil {
 					// Inform flusher that we just flushed
-					force.UpdateDataChangeTime(-1)
+					force.Flushed()
 				}
 				return
 			}
 			if force != nil {
 				if force.ShouldFlush() {
 					// Inform flusher that we just flushed
-					force.UpdateDataChangeTime(-1)
+					force.Flushed()
 					token = trimWhitespaces(data)
 					advance = len(data)
 					return
@@ -306,7 +311,7 @@ func NewLineEndSplitFunc(re *regexp.Regexp, flushAtEOF bool, force *Flusher) buf
 			if force != nil {
 				if force.ShouldFlush() {
 					// Inform flusher that we just flushed
-					force.UpdateDataChangeTime(-1)
+					force.Flushed()
 					token = trimWhitespaces(data)
 					advance = len(data)
 					return
@@ -323,7 +328,7 @@ func NewLineEndSplitFunc(re *regexp.Regexp, flushAtEOF bool, force *Flusher) buf
 		err = nil
 		if force != nil {
 			// Inform flusher that we just flushed
-			force.UpdateDataChangeTime(-1)
+			force.Flushed()
 		}
 		return
 	}
@@ -346,7 +351,7 @@ func NewNewlineSplitFunc(encoding encoding.Encoding, flushAtEOF bool, force *Flu
 		if atEOF && len(data) == 0 {
 			// There is no data and we are waiting for more, so resetting change time
 			if force != nil {
-				force.UpdateDataChangeTime(-1)
+				force.Flushed()
 			}
 			return 0, nil, nil
 		}
@@ -362,7 +367,7 @@ func NewNewlineSplitFunc(encoding encoding.Encoding, flushAtEOF bool, force *Flu
 
 			// Inform flusher that we just flushed
 			if force != nil {
-				force.UpdateDataChangeTime(-1)
+				force.Flushed()
 			}
 
 			return i + len(newline), token, nil
@@ -382,7 +387,7 @@ func NewNewlineSplitFunc(encoding encoding.Encoding, flushAtEOF bool, force *Flu
 				advance = len(data)
 				if forceFlush {
 					// Inform flusher that we just flushed
-					force.UpdateDataChangeTime(-1)
+					force.Flushed()
 				}
 				return
 			}
