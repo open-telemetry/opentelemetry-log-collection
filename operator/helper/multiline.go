@@ -44,55 +44,45 @@ func (c *FlusherConfig) Build() *Flusher {
 
 // Flusher keeps information about flush state
 type Flusher struct {
-	// force is true when data should be flushed as soon as possible
-	force bool
 	// forcePeriod defines time from last flush which should pass before setting force to true.
 	// Never forces if forcePeriod is set to 0
 	forcePeriod time.Duration
 
-	// lastFlush > lastForcedFlush => we can force flush if no logs are incoming for forcePeriod
-	// lastFlush = lastForcedFlush => last flush was forced, so we cannot force, we can update lastFlush
-	// lastFlush < lastForcedFlush => we just forced flush, set lastFlush to lastForcedFlush
-	lastFlush       time.Time
-	lastForcedFlush time.Time
+	// lastDataChange tracks date of last data change (including new data and flushes)
+	lastDataChange time.Time
+
+	// previousDataLength:
+	// if < 0 - data has been flushed and we are waiting for new data
+	// if = 0 - no new data
+	// if > 0 - there is data which has not been flushed yet
+	previousDataLength int
 }
 
-// NewFlusher Creates new Flusher with lastFlush set to unix epoch
+// NewFlusher Creates new Flusher with lastDataChange set to unix epoch
 // and order to not force ongoing flush
 func NewFlusher(forcePeriod Duration) *Flusher {
 	return &Flusher{
-		force:           false,
-		lastFlush:       time.Now(),
-		forcePeriod:     forcePeriod.Raw(),
-		lastForcedFlush: time.Unix(0, 0),
+		lastDataChange:     time.Now(),
+		forcePeriod:        forcePeriod.Raw(),
+		previousDataLength: -1,
 	}
 }
 
-// Flushed update lastFlush with current timestamp
-func (f *Flusher) Flushed() {
-	if f.lastFlush.Sub(f.lastForcedFlush) < 0 {
-		f.lastFlush = f.lastForcedFlush
-	} else {
-		f.lastFlush = time.Now()
+func (f *Flusher) UpdateDataChangeTime(length int) {
+	// Skip if length is greater than 0 and didn't changed
+	if length > 0 && length == f.previousDataLength {
+		return
 	}
-}
 
-// CheckAndFlush sets internal flag to true if data is going to be force flushed
-func (f *Flusher) CheckAndFlush() {
-	if f.forcePeriod > 0 && time.Since(f.lastFlush) > f.forcePeriod && f.lastFlush.Sub(f.lastForcedFlush) > 0 {
-		f.force = true
-	}
-}
-
-// ForceFlushed update struct fields after forced flush
-func (f *Flusher) Flush() {
-	f.force = false
-	f.lastForcedFlush = time.Now()
+	// update internal properties with new values
+	f.previousDataLength = length
+	f.lastDataChange = time.Now()
 }
 
 // ShouldFlush returns true if data should be forcefully flushed
 func (f *Flusher) ShouldFlush() bool {
-	return f.force
+	// Returns true if there is f.forcePeriod after f.lastDataChange and data length is greater than 0
+	return f.forcePeriod > 0 && time.Since(f.lastDataChange) > f.forcePeriod && f.previousDataLength > 0
 }
 
 // Multiline consists of splitFunc and variables needed to perform force flush
@@ -155,20 +145,26 @@ func (c MultilineConfig) getSplitFunc(encodingVar encoding.Encoding, flushAtEOF 
 // tokens that start with a match to the regex pattern provided
 func NewLineStartSplitFunc(re *regexp.Regexp, flushAtEOF bool, force *Flusher) bufio.SplitFunc {
 	return func(data []byte, atEOF bool) (advance int, token []byte, err error) {
-		if force != nil && force.ShouldFlush() {
-			force.Flush()
-			token = trimWhitespaces(data)
-			advance = len(data)
-			return
-		}
-
 		firstLoc := re.FindIndex(data)
 		if firstLoc == nil {
 			// Flush if no more data is expected
 			if len(data) != 0 && atEOF && flushAtEOF {
 				token = trimWhitespaces(data)
 				advance = len(data)
+				if force != nil {
+					force.UpdateDataChangeTime(-1)
+				}
 				return
+			}
+			if force != nil {
+				if force.ShouldFlush() {
+					force.UpdateDataChangeTime(-1)
+					token = trimWhitespaces(data)
+					advance = len(data)
+					return
+				} else {
+					force.UpdateDataChangeTime(len(data))
+				}
 			}
 			return 0, nil, nil // read more data and try again.
 		}
@@ -179,10 +175,23 @@ func NewLineStartSplitFunc(re *regexp.Regexp, flushAtEOF bool, force *Flusher) b
 			// the beginning of the file does not match the start pattern, so return a token up to the first match so we don't lose data
 			advance = firstMatchStart
 			token = trimWhitespaces(data[0:firstMatchStart])
+			if force != nil {
+				force.UpdateDataChangeTime(-1)
+			}
 			return
 		}
 
 		if firstMatchEnd == len(data) {
+			if force != nil {
+				if force.ShouldFlush() {
+					force.UpdateDataChangeTime(-1)
+					token = trimWhitespaces(data)
+					advance = len(data)
+					return
+				} else {
+					force.UpdateDataChangeTime(len(data))
+				}
+			}
 			// the first match goes to the end of the bufer, so don't look for a second match
 			return 0, nil, nil
 		}
@@ -191,12 +200,25 @@ func NewLineStartSplitFunc(re *regexp.Regexp, flushAtEOF bool, force *Flusher) b
 		if atEOF && flushAtEOF {
 			token = trimWhitespaces(data)
 			advance = len(data)
+			if force != nil {
+				force.UpdateDataChangeTime(-1)
+			}
 			return
 		}
 
 		secondLocOfset := firstMatchEnd + 1
 		secondLoc := re.FindIndex(data[secondLocOfset:])
 		if secondLoc == nil {
+			if force != nil {
+				if force.ShouldFlush() {
+					force.UpdateDataChangeTime(-1)
+					token = trimWhitespaces(data)
+					advance = len(data)
+					return
+				} else {
+					force.UpdateDataChangeTime(len(data))
+				}
+			}
 			return 0, nil, nil // read more data and try again
 		}
 		secondMatchStart := secondLoc[0] + secondLocOfset
@@ -204,6 +226,9 @@ func NewLineStartSplitFunc(re *regexp.Regexp, flushAtEOF bool, force *Flusher) b
 		advance = secondMatchStart                                      // start scanning at the beginning of the second match
 		token = trimWhitespaces(data[firstMatchStart:secondMatchStart]) // the token begins at the first match, and ends at the beginning of the second match
 		err = nil
+		if force != nil {
+			force.UpdateDataChangeTime(-1)
+		}
 		return
 	}
 }
@@ -230,19 +255,26 @@ func SplitNone(maxLogSize int) bufio.SplitFunc {
 // tokens that end with a match to the regex pattern provided
 func NewLineEndSplitFunc(re *regexp.Regexp, flushAtEOF bool, force *Flusher) bufio.SplitFunc {
 	return func(data []byte, atEOF bool) (advance int, token []byte, err error) {
-		if force != nil && force.ShouldFlush() {
-			force.Flush()
-			token = trimWhitespaces(data)
-			advance = len(data)
-			return
-		}
 		loc := re.FindIndex(data)
 		if loc == nil {
 			// Flush if no more data is expected
 			if len(data) != 0 && atEOF && flushAtEOF {
 				token = trimWhitespaces(data)
 				advance = len(data)
+				if force != nil {
+					force.UpdateDataChangeTime(-1)
+				}
 				return
+			}
+			if force != nil {
+				if force.ShouldFlush() {
+					force.UpdateDataChangeTime(-1)
+					token = trimWhitespaces(data)
+					advance = len(data)
+					return
+				} else {
+					force.UpdateDataChangeTime(len(data))
+				}
 			}
 			return 0, nil, nil // read more data and try again
 		}
@@ -250,12 +282,25 @@ func NewLineEndSplitFunc(re *regexp.Regexp, flushAtEOF bool, force *Flusher) buf
 		// If the match goes up to the end of the current bufer, do another
 		// read until we can capture the entire match
 		if loc[1] == len(data)-1 && !atEOF {
+			if force != nil {
+				if force.ShouldFlush() {
+					force.UpdateDataChangeTime(-1)
+					token = trimWhitespaces(data)
+					advance = len(data)
+					return
+				} else {
+					force.UpdateDataChangeTime(len(data))
+				}
+			}
 			return 0, nil, nil
 		}
 
 		advance = loc[1]
 		token = trimWhitespaces(data[:loc[1]])
 		err = nil
+		if force != nil {
+			force.UpdateDataChangeTime(-1)
+		}
 		return
 	}
 }
@@ -290,7 +335,7 @@ func NewNewlineSplitFunc(encoding encoding.Encoding, flushAtEOF bool, force *Flu
 			token = trimWhitespaces(data)
 			advance = len(data)
 			if forceFlush {
-				force.Flushed()
+				force.UpdateDataChangeTime(-1)
 			}
 			return
 		}
@@ -352,15 +397,4 @@ func (c *SplitterConfig) Build(encoding encoding.Encoding, flushAtEOF bool, maxL
 type Splitter struct {
 	SplitFunc bufio.SplitFunc
 	Flusher   *Flusher
-}
-
-// Flushed informs Flusher that Flushed had been performed
-func (s *Splitter) Flushed() {
-	s.Flusher.Flushed()
-}
-
-// CheckAndFlush instructs Flusher to check if next log should be forcefully flushed
-// and set appropriate flags if yes
-func (s *Splitter) CheckAndFlush() {
-	s.Flusher.CheckAndFlush()
 }
