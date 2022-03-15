@@ -145,6 +145,7 @@ func (c MultilineConfig) getSplitFunc(encodingVar encoding.Encoding, flushAtEOF 
 // tokens that start with a match to the regex pattern provided
 func NewLineStartSplitFunc(re *regexp.Regexp, flushAtEOF bool, force *Flusher) bufio.SplitFunc {
 	return func(data []byte, atEOF bool) (advance int, token []byte, err error) {
+		data = trimLeftWhitespaces(data)
 		firstLoc := re.FindIndex(data)
 		if firstLoc == nil {
 			// Flush if no more data is expected
@@ -319,12 +320,17 @@ func NewNewlineSplitFunc(encoding encoding.Encoding, flushAtEOF bool, force *Flu
 	}
 
 	return func(data []byte, atEOF bool) (advance int, token []byte, err error) {
+		data = trimLeftWhitespaces(data)
+
 		if atEOF && len(data) == 0 {
 			return 0, nil, nil
 		}
 
 		if i := bytes.Index(data, newline); i >= 0 {
 			// We have a full newline-terminated line.
+			if force != nil {
+				force.UpdateDataChangeTime(-1)
+			}
 			return i + len(newline), bytes.TrimSuffix(data[:i], carriageReturn), nil
 		}
 
@@ -340,6 +346,9 @@ func NewNewlineSplitFunc(encoding encoding.Encoding, flushAtEOF bool, force *Flu
 			return
 		}
 
+		if force != nil {
+			force.UpdateDataChangeTime(len(data))
+		}
 		// Request more data.
 		return 0, nil, nil
 	}, nil
@@ -362,6 +371,11 @@ func trimWhitespaces(data []byte) []byte {
 	// For some reason newline and carriage return are being moved to beginning of next log
 	// TrimRight to strip all whitespaces from the end of log
 	return bytes.TrimLeft(bytes.TrimRight(data, "\r\n\t "), "\r\n")
+}
+
+func trimLeftWhitespaces(data []byte) []byte {
+	// TrimLeft to strip EOF whitespaces
+	return bytes.TrimLeft(data, "\r\n")
 }
 
 // SplitterConfig consolidates MultilineConfig and FlusherConfig
