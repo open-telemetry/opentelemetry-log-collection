@@ -161,7 +161,7 @@ func TestLineStartSplitFunc(t *testing.T) {
 				"LOGPART log1\nLOGPART log1",
 			},
 			Flusher: &Flusher{
-				previousDataLength: len("LOGPART log1\nLOGPART log1\t   \n"),
+				previousDataLength: 0,
 				lastDataChange:     time.Unix(0, 0),
 				forcePeriod:        time.Nanosecond,
 			},
@@ -177,7 +177,7 @@ func TestLineStartSplitFunc(t *testing.T) {
 			Flusher: &Flusher{
 				forcePeriod:        time.Nanosecond,
 				lastDataChange:     time.Unix(0, 0),
-				previousDataLength: len("LOGPART log1\nLOGSTART 123\nLOGPART log1\t   \n"),
+				previousDataLength: 0,
 			},
 		},
 		{
@@ -326,7 +326,7 @@ func TestLineEndSplitFunc(t *testing.T) {
 				"LOGPART log1\nLOGPART log1",
 			},
 			Flusher: &Flusher{
-				previousDataLength: len("LOGPART log1\nLOGPART log1\t   \n"),
+				previousDataLength: 0,
 				lastDataChange:     time.Unix(0, 0),
 				forcePeriod:        time.Nanosecond,
 			},
@@ -342,7 +342,7 @@ func TestLineEndSplitFunc(t *testing.T) {
 			Flusher: &Flusher{
 				forcePeriod:        time.Nanosecond,
 				lastDataChange:     time.Unix(0, 0),
-				previousDataLength: len("LOGPART log1\nLOGEND\nLOGPART log1\t   \n"),
+				previousDataLength: 0,
 			},
 		},
 		{
@@ -453,7 +453,7 @@ func TestNewlineSplitFunc(t *testing.T) {
 				"LOGPART log1",
 			},
 			Flusher: &Flusher{
-				previousDataLength: len("LOGPART log1"),
+				previousDataLength: 0,
 				lastDataChange:     time.Unix(0, 0),
 				forcePeriod:        time.Nanosecond,
 			},
