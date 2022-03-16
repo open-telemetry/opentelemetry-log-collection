@@ -39,7 +39,11 @@ func NewFlusherConfig() FlusherConfig {
 
 // Build creates Flusher from configuration
 func (c *FlusherConfig) Build() *Flusher {
-	return NewFlusher(c.Period)
+	return &Flusher{
+		lastDataChange:     time.Now(),
+		forcePeriod:        c.Period.Raw(),
+		previousDataLength: 0,
+	}
 }
 
 // Flusher keeps information about flush state
@@ -55,16 +59,6 @@ type Flusher struct {
 	// if previousDataLength = 0 - no new data have been received after flush
 	// if previousDataLength > 0 - there is data which has not been flushed yet and it doesn't changed since lastDataChange
 	previousDataLength int
-}
-
-// NewFlusher Creates new Flusher with lastDataChange set to unix epoch
-// and order to not force ongoing flush
-func NewFlusher(forcePeriod Duration) *Flusher {
-	return &Flusher{
-		lastDataChange:     time.Now(),
-		forcePeriod:        forcePeriod.Raw(),
-		previousDataLength: 0,
-	}
 }
 
 func (f *Flusher) UpdateDataChangeTime(length int) {
