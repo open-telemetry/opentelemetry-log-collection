@@ -84,11 +84,6 @@ func (f *Flusher) Flushed() {
 	f.UpdateDataChangeTime(0)
 }
 
-// EnableForceFlush sets data length to 1 and doesn't touch lastDataChange
-func (f *Flusher) EnableForceFlush() {
-	f.previousDataLength = 1
-}
-
 // ShouldFlush returns true if data should be forcefully flushed
 func (f *Flusher) ShouldFlush() bool {
 	// Returns true if there is f.forcePeriod after f.lastDataChange and data length is greater than 0
@@ -244,11 +239,6 @@ func flusherSplitFunc(force *Flusher, splitFunc bufio.SplitFunc) bufio.SplitFunc
 				force.Flushed()
 			}
 			return
-		}
-
-		// Reset data length if there is no more data in file expected
-		if atEOF && force != nil {
-			force.EnableForceFlush()
 		}
 
 		// If there is no token, force flush eventually
