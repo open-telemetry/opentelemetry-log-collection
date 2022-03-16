@@ -52,8 +52,7 @@ type Flusher struct {
 	lastDataChange time.Time
 
 	// previousDataLength:
-	// if previousDataLength < 0 - data has been flushed and we are waiting for new data
-	// if previousDataLength = 0 - no new data
+	// if previousDataLength = 0 - no new data have been received after flush
 	// if previousDataLength > 0 - there is data which has not been flushed yet and it doesn't changed since lastDataChange
 	previousDataLength int
 }
@@ -64,7 +63,7 @@ func NewFlusher(forcePeriod Duration) *Flusher {
 	return &Flusher{
 		lastDataChange:     time.Now(),
 		forcePeriod:        forcePeriod.Raw(),
-		previousDataLength: -1,
+		previousDataLength: 0,
 	}
 }
 
@@ -82,7 +81,7 @@ func (f *Flusher) UpdateDataChangeTime(length int) {
 
 // Flushed reset data length
 func (f *Flusher) Flushed() {
-	f.UpdateDataChangeTime(-1)
+	f.UpdateDataChangeTime(0)
 }
 
 // EnableForceFlush sets data length to 1 and doesn't touch lastDataChange
@@ -155,30 +154,14 @@ func (c MultilineConfig) getSplitFunc(encodingVar encoding.Encoding, flushAtEOF 
 // NewLineStartSplitFunc creates a bufio.SplitFunc that splits an incoming stream into
 // tokens that start with a match to the regex pattern provided
 func NewLineStartSplitFunc(re *regexp.Regexp, flushAtEOF bool, force *Flusher) bufio.SplitFunc {
-	return func(data []byte, atEOF bool) (advance int, token []byte, err error) {
+	splitFunc := func(data []byte, atEOF bool) (advance int, token []byte, err error) {
 		firstLoc := re.FindIndex(data)
 		if firstLoc == nil {
 			// Flush if no more data is expected
 			if len(data) != 0 && atEOF && flushAtEOF {
 				token = trimWhitespaces(data)
 				advance = len(data)
-				if force != nil {
-					// Inform flusher that we just flushed
-					force.Flushed()
-				}
 				return
-			}
-			if force != nil {
-				if force.ShouldFlush() {
-					// Inform flusher that we just flushed
-					force.Flushed()
-					token = trimWhitespaces(data)
-					advance = len(data)
-					return
-				} else {
-					// Inform flusher that we didn't flushed
-					force.UpdateDataChangeTime(len(data))
-				}
 			}
 			return 0, nil, nil // read more data and try again.
 		}
@@ -190,27 +173,11 @@ func NewLineStartSplitFunc(re *regexp.Regexp, flushAtEOF bool, force *Flusher) b
 			advance = firstMatchStart
 			token = trimWhitespaces(data[0:firstMatchStart])
 			if len(token) > 0 {
-				if force != nil {
-					// Inform flusher that we just flushed
-					force.Flushed()
-				}
 				return
 			}
 		}
 
 		if firstMatchEnd == len(data) {
-			if force != nil {
-				if force.ShouldFlush() {
-					// Inform flusher that we just flushed
-					force.Flushed()
-					token = trimWhitespaces(data)
-					advance = len(data)
-					return
-				} else {
-					// Inform flusher that we didn't flushed
-					force.UpdateDataChangeTime(len(data))
-				}
-			}
 			// the first match goes to the end of the bufer, so don't look for a second match
 			return 0, nil, nil
 		}
@@ -219,28 +186,12 @@ func NewLineStartSplitFunc(re *regexp.Regexp, flushAtEOF bool, force *Flusher) b
 		if atEOF && flushAtEOF {
 			token = trimWhitespaces(data)
 			advance = len(data)
-			if force != nil {
-				// Inform flusher that we just flushed
-				force.Flushed()
-			}
 			return
 		}
 
 		secondLocOfset := firstMatchEnd + 1
 		secondLoc := re.FindIndex(data[secondLocOfset:])
 		if secondLoc == nil {
-			if force != nil {
-				if force.ShouldFlush() {
-					// Inform flusher that we just flushed
-					force.Flushed()
-					token = trimWhitespaces(data)
-					advance = len(data)
-					return
-				} else {
-					// Inform flusher that we didn't flushed
-					force.UpdateDataChangeTime(len(data))
-				}
-			}
 			return 0, nil, nil // read more data and try again
 		}
 		secondMatchStart := secondLoc[0] + secondLocOfset
@@ -248,12 +199,10 @@ func NewLineStartSplitFunc(re *regexp.Regexp, flushAtEOF bool, force *Flusher) b
 		advance = secondMatchStart                                      // start scanning at the beginning of the second match
 		token = trimWhitespaces(data[firstMatchStart:secondMatchStart]) // the token begins at the first match, and ends at the beginning of the second match
 		err = nil
-		if force != nil {
-			// Inform flusher that we just flushed
-			force.Flushed()
-		}
 		return
 	}
+
+	return flusherSplitFunc(force, splitFunc)
 }
 
 // SplitNone doesn't split any of the bytes, it reads in all of the bytes and returns it all at once. This is for when the encoding is nop
@@ -274,33 +223,62 @@ func SplitNone(maxLogSize int) bufio.SplitFunc {
 	}
 }
 
+func flusherSplitFunc(force *Flusher, splitFunc bufio.SplitFunc) bufio.SplitFunc {
+	return func(data []byte, atEOF bool) (advance int, token []byte, err error) {
+		advance, token, err = splitFunc(data, atEOF)
+
+		// Return as it is in case of error
+		if err != nil {
+			return
+		}
+
+		// Do not return empty log
+		if len(token) == 0 {
+			token = nil
+		}
+
+		// Return token
+		if token != nil {
+			if force != nil {
+				// Inform flusher that we just flushed
+				force.Flushed()
+			}
+			return
+		}
+
+		// Reset data length if there is no more data in file expected
+		if atEOF && force != nil {
+			force.EnableForceFlush()
+		}
+
+		// If there is no token, force flush eventually
+		if force != nil {
+			if force.ShouldFlush() {
+				// Inform flusher that we just flushed
+				force.Flushed()
+				token = trimWhitespaces(data)
+				advance = len(data)
+				return
+			} else {
+				// Inform flusher that we didn't flushed
+				force.UpdateDataChangeTime(len(data))
+			}
+		}
+		return
+	}
+}
+
 // NewLineEndSplitFunc creates a bufio.SplitFunc that splits an incoming stream into
 // tokens that end with a match to the regex pattern provided
 func NewLineEndSplitFunc(re *regexp.Regexp, flushAtEOF bool, force *Flusher) bufio.SplitFunc {
-	return func(data []byte, atEOF bool) (advance int, token []byte, err error) {
+	splitFunc := func(data []byte, atEOF bool) (advance int, token []byte, err error) {
 		loc := re.FindIndex(data)
 		if loc == nil {
 			// Flush if no more data is expected
 			if len(data) != 0 && atEOF && flushAtEOF {
 				token = trimWhitespaces(data)
 				advance = len(data)
-				if force != nil {
-					// Inform flusher that we just flushed
-					force.Flushed()
-				}
 				return
-			}
-			if force != nil {
-				if force.ShouldFlush() {
-					// Inform flusher that we just flushed
-					force.Flushed()
-					token = trimWhitespaces(data)
-					advance = len(data)
-					return
-				} else {
-					// Inform flusher that we didn't flushed
-					force.UpdateDataChangeTime(len(data))
-				}
 			}
 			return 0, nil, nil // read more data and try again
 		}
@@ -308,30 +286,16 @@ func NewLineEndSplitFunc(re *regexp.Regexp, flushAtEOF bool, force *Flusher) buf
 		// If the match goes up to the end of the current bufer, do another
 		// read until we can capture the entire match
 		if loc[1] == len(data)-1 && !atEOF {
-			if force != nil {
-				if force.ShouldFlush() {
-					// Inform flusher that we just flushed
-					force.Flushed()
-					token = trimWhitespaces(data)
-					advance = len(data)
-					return
-				} else {
-					// Inform flusher that we didn't flushed
-					force.UpdateDataChangeTime(len(data))
-				}
-			}
 			return 0, nil, nil
 		}
 
 		advance = loc[1]
 		token = trimWhitespaces(data[:loc[1]])
 		err = nil
-		if force != nil {
-			// Inform flusher that we just flushed
-			force.Flushed()
-		}
 		return
 	}
+
+	return flusherSplitFunc(force, splitFunc)
 }
 
 // NewNewlineSplitFunc splits log lines by newline, just as bufio.ScanLines, but
@@ -347,12 +311,8 @@ func NewNewlineSplitFunc(encoding encoding.Encoding, flushAtEOF bool, force *Flu
 		return nil, err
 	}
 
-	return func(data []byte, atEOF bool) (advance int, token []byte, err error) {
+	splitFunc := func(data []byte, atEOF bool) (advance int, token []byte, err error) {
 		if atEOF && len(data) == 0 {
-			// There is no data and we are waiting for more, so resetting change time
-			if force != nil {
-				force.Flushed()
-			}
 			return 0, nil, nil
 		}
 
@@ -360,46 +320,23 @@ func NewNewlineSplitFunc(encoding encoding.Encoding, flushAtEOF bool, force *Flu
 			// We have a full newline-terminated line.
 			token = bytes.TrimSuffix(data[:i], carriageReturn)
 
-			// We do not want to return empty logs
-			if len(token) == 0 {
-				token = nil
-			}
-
-			// Inform flusher that we just flushed
-			if force != nil {
-				force.Flushed()
-			}
-
 			return i + len(newline), token, nil
 		}
 
-		// No more data is expected so we can force eventually
-		if atEOF && force != nil {
-			force.EnableForceFlush()
-		}
-
-		// Flush if no more data is expected or if
-		// we don't want to wait for it
-		forceFlush := force != nil && force.ShouldFlush()
-		if atEOF && (flushAtEOF || forceFlush) {
+		// Flush if no more data is expected
+		if atEOF && flushAtEOF {
 			token = trimWhitespaces(data)
 			if len(token) > 0 {
 				advance = len(data)
-				if forceFlush {
-					// Inform flusher that we just flushed
-					force.Flushed()
-				}
 				return
 			}
 		}
 
-		if force != nil {
-			// Inform flusher that we didn't flushed
-			force.UpdateDataChangeTime(len(data))
-		}
 		// Request more data.
 		return 0, nil, nil
-	}, nil
+	}
+
+	return flusherSplitFunc(force, splitFunc), nil
 }
 
 func encodedNewline(encoding encoding.Encoding) ([]byte, error) {
