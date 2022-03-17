@@ -314,10 +314,8 @@ func NewNewlineSplitFunc(encoding encoding.Encoding, flushAtEOF bool) (bufio.Spl
 		// Flush if no more data is expected
 		if atEOF && flushAtEOF {
 			token = trimWhitespaces(data)
-			if token != nil {
-				advance = len(data)
-				return
-			}
+			advance = len(data)
+			return
 		}
 
 		// Request more data.
