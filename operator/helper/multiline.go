@@ -93,11 +93,6 @@ func (f *Flusher) SplitFunc(splitFunc bufio.SplitFunc) bufio.SplitFunc {
 			return
 		}
 
-		// Do not return empty log
-		if len(token) == 0 {
-			token = nil
-		}
-
 		// Return token
 		if token != nil {
 			// Inform flusher that we just flushed
@@ -311,11 +306,7 @@ func NewNewlineSplitFunc(encoding encoding.Encoding, flushAtEOF bool) (bufio.Spl
 			// We have a full newline-terminated line.
 			token = bytes.TrimSuffix(data[:i], carriageReturn)
 
-			if len(token) == 0 {
-				token = nil
-			}
-
-			return i + len(newline), token, nil
+			return i + len(newline), trimWhitespaces(token), nil
 		}
 
 		// Flush if no more data is expected

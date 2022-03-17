@@ -640,6 +640,15 @@ func TestNewlineSplitFunc_Encodings(t *testing.T) {
 				{0, 108, 0, 111, 0, 103, 0, 50}, // log2
 			},
 		},
+		{
+			"MultiCarriageReturnUTF16StartingWithWhiteChars",
+			unicode.UTF16(unicode.BigEndian, unicode.IgnoreBOM),
+			[]byte{0, 13, 0, 10, 0, 108, 0, 111, 0, 103, 0, 49, 0, 13, 0, 10, 0, 108, 0, 111, 0, 103, 0, 50, 0, 13, 0, 10}, // \r\nlog1\r\nlog2\r\n
+			[][]byte{
+				{0, 108, 0, 111, 0, 103, 0, 49}, // log1
+				{0, 108, 0, 111, 0, 103, 0, 50}, // log2
+			},
+		},
 	}
 
 	for _, tc := range cases {
