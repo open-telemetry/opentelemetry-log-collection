@@ -84,6 +84,45 @@ func (f *Flusher) ShouldFlush() bool {
 	return f.forcePeriod > 0 && time.Since(f.lastDataChange) > f.forcePeriod && f.previousDataLength > 0
 }
 
+func (f *Flusher) SplitFunc(splitFunc bufio.SplitFunc) bufio.SplitFunc {
+	return func(data []byte, atEOF bool) (advance int, token []byte, err error) {
+		advance, token, err = splitFunc(data, atEOF)
+
+		// Return as it is in case of error
+		if err != nil {
+			return
+		}
+
+		// Do not return empty log
+		if len(token) == 0 {
+			token = nil
+		}
+
+		// Return token
+		if token != nil {
+			// Inform flusher that we just flushed
+			f.Flushed()
+			return
+		}
+
+		// If there is no token, force flush eventually
+		if f.ShouldFlush() {
+			// Inform flusher that we just flushed
+			f.Flushed()
+			token = trimWhitespaces(data)
+			if len(token) == 0 {
+				token = nil
+			}
+			advance = len(data)
+			return
+		}
+
+		// Inform flusher that we didn't flushed
+		f.UpdateDataChangeTime(len(data))
+		return
+	}
+}
+
 // Multiline consists of splitFunc and variables needed to perform force flush
 type Multiline struct {
 	SplitFunc bufio.SplitFunc
@@ -140,6 +179,28 @@ func (c MultilineConfig) getSplitFunc(encodingVar encoding.Encoding, flushAtEOF 
 	}
 }
 
+func splitFuncWrapper(force *Flusher, splitFunc bufio.SplitFunc) bufio.SplitFunc {
+	if force != nil {
+		return force.SplitFunc(splitFunc)
+	}
+
+	return func(data []byte, atEOF bool) (advance int, token []byte, err error) {
+		advance, token, err = splitFunc(data, atEOF)
+
+		// Return as it is in case of error
+		if err != nil {
+			return
+		}
+
+		// Do not return empty log
+		if len(token) == 0 {
+			token = nil
+		}
+
+		return
+	}
+}
+
 // NewLineStartSplitFunc creates a bufio.SplitFunc that splits an incoming stream into
 // tokens that start with a match to the regex pattern provided
 func NewLineStartSplitFunc(re *regexp.Regexp, flushAtEOF bool, force *Flusher) bufio.SplitFunc {
@@ -191,7 +252,7 @@ func NewLineStartSplitFunc(re *regexp.Regexp, flushAtEOF bool, force *Flusher) b
 		return
 	}
 
-	return flusherSplitFunc(force, splitFunc)
+	return splitFuncWrapper(force, splitFunc)
 }
 
 // SplitNone doesn't split any of the bytes, it reads in all of the bytes and returns it all at once. This is for when the encoding is nop
@@ -209,51 +270,6 @@ func SplitNone(maxLogSize int) bufio.SplitFunc {
 			return 0, nil, nil
 		}
 		return len(data), data, nil
-	}
-}
-
-func flusherSplitFunc(force *Flusher, splitFunc bufio.SplitFunc) bufio.SplitFunc {
-	return func(data []byte, atEOF bool) (advance int, token []byte, err error) {
-		advance, token, err = splitFunc(data, atEOF)
-
-		// Return as it is in case of error
-		if err != nil {
-			return
-		}
-
-		// Do not return empty log
-		if len(token) == 0 {
-			token = nil
-		}
-
-		// Return token
-		if token != nil {
-			if force != nil {
-				// Inform flusher that we just flushed
-				force.Flushed()
-			}
-			return
-		}
-
-		if force == nil {
-			return
-		}
-
-		// If there is no token, force flush eventually
-		if force.ShouldFlush() {
-			// Inform flusher that we just flushed
-			force.Flushed()
-			token = trimWhitespaces(data)
-			if len(token) == 0 {
-				token = nil
-			}
-			advance = len(data)
-			return
-		}
-
-		// Inform flusher that we didn't flushed
-		force.UpdateDataChangeTime(len(data))
-		return
 	}
 }
 
@@ -284,7 +300,7 @@ func NewLineEndSplitFunc(re *regexp.Regexp, flushAtEOF bool, force *Flusher) buf
 		return
 	}
 
-	return flusherSplitFunc(force, splitFunc)
+	return splitFuncWrapper(force, splitFunc)
 }
 
 // NewNewlineSplitFunc splits log lines by newline, just as bufio.ScanLines, but
@@ -325,7 +341,7 @@ func NewNewlineSplitFunc(encoding encoding.Encoding, flushAtEOF bool, force *Flu
 		return 0, nil, nil
 	}
 
-	return flusherSplitFunc(force, splitFunc), nil
+	return splitFuncWrapper(force, splitFunc), nil
 }
 
 func encodedNewline(encoding encoding.Encoding) ([]byte, error) {
