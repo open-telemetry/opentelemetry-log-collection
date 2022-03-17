@@ -235,22 +235,24 @@ func flusherSplitFunc(force *Flusher, splitFunc bufio.SplitFunc) bufio.SplitFunc
 			return
 		}
 
-		// If there is no token, force flush eventually
-		if force != nil {
-			if force.ShouldFlush() {
-				// Inform flusher that we just flushed
-				force.Flushed()
-				token = trimWhitespaces(data)
-				if len(token) == 0 {
-					token = nil
-				}
-				advance = len(data)
-				return
-			} else {
-				// Inform flusher that we didn't flushed
-				force.UpdateDataChangeTime(len(data))
-			}
+		if force == nil {
+			return
 		}
+
+		// If there is no token, force flush eventually
+		if force.ShouldFlush() {
+			// Inform flusher that we just flushed
+			force.Flushed()
+			token = trimWhitespaces(data)
+			if len(token) == 0 {
+				token = nil
+			}
+			advance = len(data)
+			return
+		}
+
+		// Inform flusher that we didn't flushed
+		force.UpdateDataChangeTime(len(data))
 		return
 	}
 }
