@@ -151,7 +151,6 @@ func TestLineStartSplitFunc(t *testing.T) {
 			Pattern:           `^LOGSTART \d+`,
 			Raw:               []byte("LOGPART log1\nLOGPART log1\t   \n"),
 			ExpectedTokenized: []string{},
-			Flusher:           &Flusher{},
 		},
 		{
 			Name:    "LogsWithFlusher",
@@ -209,7 +208,7 @@ func TestLineStartSplitFunc(t *testing.T) {
 	}
 
 	t.Run("FirstMatchHitsEndOfBuffer", func(t *testing.T) {
-		splitFunc := NewLineStartSplitFunc(regexp.MustCompile("LOGSTART"), false, nil)
+		splitFunc := NewLineStartSplitFunc(regexp.MustCompile("LOGSTART"), false)
 		data := []byte(`LOGSTART`)
 
 		t.Run("NotAtEOF", func(t *testing.T) {
@@ -470,7 +469,6 @@ func TestNewlineSplitFunc(t *testing.T) {
 				"log1",
 				"log2",
 			},
-			Flusher: &Flusher{},
 		},
 		{
 			Name: "LogsWithLogStartingWithWhiteChars",
@@ -482,8 +480,11 @@ func TestNewlineSplitFunc(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		splitFunc, err := NewNewlineSplitFunc(unicode.UTF8, false, tc.Flusher)
+		splitFunc, err := NewNewlineSplitFunc(unicode.UTF8, false)
 		require.NoError(t, err)
+		if tc.Flusher != nil {
+			splitFunc = tc.Flusher.SplitFunc(splitFunc)
+		}
 		t.Run(tc.Name, tc.RunFunc(splitFunc))
 	}
 }
@@ -643,7 +644,7 @@ func TestNewlineSplitFunc_Encodings(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			splitFunc, err := NewNewlineSplitFunc(tc.encoding, false, nil)
+			splitFunc, err := NewNewlineSplitFunc(tc.encoding, false)
 			require.NoError(t, err)
 			scanner := bufio.NewScanner(bytes.NewReader(tc.input))
 			scanner.Split(splitFunc)
