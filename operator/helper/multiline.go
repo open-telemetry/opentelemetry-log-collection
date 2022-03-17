@@ -207,6 +207,8 @@ func NewLineStartSplitFunc(re *regexp.Regexp, flushAtEOF bool) bufio.SplitFunc {
 			// the beginning of the file does not match the start pattern, so return a token up to the first match so we don't lose data
 			advance = firstMatchStart
 			token = trimWhitespaces(data[0:firstMatchStart])
+
+			// return if non-matching pattern is not only whitespaces
 			if token != nil {
 				return
 			}
