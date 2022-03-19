@@ -184,11 +184,11 @@ func (l *atomicLimiter) increment() {
 // blocked, causing the regex parser to be slower than if it was
 // not caching at all.
 func (l *atomicLimiter) throttled() bool {
-	return l.count >= l.max
+	return l.currentCount() >= l.max
 }
 
 func (l *atomicLimiter) currentCount() uint64 {
-	return l.count
+	return atomic.LoadUint64(&l.count)
 }
 
 func (l *atomicLimiter) limit() uint64 {

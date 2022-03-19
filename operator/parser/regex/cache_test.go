@@ -190,7 +190,7 @@ func TestNewStartedAtomicLimiter(t *testing.T) {
 				tc.interval = 30
 			}
 			require.Equal(t, float64(tc.interval), l.interval.Seconds())
-			require.Equal(t, uint64(0), l.count)
+			require.Equal(t, uint64(0), l.currentCount())
 		})
 	}
 }
@@ -204,12 +204,12 @@ func TestLimiter(t *testing.T) {
 	require.Equal(t, max, l.max)
 
 	require.False(t, l.throttled(), "new limiter should not be throttling")
-	require.Equal(t, uint64(0), l.count)
+	require.Equal(t, uint64(0), l.currentCount())
 
 	var i uint64
 	for i = 1; i < max; i++ {
 		l.increment()
-		require.Equal(t, i, l.count)
+		require.Equal(t, i, l.currentCount())
 		require.False(t, l.throttled())
 	}
 
@@ -238,7 +238,7 @@ func TestThrottledLimiter(t *testing.T) {
 	wait := 2 * l.interval
 	time.Sleep(time.Second * wait)
 	require.False(t, l.throttled())
-	require.Equal(t, uint64(0), l.count)
+	require.Equal(t, uint64(0), l.currentCount())
 }
 
 func TestThrottledCache(t *testing.T) {
