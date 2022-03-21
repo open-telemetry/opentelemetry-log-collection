@@ -23,11 +23,6 @@ const (
 	AttributesPrefix = "attributes"
 	ResourcePrefix   = "resource"
 	BodyPrefix       = "body"
-
-	deprecatedAttributesPrefix = "$attributes"
-	deprecatedResourcePrefix   = "$resource"
-	deprecatedBodyPrefix       = "$body"
-	deprecatedBodyShorthand    = "$"
 )
 
 // Field represents a potential field on an entry.
@@ -74,17 +69,17 @@ func NewField(s string) (Field, error) {
 	}
 
 	switch split[0] {
-	case AttributesPrefix, deprecatedAttributesPrefix:
+	case AttributesPrefix:
 		if len(split) != 2 {
 			return Field{}, fmt.Errorf("attributes cannot be nested")
 		}
 		return Field{AttributeField{split[1]}}, nil
-	case ResourcePrefix, deprecatedResourcePrefix:
+	case ResourcePrefix:
 		if len(split) != 2 {
 			return Field{}, fmt.Errorf("resource fields cannot be nested")
 		}
 		return Field{ResourceField{split[1]}}, nil
-	case BodyPrefix, deprecatedBodyPrefix, deprecatedBodyShorthand:
+	case BodyPrefix:
 		return NewBodyField(split[1:]...), nil
 	default:
 		return Field{}, fmt.Errorf("unrecognized prefix")
