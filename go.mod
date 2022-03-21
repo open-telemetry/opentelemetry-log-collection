@@ -19,9 +19,9 @@ require (
 	golang.org/x/text v0.3.7
 	gonum.org/v1/gonum v0.11.0
 	gopkg.in/yaml.v2 v2.4.0
-	k8s.io/api v0.23.4
-	k8s.io/apimachinery v0.23.4
-	k8s.io/client-go v0.23.4
+	k8s.io/api v0.23.5
+	k8s.io/apimachinery v0.23.5
+	k8s.io/client-go v0.23.5
 )
 
 require go.uber.org/multierr v1.8.0
