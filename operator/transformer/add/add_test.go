@@ -34,8 +34,10 @@ type testCase struct {
 }
 
 func TestProcessAndBuild(t *testing.T) {
+	now := time.Now()
 	newTestEntry := func() *entry.Entry {
 		e := entry.New()
+		e.ObservedTimestamp = now
 		e.Timestamp = time.Unix(1586632809, 0)
 		e.Body = map[string]interface{}{
 			"key": "val",
@@ -68,7 +70,7 @@ func TestProcessAndBuild(t *testing.T) {
 			func() *AddOperatorConfig {
 				cfg := defaultCfg()
 				cfg.Field = entry.NewBodyField("new")
-				cfg.Value = `EXPR($.key + "_suffix")`
+				cfg.Value = `EXPR(body.key + "_suffix")`
 				return cfg
 			}(),
 			newTestEntry,
@@ -146,7 +148,7 @@ func TestProcessAndBuild(t *testing.T) {
 			func() *AddOperatorConfig {
 				cfg := defaultCfg()
 				cfg.Field = entry.NewResourceField("new")
-				cfg.Value = `EXPR($.key + "_suffix")`
+				cfg.Value = `EXPR(body.key + "_suffix")`
 				return cfg
 			}(),
 			newTestEntry,

@@ -60,11 +60,11 @@ func (c RetainOperatorConfig) Build(logger *zap.SugaredLogger) (operator.Operato
 
 	for _, field := range c.Fields {
 		typeCheck := field.String()
-		if strings.HasPrefix(typeCheck, "$resource") {
+		if strings.HasPrefix(typeCheck, "resource") {
 			retainOp.AllResourceFields = true
 			continue
 		}
-		if strings.HasPrefix(typeCheck, "$attributes") {
+		if strings.HasPrefix(typeCheck, "attributes") {
 			retainOp.AllAttributeFields = true
 			continue
 		}
@@ -90,6 +90,7 @@ func (p *RetainOperator) Process(ctx context.Context, entry *entry.Entry) error 
 // Transform will apply the retain operation to an entry
 func (p *RetainOperator) Transform(e *entry.Entry) error {
 	newEntry := entry.New()
+	newEntry.ObservedTimestamp = e.ObservedTimestamp
 	newEntry.Timestamp = e.Timestamp
 
 	if !p.AllResourceFields {

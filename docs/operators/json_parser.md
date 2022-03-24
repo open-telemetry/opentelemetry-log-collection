@@ -8,8 +8,8 @@ The `json_parser` operator parses the string-type field selected by `parse_from`
 | ---           | ---              | ---         |
 | `id`          | `json_parser`    | A unique identifier for the operator. |
 | `output`      | Next in pipeline | The connected operator(s) that will receive all outbound entries. |
-| `parse_from`  | `$body`          | The [field](/docs/types/field.md) from which the value will be parsed. |
-| `parse_to`    | `$body`          | The [field](/docs/types/field.md) to which the value will be parsed. |
+| `parse_from`  | `body`           | The [field](/docs/types/field.md) from which the value will be parsed. |
+| `parse_to`    | `body`           | The [field](/docs/types/field.md) to which the value will be parsed. |
 | `preserve_to` |                  | Preserves the unparsed value at the specified [field](/docs/types/field.md). |
 | `on_error`    | `send`           | The behavior of the operator if it encounters an error. See [on_error](/docs/types/on_error.md). |
 | `if`          |                  | An [expression](/docs/types/expression.md) that, when set, will be evaluated to determine whether this operator should be used for the given entry. This allows you to do easy conditional parsing without branching logic with routers. |
@@ -25,7 +25,7 @@ The `json_parser` operator parses the string-type field selected by `parse_from`
 Configuration:
 ```yaml
 - type: json_parser
-  parse_from: message
+  parse_from: body.message
 ```
 
 <table>
@@ -63,9 +63,9 @@ Configuration:
 Configuration:
 ```yaml
 - type: json_parser
-  parse_from: message.embedded
-  parse_to: parsed
-  preserve_to: message.embedded
+  parse_from: body.message.embedded
+  parse_to: body.parsed
+  preserve_to: body.message.embedded
 ```
 
 <table>
@@ -110,9 +110,9 @@ Configuration:
 Configuration:
 ```yaml
 - type: json_parser
-  parse_from: message
+  parse_from: body.message
   timestamp:
-    parse_from: seconds_since_epoch
+    parse_from: body.seconds_since_epoch
     layout_type: epoch
     layout: s
 ```

@@ -13,8 +13,8 @@ This operator makes use of [Go regular expression](https://github.com/google/re2
 | `id`          | `regex_parser`   | A unique identifier for the operator. |
 | `output`      | Next in pipeline | The connected operator(s) that will receive all outbound entries. |
 | `regex`       | required         | A [Go regular expression](https://github.com/google/re2/wiki/Syntax). The named capture groups will be extracted as fields in the parsed body. |
-| `parse_from`  | `$body`          | The [field](/docs/types/field.md) from which the value will be parsed. |
-| `parse_to`    | `$body`          | The [field](/docs/types/field.md) to which the value will be parsed. |
+| `parse_from`  | `body`           | The [field](/docs/types/field.md) from which the value will be parsed. |
+| `parse_to`    | `body`           | The [field](/docs/types/field.md) to which the value will be parsed. |
 | `preserve_to` |                  | Preserves the unparsed value at the specified [field](/docs/types/field.md). |
 | `on_error`    | `send`           | The behavior of the operator if it encounters an error. See [on_error](/docs/types/on_error.md). |
 | `if`          |                  | An [expression](/docs/types/expression.md) that, when set, will be evaluated to determine whether this operator should be used for the given entry. This allows you to do easy conditional parsing without branching logic with routers. |
@@ -29,7 +29,7 @@ This operator makes use of [Go regular expression](https://github.com/google/re2
 Configuration:
 ```yaml
 - type: regex_parser
-  parse_from: message
+  parse_from: body.message
   regex: '^Host=(?P<host>[^,]+), Type=(?P<type>.*)$'
 ```
 
@@ -69,10 +69,10 @@ Configuration:
 Configuration:
 ```yaml
 - type: regex_parser
-  parse_from: message.embedded
-  parse_to: parsed
+  parse_from: body.message.embedded
+  parse_to: body.parsed
   regex: '^Host=(?P<host>[^,]+), Type=(?P<type>.*)$'
-  preserve_to: message.embedded
+  preserve_to: body.message.embedded
 ```
 
 <table>
@@ -121,7 +121,7 @@ Configuration:
 - type: regex_parser
   regex: '^Time=(?P<timestamp_field>\d{4}-\d{2}-\d{2}), Host=(?P<host>[^,]+), Type=(?P<type>.*)$'
   timestamp:
-    parse_from: timestamp_field
+    parse_from: body.timestamp_field
     layout_type: strptime
     layout: '%Y-%m-%d'
 ```
@@ -161,8 +161,8 @@ Configuration:
 ```yaml
 - type: regex_parser
   regex: '^Host=(?<host>)$'
-  parse_from: message
-  if: '$body.type == "hostname"'
+  parse_from: body.message
+  if: 'body.type == "hostname"'
 ```
 
 <table>
@@ -228,8 +228,8 @@ Configuration:
 ```yaml
 - type: regex_parser
   regex: '^Host=(?<host>)$'
-  parse_from: message
-  if: '$body.type == "hostname"'
+  parse_from: body.message
+  if: 'body.type == "hostname"'
 ```
 
 <table>

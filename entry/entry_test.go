@@ -133,9 +133,12 @@ func TestRead(t *testing.T) {
 }
 
 func TestCopy(t *testing.T) {
+	now := time.Now()
+
 	entry := New()
 	entry.Severity = Severity(0)
 	entry.SeverityText = "ok"
+	entry.ObservedTimestamp = now
 	entry.Timestamp = time.Time{}
 	entry.Body = "test"
 	entry.Attributes = map[string]interface{}{"label": "value"}
@@ -143,6 +146,7 @@ func TestCopy(t *testing.T) {
 	entry.TraceId = []byte{0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f}
 	entry.SpanId = []byte{0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08}
 	entry.TraceFlags = []byte{0x01}
+	entry.ScopeName = "my.logger"
 	copy := entry.Copy()
 
 	entry.Severity = Severity(1)
@@ -154,7 +158,9 @@ func TestCopy(t *testing.T) {
 	entry.TraceId[0] = 0xff
 	entry.SpanId[0] = 0xff
 	entry.TraceFlags[0] = 0xff
+	entry.ScopeName = "foo"
 
+	require.Equal(t, now, copy.ObservedTimestamp)
 	require.Equal(t, time.Time{}, copy.Timestamp)
 	require.Equal(t, Severity(0), copy.Severity)
 	require.Equal(t, "ok", copy.SeverityText)
@@ -164,11 +170,13 @@ func TestCopy(t *testing.T) {
 	require.Equal(t, []byte{0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f}, copy.TraceId)
 	require.Equal(t, []byte{0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08}, copy.SpanId)
 	require.Equal(t, []byte{0x01}, copy.TraceFlags)
+	require.Equal(t, "my.logger", copy.ScopeName)
 }
 
 func TestCopyNil(t *testing.T) {
+	now := time.Now()
 	entry := New()
-	entry.Timestamp = time.Time{}
+	entry.ObservedTimestamp = now
 	copy := entry.Copy()
 
 	entry.Severity = Severity(1)
@@ -180,7 +188,9 @@ func TestCopyNil(t *testing.T) {
 	entry.TraceId = []byte{0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f}
 	entry.SpanId = []byte{0x04, 0x05, 0x06, 0x07, 0x08, 0x00, 0x01, 0x02, 0x03}
 	entry.TraceFlags = []byte{0x01}
+	entry.ScopeName = "foo"
 
+	require.Equal(t, now, copy.ObservedTimestamp)
 	require.Equal(t, time.Time{}, copy.Timestamp)
 	require.Equal(t, Severity(0), copy.Severity)
 	require.Equal(t, "", copy.SeverityText)
@@ -190,6 +200,7 @@ func TestCopyNil(t *testing.T) {
 	require.Equal(t, []byte{}, copy.TraceId)
 	require.Equal(t, []byte{}, copy.SpanId)
 	require.Equal(t, []byte{}, copy.TraceFlags)
+	require.Equal(t, "", copy.ScopeName)
 }
 
 func TestFieldFromString(t *testing.T) {
@@ -200,32 +211,44 @@ func TestFieldFromString(t *testing.T) {
 		expectedError bool
 	}{
 		{
-			"SimpleBody",
-			"test",
-			Field{BodyField{[]string{"test"}}},
+			"Body",
+			"body",
+			Field{BodyField{[]string{}}},
 			false,
 		},
 		{
 			"PrefixedBody",
-			"$.test",
+			"body.test",
 			Field{BodyField{[]string{"test"}}},
 			false,
 		},
 		{
 			"FullPrefixedBody",
-			"$body.test",
+			"body.test",
 			Field{BodyField{[]string{"test"}}},
 			false,
 		},
 		{
 			"SimpleAttribute",
-			"$attributes.test",
+			"attributes.test",
 			Field{AttributeField{"test"}},
 			false,
 		},
 		{
 			"AttributesTooManyFields",
-			"$attributes.test.bar",
+			"attributes.test.bar",
+			Field{},
+			true,
+		},
+		{
+			"SimpleResource",
+			"resource.test",
+			Field{ResourceField{"test"}},
+			false,
+		},
+		{
+			"ResourceTooManyFields",
+			"resource.test.bar",
 			Field{},
 			true,
 		},
@@ -283,4 +306,14 @@ func TestReadToInterfaceMissingField(t *testing.T) {
 	err := entry.readToInterface(field, &dest)
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "can not be read as a interface{}")
+}
+
+func TestDefaultTimestamps(t *testing.T) {
+	now := time.Now()
+	timeNow = func() time.Time { return now }
+	defer func() { timeNow = time.Now }()
+
+	e := New()
+	require.Equal(t, now, e.ObservedTimestamp)
+	require.True(t, e.Timestamp.IsZero())
 }
