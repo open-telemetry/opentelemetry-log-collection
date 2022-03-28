@@ -34,9 +34,8 @@ func init() {
 // NewKVParserConfig creates a new key value parser config with default values
 func NewKVParserConfig(operatorID string) *KVParserConfig {
 	return &KVParserConfig{
-		ParserConfig:  helper.NewParserConfig(operatorID, "key_value_parser"),
-		Delimiter:     "=",
-		PairDelimiter: "",
+		ParserConfig: helper.NewParserConfig(operatorID, "key_value_parser"),
+		Delimiter:    "=",
 	}
 }
 
@@ -122,7 +121,6 @@ func (kv *KVParser) parser(input string, delimiter string) (map[string]interface
 		key := cleanString(m[0])
 		value := cleanString(m[1])
 
-		// TODO: Check if key already exists and fail if so?
 		parsed[key] = value
 	}
 
