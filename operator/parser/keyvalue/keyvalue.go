@@ -59,7 +59,7 @@ func (c KVParserConfig) Build(logger *zap.SugaredLogger) (operator.Operator, err
 		return nil, errors.New("delimiter and pair_delimiter cannot be the same value")
 	}
 
-	if len(c.Delimiter) == 0 {
+	if c.Delimiter == "" {
 		return nil, errors.New("delimiter is a required parameter")
 	}
 
@@ -102,7 +102,7 @@ func (kv *KVParser) parse(value interface{}) (interface{}, error) {
 }
 
 func (kv *KVParser) parser(input string, delimiter string) (map[string]interface{}, error) {
-	if len(input) == 0 {
+	if input == "" {
 		return nil, fmt.Errorf("parse from field %s is empty", kv.ParseFrom.String())
 	}
 
@@ -117,8 +117,8 @@ func (kv *KVParser) parser(input string, delimiter string) (map[string]interface
 			continue
 		}
 
-		key := cleanString(m[0])
-		value := cleanString(m[1])
+		key := strings.TrimSpace(strings.Trim(m[0], "\"'"))
+		value := strings.TrimSpace(strings.Trim(m[1], "\"'"))
 
 		parsed[key] = value
 	}
@@ -136,29 +136,4 @@ func splitStringByWhitespace(input string) []string {
 		return !quoted && r == ' '
 	})
 	return raw
-}
-
-// remove surrounding quotes and trim leading and trailing space
-func cleanString(input string) string {
-	if len(input) < 1 {
-		return input
-	}
-
-	if input[0] == '"' {
-		input = input[1:]
-	}
-
-	if input[len(input)-1] == '"' {
-		input = input[:len(input)-1]
-	}
-
-	if input[0] == '\'' {
-		input = input[1:]
-	}
-
-	if input[len(input)-1] == '\'' {
-		input = input[:len(input)-1]
-	}
-
-	return strings.TrimSpace(input)
 }

@@ -499,10 +499,3 @@ func TestSplitStringByWhitespace(t *testing.T) {
 		})
 	}
 }
-
-func TestCleanString(t *testing.T) {
-	t.Run("empty", func(t *testing.T) {
-		x := ""
-		require.Equal(t, x, cleanString(x))
-	})
-}
