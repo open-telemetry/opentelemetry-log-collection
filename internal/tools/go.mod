@@ -5,7 +5,7 @@ go 1.17
 require (
 	github.com/golangci/golangci-lint v1.45.0
 	github.com/google/addlicense v1.0.0
-	github.com/securego/gosec/v2 v2.10.0
+	github.com/securego/gosec/v2 v2.11.0
 	github.com/tcnksm/ghr v0.14.0
 	github.com/vektra/mockery v1.1.2
 )
