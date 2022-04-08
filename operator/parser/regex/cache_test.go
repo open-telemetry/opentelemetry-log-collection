@@ -187,7 +187,7 @@ func TestNewStartedAtomicLimiter(t *testing.T) {
 			require.Equal(t, tc.max, l.max)
 			if tc.interval == 0 {
 				// default
-				tc.interval = 30
+				tc.interval = 5
 			}
 			require.Equal(t, float64(tc.interval), l.interval.Seconds())
 			require.Equal(t, uint64(0), l.currentCount())

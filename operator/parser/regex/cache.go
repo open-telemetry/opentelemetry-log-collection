@@ -15,6 +15,7 @@
 package regex
 
 import (
+	"math"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -135,7 +136,7 @@ type limiter interface {
 // newStartedAtomicLimiter returns a started atomicLimiter
 func newStartedAtomicLimiter(max uint64, interval uint64) *atomicLimiter {
 	if interval == 0 {
-		interval = 30
+		interval = 5
 	}
 
 	a := &atomicLimiter{
@@ -165,9 +166,14 @@ func (l *atomicLimiter) init() {
 	// start the reset go routine once
 	l.start.Do(func() {
 		go func() {
-			ticker := time.NewTicker(l.interval)
-			for range ticker.C {
-				atomic.SwapUint64(&l.count, 0)
+			// During every interval period, reduce the counter
+			// by 10%
+			x := math.Round(-0.10 * float64(l.max))
+			for {
+				time.Sleep(l.interval)
+				if l.currentCount() > 0 {
+					atomic.AddUint64(&l.count, ^uint64(x))
+				}
 			}
 		}()
 	})
