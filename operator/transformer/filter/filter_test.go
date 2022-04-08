@@ -46,7 +46,7 @@ func TestFilterOperator(t *testing.T) {
 					"message": "test_message",
 				},
 			},
-			`$.message == "test_message"`,
+			`body.message == "test_message"`,
 			true,
 		},
 		{
@@ -56,7 +56,7 @@ func TestFilterOperator(t *testing.T) {
 					"message": "invalid",
 				},
 			},
-			`$.message == "test_message"`,
+			`body.message == "test_message"`,
 			false,
 		},
 		{
@@ -69,7 +69,70 @@ func TestFilterOperator(t *testing.T) {
 					"key": "value",
 				},
 			},
-			`$attributes.key == "value"`,
+			`attributes.key == "value"`,
+			true,
+		},
+		{
+			"MatchBodyNested",
+			&entry.Entry{
+				Body: map[string]interface{}{
+					"one": map[string]interface{}{
+						"two": map[string]interface{}{
+							"key": "value",
+						},
+					},
+				},
+			},
+			`body.one.two.key == "value"`,
+			true,
+		},
+		{
+			"MatchAttributeNested",
+			&entry.Entry{
+				Body: map[string]interface{}{
+					"message": "test_message",
+				},
+				Attributes: map[string]interface{}{
+					"one": map[string]interface{}{
+						"two": map[string]interface{}{
+							"key": "value",
+						},
+					},
+				},
+			},
+			`attributes.one.two.key == "value"`,
+			true,
+		},
+		{
+			"MatchResourceNested",
+			&entry.Entry{
+				Body: map[string]interface{}{
+					"message": "test_message",
+				},
+				Resource: map[string]interface{}{
+					"one": map[string]interface{}{
+						"two": map[string]interface{}{
+							"key": "value",
+						},
+					},
+				},
+			},
+			`resource.one.two.key == "value"`,
+			true,
+		},
+		{
+			"MatchResourceBracketed",
+			&entry.Entry{
+				Body: map[string]interface{}{
+					"message": "test_message",
+				},
+				Resource: map[string]interface{}{
+					"one": map[string]interface{}{
+						"two.stilltwo": "value",
+					},
+				},
+			},
+			`resource.one["two.stilltwo"] == "value"`,
 			true,
 		},
 		{
@@ -79,7 +142,7 @@ func TestFilterOperator(t *testing.T) {
 					"message": "test_message",
 				},
 			},
-			`$attributes.key == "value"`,
+			`attributes.key == "value"`,
 			false,
 		},
 		{
@@ -132,7 +195,7 @@ func TestFilterOperator(t *testing.T) {
 
 func TestFilterDropRatio(t *testing.T) {
 	cfg := NewFilterOperatorConfig("test")
-	cfg.Expression = `$.message == "test_message"`
+	cfg.Expression = `body.message == "test_message"`
 	cfg.DropRatio = 0.5
 	op, err := cfg.Build(testutil.Logger(t))
 	require.NoError(t, err)

@@ -21,8 +21,8 @@ Add a string to the body
 
 ```yaml
 - type: add
-  field: key2
-  value: val2
+  field: body.key2
+  value: body.val2
 ```
 
 <table>
@@ -63,8 +63,8 @@ Add a value to the body using an expression
 
 ```yaml
 - type: add
-  field: key2
-  value: EXPR($.key1 + "_suffix")
+  field: body.key2
+  value: EXPR(body.key1 + "_suffix")
 ```
 
 <table>
@@ -105,7 +105,7 @@ Add an object to the body
 
 ```yaml
 - type: add
-  field: key2
+  field: body.key2
   value: 
     nestedkey: nestedvalue
 ```
@@ -150,7 +150,7 @@ Add a value to attributes
 
 ```yaml
 - type: add
-  field: $attributes.key2
+  field: attributes.key2
   value: val2
 ```
 
@@ -193,7 +193,7 @@ Add a value to resource
 
 ```yaml
 - type: add
-  field: $resource.key2
+  field: resource.key2
   value: val2
 ```
 
@@ -235,8 +235,8 @@ Add a value to resource using an expression
 
 ```yaml
 - type: add
-  field: $resource.key2
-  value: EXPR($.key1 + "_suffix")
+  field: resource.key2
+  value: EXPR(body.key1 + "_suffix")
 ```
 
 <table>

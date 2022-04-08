@@ -17,8 +17,8 @@ The `uri_parser` operator parses the string-type field selected by `parse_from` 
 | ---           | ---              | ---         |
 | `id`          | `uri_parser`     | A unique identifier for the operator. |
 | `output`      | Next in pipeline | The connected operator(s) that will receive all outbound entries. |
-| `parse_from`  | `$body`          | The [field](/docs/types/field.md) from which the value will be parsed. |
-| `parse_to`    | `$body`          | The [field](/docs/types/field.md) to which the value will be parsed. |
+| `parse_from`  | `body`           | The [field](/docs/types/field.md) from which the value will be parsed. |
+| `parse_to`    | `body`           | The [field](/docs/types/field.md) to which the value will be parsed. |
 | `preserve_to` |                  | Preserves the unparsed value at the specified [field](/docs/types/field.md). |
 | `on_error`    | `send`           | The behavior of the operator if it encounters an error. See [on_error](/docs/types/on_error.md). |
 | `if`          |                  | An [expression](/docs/types/expression.md) that, when set, will be evaluated to determine whether this operator should be used for the given entry. This allows you to do easy conditional parsing without branching logic with routers. |
@@ -41,12 +41,12 @@ The following fields are returned. Empty fields are not returned.
 ### Example Configurations
 
 
-#### Parse the field `message` as absolute URI
+#### Parse the field `body.message` as absolute URI
 
 Configuration:
 ```yaml
 - type: uri_parser
-  parse_from: message
+  parse_from: body.message
 ```
 
 <table>
@@ -90,12 +90,12 @@ Configuration:
 </tr>
 </table>
 
-#### Parse the field `message` as relative URI
+#### Parse the field `body.message` as relative URI
 
 Configuration:
 ```yaml
 - type: uri_parser
-  parse_from: message
+  parse_from: body.message
 ```
 
 <table>
@@ -133,12 +133,12 @@ Configuration:
 </tr>
 </table>
 
-#### Parse the field `query` as URI query string
+#### Parse the field `body.query` as URI query string
 
 Configuration:
 ```yaml
 - type: uri_parser
-  parse_from: query
+  parse_from: body.query
 ```
 
 <table>

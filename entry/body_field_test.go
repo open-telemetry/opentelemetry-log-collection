@@ -16,6 +16,7 @@ package entry
 
 import (
 	"encoding/json"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -23,7 +24,7 @@ import (
 	yaml "gopkg.in/yaml.v2"
 )
 
-func testBody() map[string]interface{} {
+func testMap() map[string]interface{} {
 	return map[string]interface{}{
 		"simple_key": "simple_value",
 		"map_key":    nestedMap(),
@@ -47,42 +48,42 @@ func TestNewBodyFieldGet(t *testing.T) {
 		{
 			"EmptyField",
 			NewBodyField(),
-			testBody(),
-			testBody(),
+			testMap(),
+			testMap(),
 			true,
 		},
 		{
 			"SimpleField",
 			NewBodyField("simple_key"),
-			testBody(),
+			testMap(),
 			"simple_value",
 			true,
 		},
 		{
 			"MapField",
 			NewBodyField("map_key"),
-			testBody(),
+			testMap(),
 			nestedMap(),
 			true,
 		},
 		{
 			"NestedField",
 			NewBodyField("map_key", "nested_key"),
-			testBody(),
+			testMap(),
 			"nested_value",
 			true,
 		},
 		{
 			"MissingField",
 			NewBodyField("invalid"),
-			testBody(),
+			testMap(),
 			nil,
 			false,
 		},
 		{
 			"InvalidField",
 			NewBodyField("simple_key", "nested_key"),
-			testBody(),
+			testMap(),
 			nil,
 			false,
 		},
@@ -123,7 +124,7 @@ func TestBodyFieldDelete(t *testing.T) {
 		{
 			"SimpleKey",
 			NewBodyField("simple_key"),
-			testBody(),
+			testMap(),
 			map[string]interface{}{
 				"map_key": nestedMap(),
 			},
@@ -141,23 +142,23 @@ func TestBodyFieldDelete(t *testing.T) {
 		{
 			"EmptyField",
 			NewBodyField(),
-			testBody(),
+			testMap(),
 			nil,
-			testBody(),
+			testMap(),
 			true,
 		},
 		{
 			"MissingKey",
 			NewBodyField("missing_key"),
-			testBody(),
-			testBody(),
+			testMap(),
+			testMap(),
 			nil,
 			false,
 		},
 		{
 			"NestedKey",
 			NewBodyField("map_key", "nested_key"),
-			testBody(),
+			testMap(),
 			map[string]interface{}{
 				"simple_key": "simple_value",
 				"map_key":    map[string]interface{}{},
@@ -168,7 +169,7 @@ func TestBodyFieldDelete(t *testing.T) {
 		{
 			"MapKey",
 			NewBodyField("map_key"),
-			testBody(),
+			testMap(),
 			map[string]interface{}{
 				"simple_key": "simple_value",
 			},
@@ -178,8 +179,8 @@ func TestBodyFieldDelete(t *testing.T) {
 		{
 			"InvalidNestedKey",
 			NewBodyField("simple_key", "missing"),
-			testBody(),
-			testBody(),
+			testMap(),
+			testMap(),
 			nil,
 			false,
 		},
@@ -189,7 +190,9 @@ func TestBodyFieldDelete(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			entry := New()
 			entry.Body = tc.body
-			entry.Delete(tc.field)
+			val, ok := entry.Delete(tc.field)
+			require.Equal(t, tc.expectedOk, ok)
+			require.Equal(t, tc.expectedReturned, val)
 			assert.Equal(t, tc.expectedBody, entry.Body)
 		})
 	}
@@ -206,7 +209,7 @@ func TestBodyFieldSet(t *testing.T) {
 		{
 			"OverwriteMap",
 			NewBodyField(),
-			testBody(),
+			testMap(),
 			"new_value",
 			"new_value",
 		},
@@ -222,21 +225,27 @@ func TestBodyFieldSet(t *testing.T) {
 			NewBodyField("embedded", "field"),
 			"raw_value",
 			"new_value",
-			map[string]interface{}{"embedded": map[string]interface{}{"field": "new_value"}},
+			map[string]interface{}{
+				"embedded": map[string]interface{}{
+					"field": "new_value",
+				},
+			},
 		},
 		{
 			"NewMapValue",
 			NewBodyField(),
 			map[string]interface{}{},
-			testBody(),
-			testBody(),
+			testMap(),
+			testMap(),
 		},
 		{
 			"NewRootField",
 			NewBodyField("new_key"),
 			map[string]interface{}{},
 			"new_value",
-			map[string]interface{}{"new_key": "new_value"},
+			map[string]interface{}{
+				"new_key": "new_value",
+			},
 		},
 		{
 			"NewNestedField",
@@ -252,7 +261,7 @@ func TestBodyFieldSet(t *testing.T) {
 		{
 			"OverwriteNestedMap",
 			NewBodyField("map_key"),
-			testBody(),
+			testMap(),
 			"new_value",
 			map[string]interface{}{
 				"simple_key": "simple_value",
@@ -262,7 +271,7 @@ func TestBodyFieldSet(t *testing.T) {
 		{
 			"MergedNestedValue",
 			NewBodyField("map_key"),
-			testBody(),
+			testMap(),
 			map[string]interface{}{
 				"merged_key": "merged_value",
 			},
@@ -313,55 +322,130 @@ func TestBodyFieldMerge(t *testing.T) {
 	require.Equal(t, expected, entry.Body)
 }
 
-func TestBodyFieldMarshalJSON(t *testing.T) {
-	bodyField := BodyField{Keys: []string{"test"}}
-	json, err := bodyField.MarshalJSON()
-	require.NoError(t, err)
-	require.Equal(t, []byte(`"test"`), json)
+func TestBodyFieldMarshal(t *testing.T) {
+	cases := []struct {
+		name    string
+		keys    []string
+		jsonDot string
+	}{
+		{
+			"root",
+			[]string{},
+			"body",
+		},
+		{
+			"standard",
+			[]string{"test"},
+			"body.test",
+		},
+		{
+			"bracketed",
+			[]string{"test.foo"},
+			"body['test.foo']",
+		},
+		{
+			"double_bracketed",
+			[]string{"test.foo", "bar"},
+			"body['test.foo']['bar']",
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			field := BodyField{Keys: tc.keys}
+			yaml, err := field.MarshalYAML()
+			require.NoError(t, err)
+			require.Equal(t, tc.jsonDot, yaml)
+
+			json, err := field.MarshalJSON()
+			require.NoError(t, err)
+			require.Equal(t, []byte(fmt.Sprintf(`"%s"`, tc.jsonDot)), json)
+		})
+	}
 }
 
-func TestBodyFieldUnmarshalJSON(t *testing.T) {
-	fieldString := []byte(`"test"`)
-	var f BodyField
-	err := json.Unmarshal(fieldString, &f)
-	require.NoError(t, err)
-	require.Equal(t, BodyField{Keys: []string{"test"}}, f)
+func TestBodyFieldUnmarshal(t *testing.T) {
+	cases := []struct {
+		name    string
+		jsonDot string
+		keys    []string
+	}{
+		{
+			"root",
+			"body",
+			[]string{},
+		},
+		{
+			"standard",
+			"body.test",
+			[]string{"test"},
+		},
+		{
+			"bracketed",
+			"body['test.foo']",
+			[]string{"test.foo"},
+		},
+		{
+			"double_bracketed",
+			"body['test.foo']['bar']",
+			[]string{"test.foo", "bar"},
+		},
+		{
+			"mixed",
+			"body['test.foo'].bar",
+			[]string{"test.foo", "bar"},
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			var fy BodyField
+			err := yaml.UnmarshalStrict([]byte(tc.jsonDot), &fy)
+			require.NoError(t, err)
+			require.Equal(t, tc.keys, fy.Keys)
+
+			var fj BodyField
+			err = json.Unmarshal([]byte(fmt.Sprintf(`"%s"`, tc.jsonDot)), &fj)
+			require.NoError(t, err)
+			require.Equal(t, tc.keys, fy.Keys)
+		})
+	}
 }
 
-func TestBodyFieldUnmarshalJSONFailure(t *testing.T) {
-	invalidField := []byte(`{"key":"value"}`)
-	var f BodyField
-	err := json.Unmarshal(invalidField, &f)
-	require.Error(t, err)
-	require.Contains(t, err.Error(), "the field is not a string: json")
-}
+func TestBodyFieldUnmarshalFailure(t *testing.T) {
+	cases := []struct {
+		name        string
+		invalid     []byte
+		expectedErr string
+	}{
+		{
+			"must_be_string",
+			[]byte(`{"key":"value"}`),
+			"the field is not a string",
+		},
+		{
+			"must_start_with_prefix",
+			[]byte(`"test"`),
+			"must start with 'body'",
+		},
+		{
+			"invalid_syntax",
+			[]byte(`"test['foo'"`),
+			"found unclosed left bracket",
+		},
+	}
 
-func TestBodyFieldMarshalYAML(t *testing.T) {
-	bodyField := BodyField{Keys: []string{"test"}}
-	yaml, err := bodyField.MarshalYAML()
-	require.NoError(t, err)
-	require.Equal(t, "test", yaml)
-}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			var fy BodyField
+			err := yaml.UnmarshalStrict(tc.invalid, &fy)
+			require.Error(t, err)
+			require.Contains(t, err.Error(), tc.expectedErr)
 
-func TestBodyFieldUnmarshalYAML(t *testing.T) {
-	invalidField := []byte("test")
-	var f BodyField
-	err := yaml.UnmarshalStrict(invalidField, &f)
-	require.NoError(t, err)
-	require.Equal(t, BodyField{Keys: []string{"test"}}, f)
-}
-
-func TestBodyFieldUnmarshalYAMLFailure(t *testing.T) {
-	invalidField := []byte(`{"key":"value"}`)
-	var f BodyField
-	err := yaml.UnmarshalStrict(invalidField, &f)
-	require.Error(t, err)
-	require.Contains(t, err.Error(), "the field is not a string: yaml")
-}
-
-func TestBodyFieldFromJSONDot(t *testing.T) {
-	jsonDot := "$.test"
-	bodyField := fromJSONDot(jsonDot)
-	expectedField := BodyField{Keys: []string{"test"}}
-	require.Equal(t, expectedField, bodyField)
+			var fj BodyField
+			err = json.Unmarshal(tc.invalid, &fj)
+			require.Error(t, err)
+			require.Contains(t, err.Error(), tc.expectedErr)
+		})
+	}
 }

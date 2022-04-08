@@ -37,7 +37,7 @@ func TestGoldenConfig(t *testing.T) {
 			Expect: func() *AddOperatorConfig {
 				cfg := defaultCfg()
 				cfg.Field = entry.NewBodyField("new")
-				cfg.Value = `EXPR($.key + "_suffix")`
+				cfg.Value = `EXPR(body.key + "_suffix")`
 				return cfg
 			}(),
 		},
@@ -62,6 +62,26 @@ func TestGoldenConfig(t *testing.T) {
 			}(),
 		},
 		{
+			Name: "add_nested_attribute",
+			Expect: func() *AddOperatorConfig {
+				cfg := defaultCfg()
+				cfg.Field = entry.NewAttributeField("one", "two")
+				cfg.Value = "newVal"
+				return cfg
+			}(),
+		},
+		{
+			Name: "add_nested_obj_attribute",
+			Expect: func() *AddOperatorConfig {
+				cfg := defaultCfg()
+				cfg.Field = entry.NewAttributeField("one", "two")
+				cfg.Value = map[interface{}]interface{}{
+					"nest": map[interface{}]interface{}{"key": "val"},
+				}
+				return cfg
+			}(),
+		},
+		{
 			Name: "add_resource",
 			Expect: func() *AddOperatorConfig {
 				cfg := defaultCfg()
@@ -71,11 +91,31 @@ func TestGoldenConfig(t *testing.T) {
 			}(),
 		},
 		{
+			Name: "add_nested_resource",
+			Expect: func() *AddOperatorConfig {
+				cfg := defaultCfg()
+				cfg.Field = entry.NewResourceField("one", "two")
+				cfg.Value = "newVal"
+				return cfg
+			}(),
+		},
+		{
+			Name: "add_nested_obj_resource",
+			Expect: func() *AddOperatorConfig {
+				cfg := defaultCfg()
+				cfg.Field = entry.NewResourceField("one", "two")
+				cfg.Value = map[interface{}]interface{}{
+					"nest": map[interface{}]interface{}{"key": "val"},
+				}
+				return cfg
+			}(),
+		},
+		{
 			Name: "add_resource_expr",
 			Expect: func() *AddOperatorConfig {
 				cfg := defaultCfg()
 				cfg.Field = entry.NewResourceField("new")
-				cfg.Value = `EXPR($.key + "_suffix")`
+				cfg.Value = `EXPR(body.key + "_suffix")`
 				return cfg
 			}(),
 		},
@@ -84,6 +124,25 @@ func TestGoldenConfig(t *testing.T) {
 			Expect: func() *AddOperatorConfig {
 				cfg := defaultCfg()
 				cfg.Field = entry.NewBodyField("new")
+				cfg.Value = []interface{}{1, 2, 3, 4}
+				return cfg
+			}(),
+		},
+		{
+			Name: "add_array_to_attributes",
+			Expect: func() *AddOperatorConfig {
+				cfg := defaultCfg()
+				cfg.Field = entry.NewAttributeField("new")
+				cfg.Value = []interface{}{1, 2, 3, 4}
+				return cfg
+			}(),
+		},
+
+		{
+			Name: "add_array_to_resource",
+			Expect: func() *AddOperatorConfig {
+				cfg := defaultCfg()
+				cfg.Field = entry.NewResourceField("new")
 				cfg.Value = []interface{}{1, 2, 3, 4}
 				return cfg
 			}(),

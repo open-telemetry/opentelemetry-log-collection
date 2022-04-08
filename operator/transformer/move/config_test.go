@@ -133,29 +133,20 @@ func TestGoldenConfig(t *testing.T) {
 			}(),
 		},
 		{
-			Name: "implicit_body_from",
+			Name: "move_nested_body_to_nested_attribute",
 			Expect: func() *MoveOperatorConfig {
 				cfg := defaultCfg()
-				cfg.From = entry.NewBodyField("implicitkey")
-				cfg.To = entry.NewAttributeField("new")
+				cfg.From = entry.NewBodyField("one", "two")
+				cfg.To = entry.NewAttributeField("three", "four")
 				return cfg
 			}(),
 		},
 		{
-			Name: "implicit_body_to",
+			Name: "move_nested_body_to_nested_resource",
 			Expect: func() *MoveOperatorConfig {
 				cfg := defaultCfg()
-				cfg.From = entry.NewAttributeField("new")
-				cfg.To = entry.NewBodyField("implicitkey")
-				return cfg
-			}(),
-		},
-		{
-			Name: "implicit_nested_key",
-			Expect: func() *MoveOperatorConfig {
-				cfg := defaultCfg()
-				cfg.From = entry.NewAttributeField("new")
-				cfg.To = entry.NewBodyField("key", "key2")
+				cfg.From = entry.NewBodyField("one", "two")
+				cfg.To = entry.NewResourceField("three", "four")
 				return cfg
 			}(),
 		},

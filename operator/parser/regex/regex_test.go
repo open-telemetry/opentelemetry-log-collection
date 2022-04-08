@@ -20,6 +20,7 @@ import (
 	"math/rand"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v2"
@@ -81,31 +82,38 @@ func TestRegexParserCache(t *testing.T) {
 
 func TestParserRegex(t *testing.T) {
 	cases := []struct {
-		name       string
-		configure  func(*RegexParserConfig)
-		inputBody  interface{}
-		outputBody interface{}
+		name      string
+		configure func(*RegexParserConfig)
+		input     *entry.Entry
+		expected  *entry.Entry
 	}{
 		{
 			"RootString",
 			func(p *RegexParserConfig) {
 				p.Regex = "a=(?P<a>.*)"
 			},
-			"a=b",
-			map[string]interface{}{
-				"a": "b",
+			&entry.Entry{
+				Body: "a=b",
+			},
+			&entry.Entry{
+				Attributes: map[string]interface{}{
+					"a": "b",
+				},
 			},
 		},
 		{
 			"MemeoryCache",
 			func(p *RegexParserConfig) {
 				p.Regex = "a=(?P<a>.*)"
-				p.ParseTo = entry.NewBodyField()
 				p.Cache.Size = 100
 			},
-			"a=b",
-			map[string]interface{}{
-				"a": "b",
+			&entry.Entry{
+				Body: "a=b",
+			},
+			&entry.Entry{
+				Attributes: map[string]interface{}{
+					"a": "b",
+				},
 			},
 		},
 		{
@@ -114,12 +122,16 @@ func TestParserRegex(t *testing.T) {
 				p.Regex = `^(?P<pod_name>[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*)_(?P<namespace>[^_]+)_(?P<container_name>.+)-(?P<container_id>[a-z0-9]{64})\.log$`
 				p.Cache.Size = 100
 			},
-			"coredns-5644d7b6d9-mzngq_kube-system_coredns-901f7510281180a402936c92f5bc0f3557f5a21ccb5a4591c5bf98f3ddbffdd6.log",
-			map[string]interface{}{
-				"container_id":   "901f7510281180a402936c92f5bc0f3557f5a21ccb5a4591c5bf98f3ddbffdd6",
-				"container_name": "coredns",
-				"namespace":      "kube-system",
-				"pod_name":       "coredns-5644d7b6d9-mzngq",
+			&entry.Entry{
+				Body: "coredns-5644d7b6d9-mzngq_kube-system_coredns-901f7510281180a402936c92f5bc0f3557f5a21ccb5a4591c5bf98f3ddbffdd6.log",
+			},
+			&entry.Entry{
+				Attributes: map[string]interface{}{
+					"container_id":   "901f7510281180a402936c92f5bc0f3557f5a21ccb5a4591c5bf98f3ddbffdd6",
+					"container_name": "coredns",
+					"namespace":      "kube-system",
+					"pod_name":       "coredns-5644d7b6d9-mzngq",
+				},
 			},
 		},
 	}
@@ -136,32 +148,14 @@ func TestParserRegex(t *testing.T) {
 			fake := testutil.NewFakeOutput(t)
 			op.SetOutputs([]operator.Operator{fake})
 
-			entry := entry.New()
-			entry.Body = tc.inputBody
-			err = op.Process(context.Background(), entry)
+			ots := time.Now()
+			tc.input.ObservedTimestamp = ots
+			tc.expected.ObservedTimestamp = ots
+
+			err = op.Process(context.Background(), tc.input)
 			require.NoError(t, err)
 
-			fake.ExpectBody(t, tc.outputBody)
-
-			// op is always a RegexParser
-			regexOp := op.(*RegexParser)
-
-			// If cache is enabled, read it and ensure it is the same
-			// as the entry's body
-			if regexOp.cache != nil {
-				cacheKey := tc.inputBody.(string)
-
-				// Dump the cache to ensure the entry was actually written
-				dump := regexOp.cache.copy()
-				dumpOut, ok := dump[cacheKey]
-				require.True(t, ok, "expected %s to exist in the cache", cacheKey)
-				require.Equal(t, tc.outputBody, dumpOut)
-
-				// Call match directly to ensure we get the cached value back
-				cacheOut, err := regexOp.match(cacheKey)
-				require.NoError(t, err, "expected cache key to exist")
-				require.Equal(t, entry.Body, cacheOut)
-			}
+			fake.ExpectEntry(t, tc.expected)
 		})
 	}
 }
@@ -222,8 +216,8 @@ func TestRegexParserConfig(t *testing.T) {
 			"id":         "test",
 			"type":       "regex_parser",
 			"regex":      "test123",
-			"parse_from": "$.from",
-			"parse_to":   "$.to",
+			"parse_from": "body.from",
+			"parse_to":   "body.to",
 			"on_error":   "send",
 		}
 		var actual RegexParserConfig
@@ -238,8 +232,8 @@ type: regex_parser
 id: test
 on_error: "send"
 regex: "test123"
-parse_from: $.from
-parse_to: $.to`
+parse_from: body.from
+parse_to: body.to`
 		var actual RegexParserConfig
 		err := yaml.Unmarshal([]byte(input), &actual)
 		require.NoError(t, err)

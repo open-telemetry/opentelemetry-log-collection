@@ -17,12 +17,21 @@ package entry
 import (
 	"encoding/json"
 	"fmt"
-	"strings"
 )
 
 // BodyField is a field found on an entry body.
 type BodyField struct {
 	Keys []string
+}
+
+// NewBodyField creates a new field from an ordered array of keys.
+func NewBodyField(keys ...string) Field {
+	if keys == nil {
+		keys = []string{}
+	}
+	return Field{BodyField{
+		Keys: keys,
+	}}
 }
 
 // Parent returns the parent of the current field.
@@ -51,7 +60,7 @@ func (f BodyField) isRoot() bool {
 
 // String returns the string representation of this field.
 func (f BodyField) String() string {
-	return toJSONDot(f)
+	return toJSONDot(BodyPrefix, f.Keys)
 }
 
 // Get will retrieve a value from an entry's body using the field.
@@ -60,12 +69,12 @@ func (f BodyField) Get(entry *Entry) (interface{}, bool) {
 	var currentValue interface{} = entry.Body
 
 	for _, key := range f.Keys {
-		currentBody, ok := currentValue.(map[string]interface{})
+		currentMap, ok := currentValue.(map[string]interface{})
 		if !ok {
 			return nil, false
 		}
 
-		currentValue, ok = currentBody[key]
+		currentValue, ok = currentMap[key]
 		if !ok {
 			return nil, false
 		}
@@ -76,7 +85,6 @@ func (f BodyField) Get(entry *Entry) (interface{}, bool) {
 
 // Set will set a value on an entry's body using the field.
 // If a key already exists, it will be overwritten.
-// If mergeMaps is set to true, map values will be merged together.
 func (f BodyField) Set(entry *Entry, value interface{}) error {
 	mapValue, isMapValue := value.(map[string]interface{})
 	if isMapValue {
@@ -100,7 +108,7 @@ func (f BodyField) Set(entry *Entry, value interface{}) error {
 			currentMap[key] = value
 			break
 		}
-		currentMap = f.getNestedMap(currentMap, key)
+		currentMap = getNestedMap(currentMap, key)
 	}
 	return nil
 }
@@ -115,7 +123,7 @@ func (f BodyField) Merge(entry *Entry, mapValues map[string]interface{}) {
 	}
 
 	for _, key := range f.Keys {
-		currentMap = f.getNestedMap(currentMap, key)
+		currentMap = getNestedMap(currentMap, key)
 	}
 
 	for key, value := range mapValues {
@@ -153,23 +161,6 @@ func (f BodyField) Delete(entry *Entry) (interface{}, bool) {
 	return nil, false
 }
 
-// getNestedMap will get a nested map assigned to a key.
-// If the map does not exist, it will create and return it.
-func (f BodyField) getNestedMap(currentMap map[string]interface{}, key string) map[string]interface{} {
-	currentValue, ok := currentMap[key]
-	if !ok {
-		currentMap[key] = map[string]interface{}{}
-	}
-
-	nextMap, ok := currentValue.(map[string]interface{})
-	if !ok {
-		nextMap = map[string]interface{}{}
-		currentMap[key] = nextMap
-	}
-
-	return nextMap
-}
-
 /****************
   Serialization
 ****************/
@@ -181,13 +172,22 @@ func (f *BodyField) UnmarshalJSON(raw []byte) error {
 		return fmt.Errorf("the field is not a string: %s", err)
 	}
 
-	*f = fromJSONDot(value)
+	keys, err := fromJSONDot(value)
+	if err != nil {
+		return err
+	}
+
+	if keys[0] != BodyPrefix {
+		return fmt.Errorf("must start with 'body': %s", value)
+	}
+
+	*f = BodyField{keys[1:]}
 	return nil
 }
 
 // MarshalJSON will marshal the field for JSON.
 func (f BodyField) MarshalJSON() ([]byte, error) {
-	json := fmt.Sprintf(`"%s"`, toJSONDot(f))
+	json := fmt.Sprintf(`"%s"`, toJSONDot(BodyPrefix, f.Keys))
 	return []byte(json), nil
 }
 
@@ -198,65 +198,20 @@ func (f *BodyField) UnmarshalYAML(unmarshal func(interface{}) error) error {
 		return fmt.Errorf("the field is not a string: %s", err)
 	}
 
-	*f = fromJSONDot(value)
+	keys, err := fromJSONDot(value)
+	if err != nil {
+		return err
+	}
+
+	if keys[0] != BodyPrefix {
+		return fmt.Errorf("must start with 'body': %s", value)
+	}
+
+	*f = BodyField{keys[1:]}
 	return nil
 }
 
 // MarshalYAML will marshal the field for YAML.
 func (f BodyField) MarshalYAML() (interface{}, error) {
-	return toJSONDot(f), nil
-}
-
-// fromJSONDot creates a field from JSON dot notation.
-func fromJSONDot(value string) BodyField {
-	keys := strings.Split(value, ".")
-
-	if keys[0] == "$" || keys[0] == BodyPrefix {
-		keys = keys[1:]
-	}
-
-	return BodyField{keys}
-}
-
-// toJSONDot returns the JSON dot notation for a field.
-func toJSONDot(field BodyField) string {
-	if field.isRoot() {
-		return BodyPrefix
-	}
-
-	containsDots := false
-	for _, key := range field.Keys {
-		if strings.Contains(key, ".") {
-			containsDots = true
-		}
-	}
-
-	var b strings.Builder
-	if containsDots {
-		b.WriteString(BodyPrefix)
-		for _, key := range field.Keys {
-			b.WriteString(`['`)
-			b.WriteString(key)
-			b.WriteString(`']`)
-		}
-	} else {
-		for i, key := range field.Keys {
-			if i != 0 {
-				b.WriteString(".")
-			}
-			b.WriteString(key)
-		}
-	}
-
-	return b.String()
-}
-
-// NewBodyField creates a new field from an ordered array of keys.
-func NewBodyField(keys ...string) Field {
-	if keys == nil {
-		keys = []string{}
-	}
-	return Field{BodyField{
-		Keys: keys,
-	}}
+	return toJSONDot(BodyPrefix, f.Keys), nil
 }

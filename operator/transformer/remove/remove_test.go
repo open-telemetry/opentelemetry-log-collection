@@ -35,8 +35,10 @@ type testCase struct {
 
 // Test building and processing a given remove config
 func TestProcessAndBuild(t *testing.T) {
+	now := time.Now()
 	newTestEntry := func() *entry.Entry {
 		e := entry.New()
+		e.ObservedTimestamp = now
 		e.Timestamp = time.Unix(1586632809, 0)
 		e.Body = map[string]interface{}{
 			"key": "val",
@@ -78,6 +80,60 @@ func TestProcessAndBuild(t *testing.T) {
 			func() *entry.Entry {
 				e := newTestEntry()
 				e.Body = map[string]interface{}{
+					"key":    "val",
+					"nested": map[string]interface{}{},
+				}
+				return e
+			},
+			false,
+		},
+		{
+			"remove_nested_attribute",
+			func() *RemoveOperatorConfig {
+				cfg := defaultCfg()
+				cfg.Field = newAttributeField("nested", "nestedkey")
+				return cfg
+			}(),
+			func() *entry.Entry {
+				e := newTestEntry()
+				e.Attributes = map[string]interface{}{
+					"key": "val",
+					"nested": map[string]interface{}{
+						"nestedkey": "nestedval",
+					},
+				}
+				return e
+			},
+			func() *entry.Entry {
+				e := newTestEntry()
+				e.Attributes = map[string]interface{}{
+					"key":    "val",
+					"nested": map[string]interface{}{},
+				}
+				return e
+			},
+			false,
+		},
+		{
+			"remove_nested_resource",
+			func() *RemoveOperatorConfig {
+				cfg := defaultCfg()
+				cfg.Field = newResourceField("nested", "nestedkey")
+				return cfg
+			}(),
+			func() *entry.Entry {
+				e := newTestEntry()
+				e.Resource = map[string]interface{}{
+					"key": "val",
+					"nested": map[string]interface{}{
+						"nestedkey": "nestedval",
+					},
+				}
+				return e
+			},
+			func() *entry.Entry {
+				e := newTestEntry()
+				e.Resource = map[string]interface{}{
 					"key":    "val",
 					"nested": map[string]interface{}{},
 				}

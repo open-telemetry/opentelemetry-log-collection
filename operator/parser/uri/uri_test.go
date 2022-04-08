@@ -87,7 +87,7 @@ func TestProcess(t *testing.T) {
 				Body: "https://google.com:443/path?user=dev",
 			},
 			&entry.Entry{
-				Body: map[string]interface{}{
+				Attributes: map[string]interface{}{
 					"host": "google.com",
 					"port": "443",
 					"path": "/path",
@@ -142,7 +142,8 @@ func TestProcess(t *testing.T) {
 				},
 			},
 			&entry.Entry{
-				Body: map[string]interface{}{
+				Body: map[string]interface{}{},
+				Attributes: map[string]interface{}{
 					"host": "google.com",
 					"port": "443",
 					"path": "/path",
@@ -170,6 +171,9 @@ func TestProcess(t *testing.T) {
 			},
 			&entry.Entry{
 				Body: map[string]interface{}{
+					"url": "https://google.com:443/path?user=dev",
+				},
+				Attributes: map[string]interface{}{
 					"host": "google.com",
 					"port": "443",
 					"path": "/path",
@@ -179,7 +183,6 @@ func TestProcess(t *testing.T) {
 						},
 					},
 					"scheme": "https",
-					"url":    "https://google.com:443/path?user=dev",
 				},
 			},
 		},
@@ -740,8 +743,8 @@ func TestURIParserConfig(t *testing.T) {
 		input := map[string]interface{}{
 			"id":         "test",
 			"type":       "uri_parser",
-			"parse_from": "$.from",
-			"parse_to":   "$.to",
+			"parse_from": "body.from",
+			"parse_to":   "body.to",
 			"on_error":   "send",
 		}
 		var actual URIParserConfig
@@ -755,8 +758,8 @@ func TestURIParserConfig(t *testing.T) {
 type: uri_parser
 id: test
 on_error: "send"
-parse_from: $.from
-parse_to: $.to`
+parse_from: body.from
+parse_to: body.to`
 		var actual URIParserConfig
 		err := yaml.Unmarshal([]byte(input), &actual)
 		require.NoError(t, err)

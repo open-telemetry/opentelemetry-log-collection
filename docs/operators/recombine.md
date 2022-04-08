@@ -16,7 +16,7 @@ The `recombine` operator combines consecutive logs into single logs based on sim
 | `max_batch_size`     | 1000             | The maximum number of consecutive entries that will be combined into a single entry. |
 | `overwrite_with`     | `oldest`         | Whether to use the fields from the `oldest` or the `newest` entry for all the fields that are not combined. |
 | `force_flush_period` | `5s`             | Flush timeout after which entries will be flushed aborting the wait for their sub parts to be merged with. |
-| `source_identifier`  | `$attibutes["file.path"]` | The [field](/docs/types/field.md) to separate one source of logs from others when combining them. |
+| `source_identifier`  | `$attributes["file.path"]` | The [field](/docs/types/field.md) to separate one source of logs from others when combining them. |
 | `max_sources`        | 1000             | The maximum number of unique sources allowed concurrently to be tracked for combining separately. |
 
 Exactly one of `is_first_entry` and `is_last_entry` must be specified.
@@ -38,9 +38,9 @@ Configuration:
 - type: regex_parser
   regex: '^(?P<timestamp>[^\s]+) (?P<stream>\w+) (?P<logtag>\w) (?P<message>.*)'
 - type: recombine
-  combine_field: message
+  combine_field: body.message
   combine_with: ""
-  is_last_entry: "$body.logtag == 'F'"
+  is_last_entry: "body.logtag == 'F'"
   overwrite_with: "newest"
 ```
 
@@ -100,8 +100,8 @@ This can be expressed with the following configuration:
 
 ```yaml
 - type: recombine
-  combine_field: message
-  is_first_entry: $body.message matches "^[^\s]"
+  combine_field: body.message
+  is_first_entry: body.message matches "^[^\s]"
 ```
 
 Given the following input file:

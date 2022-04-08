@@ -28,7 +28,7 @@ func NewParserConfig(operatorID, operatorType string) ParserConfig {
 	return ParserConfig{
 		TransformerConfig: NewTransformerConfig(operatorID, operatorType),
 		ParseFrom:         entry.NewBodyField(),
-		ParseTo:           entry.NewBodyField(),
+		ParseTo:           entry.NewAttributeField(),
 		PreserveTo:        nil,
 	}
 }
@@ -43,6 +43,7 @@ type ParserConfig struct {
 	TimeParser           *TimeParser           `mapstructure:"timestamp,omitempty" json:"timestamp,omitempty" yaml:"timestamp,omitempty"`
 	SeverityParserConfig *SeverityParserConfig `mapstructure:"severity,omitempty"  json:"severity,omitempty"  yaml:"severity,omitempty"`
 	TraceParser          *TraceParser          `mapstructure:"trace,omitempty"     json:"trace,omitempty"     yaml:"trace,omitempty"`
+	ScopeNameParser      *ScopeNameParser      `mapstructure:"scope_name,omitempty"     json:"scope_name,omitempty"     yaml:"scope_name,omitempty"`
 }
 
 // Build will build a parser operator.
@@ -81,18 +82,23 @@ func (c ParserConfig) Build(logger *zap.SugaredLogger) (ParserOperator, error) {
 		parserOperator.TraceParser = c.TraceParser
 	}
 
+	if c.ScopeNameParser != nil {
+		parserOperator.ScopeNameParser = c.ScopeNameParser
+	}
+
 	return parserOperator, nil
 }
 
 // ParserOperator provides a basic implementation of a parser operator.
 type ParserOperator struct {
 	TransformerOperator
-	ParseFrom      entry.Field
-	ParseTo        entry.Field
-	PreserveTo     *entry.Field
-	TimeParser     *TimeParser
-	SeverityParser *SeverityParser
-	TraceParser    *TraceParser
+	ParseFrom       entry.Field
+	ParseTo         entry.Field
+	PreserveTo      *entry.Field
+	TimeParser      *TimeParser
+	SeverityParser  *SeverityParser
+	TraceParser     *TraceParser
+	ScopeNameParser *ScopeNameParser
 }
 
 // ProcessWith will run ParseWith on the entry, then forward the entry on to the next operators.
@@ -169,6 +175,11 @@ func (p *ParserOperator) ParseWith(ctx context.Context, entry *entry.Entry, pars
 		traceParseErr = p.TraceParser.Parse(entry)
 	}
 
+	var scopeNameParserErr error
+	if p.ScopeNameParser != nil {
+		scopeNameParserErr = p.ScopeNameParser.Parse(entry)
+	}
+
 	// Handle time or severity parsing errors after attempting to parse both
 	if timeParseErr != nil {
 		return p.HandleEntryError(ctx, entry, errors.Wrap(timeParseErr, "time parser"))
@@ -178,6 +189,9 @@ func (p *ParserOperator) ParseWith(ctx context.Context, entry *entry.Entry, pars
 	}
 	if traceParseErr != nil {
 		return p.HandleEntryError(ctx, entry, errors.Wrap(traceParseErr, "trace parser"))
+	}
+	if scopeNameParserErr != nil {
+		return p.HandleEntryError(ctx, entry, errors.Wrap(scopeNameParserErr, "scope_name parser"))
 	}
 	return nil
 }

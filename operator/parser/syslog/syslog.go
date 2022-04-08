@@ -19,9 +19,9 @@ import (
 	"fmt"
 	"time"
 
-	sl "github.com/observiq/go-syslog/v3"
-	"github.com/observiq/go-syslog/v3/rfc3164"
-	"github.com/observiq/go-syslog/v3/rfc5424"
+	sl "github.com/influxdata/go-syslog/v3"
+	"github.com/influxdata/go-syslog/v3/rfc3164"
+	"github.com/influxdata/go-syslog/v3/rfc5424"
 	"go.uber.org/zap"
 
 	"github.com/open-telemetry/opentelemetry-log-collection/entry"
@@ -58,7 +58,7 @@ type SyslogBaseConfig struct {
 // Build will build a JSON parser operator.
 func (c SyslogParserConfig) Build(logger *zap.SugaredLogger) (operator.Operator, error) {
 	if c.ParserConfig.TimeParser == nil {
-		parseFromField := entry.NewBodyField("timestamp")
+		parseFromField := entry.NewAttributeField("timestamp")
 		c.ParserConfig.TimeParser = &helper.TimeParser{
 			ParseFrom:  &parseFromField,
 			LayoutType: helper.NativeKey,
@@ -243,7 +243,7 @@ var severityText = [...]string{
 	7: "debug",
 }
 
-var severityField = entry.NewBodyField("severity")
+var severityField = entry.NewAttributeField("severity")
 
 func promoteSeverity(e *entry.Entry) error {
 	sev, ok := severityField.Delete(e)

@@ -54,14 +54,46 @@ func TestParserConfigInvalidTimeParser(t *testing.T) {
 
 func TestParserConfigBuildValid(t *testing.T) {
 	cfg := NewParserConfig("test-id", "test-type")
-	f := entry.NewBodyField("timestamp")
+
+	timeField := entry.NewBodyField("timestamp")
 	cfg.TimeParser = &TimeParser{
-		ParseFrom:  &f,
+		ParseFrom:  &timeField,
 		Layout:     "",
 		LayoutType: "native",
 	}
-	_, err := cfg.Build(testutil.Logger(t))
+
+	sevField := entry.NewBodyField("timestamp")
+	cfg.SeverityParserConfig = &SeverityParserConfig{
+		ParseFrom: &sevField,
+	}
+
+	traceIdField := entry.NewBodyField("trace_id")
+	spanIdField := entry.NewBodyField("span_id")
+	traceFlagsField := entry.NewBodyField("trace_flags")
+	cfg.TraceParser = &TraceParser{
+		TraceId: &TraceIdConfig{
+			ParseFrom: &traceIdField,
+		},
+		SpanId: &SpanIdConfig{
+			ParseFrom: &spanIdField,
+		},
+		TraceFlags: &TraceFlagsConfig{
+			ParseFrom: &traceFlagsField,
+		},
+	}
+
+	scopeNameField := entry.NewBodyField("logger")
+	cfg.ScopeNameParser = &ScopeNameParser{
+		ParseFrom: scopeNameField,
+	}
+
+	op, err := cfg.Build(testutil.Logger(t))
 	require.NoError(t, err)
+
+	require.NotNil(t, op.TimeParser)
+	require.NotNil(t, op.SeverityParser)
+	require.NotNil(t, op.TraceParser)
+	require.NotNil(t, op.ScopeNameParser)
 }
 
 func TestParserMissingField(t *testing.T) {
@@ -331,18 +363,274 @@ func TestParserOutput(t *testing.T) {
 	output.AssertCalled(t, "Process", mock.Anything, mock.Anything)
 }
 
-func TestParserPreserve(t *testing.T) {
+func TestParserFields(t *testing.T) {
+	keyValue := "key:value"
+	now := time.Now()
 	cases := []struct {
-		name       string
-		cfgMod     func(*ParserConfig)
-		inputBody  interface{}
-		outputBody interface{}
+		name   string
+		cfgMod func(*ParserConfig)
+		input  func() *entry.Entry
+		output func() *entry.Entry
 	}{
+		{
+			"ParseToBodyRoot",
+			func(cfg *ParserConfig) {
+				cfg.ParseTo = entry.NewBodyField()
+			},
+			func() *entry.Entry {
+				e := entry.New()
+				e.ObservedTimestamp = now
+				e.Body = keyValue
+				return e
+			},
+			func() *entry.Entry {
+				e := entry.New()
+				e.ObservedTimestamp = now
+				e.Body = map[string]interface{}{
+					"key": "value",
+				}
+				return e
+			},
+		},
+		{
+			"ParseToAttributesRoot",
+			func(cfg *ParserConfig) {
+				cfg.ParseTo = entry.NewAttributeField()
+			},
+			func() *entry.Entry {
+				e := entry.New()
+				e.ObservedTimestamp = now
+				e.Body = keyValue
+				return e
+			},
+			func() *entry.Entry {
+				e := entry.New()
+				e.ObservedTimestamp = now
+				e.Attributes = map[string]interface{}{
+					"key": "value",
+				}
+				return e
+			},
+		},
+		{
+			"ParseToResourceRoot",
+			func(cfg *ParserConfig) {
+				cfg.ParseTo = entry.NewResourceField()
+			},
+			func() *entry.Entry {
+				e := entry.New()
+				e.ObservedTimestamp = now
+				e.Body = keyValue
+				return e
+			},
+			func() *entry.Entry {
+				e := entry.New()
+				e.ObservedTimestamp = now
+				e.Resource = map[string]interface{}{
+					"key": "value",
+				}
+				return e
+			},
+		},
+		{
+			"ParseToBodyField",
+			func(cfg *ParserConfig) {
+				cfg.ParseTo = entry.NewBodyField("one", "two")
+			},
+			func() *entry.Entry {
+				e := entry.New()
+				e.ObservedTimestamp = now
+				e.Body = keyValue
+				return e
+			},
+			func() *entry.Entry {
+				e := entry.New()
+				e.ObservedTimestamp = now
+				e.Body = map[string]interface{}{
+					"one": map[string]interface{}{
+						"two": map[string]interface{}{
+							"key": "value",
+						},
+					},
+				}
+				return e
+			},
+		},
+		{
+			"ParseToAttributeField",
+			func(cfg *ParserConfig) {
+				cfg.ParseTo = entry.NewAttributeField("one", "two")
+			},
+			func() *entry.Entry {
+				e := entry.New()
+				e.ObservedTimestamp = now
+				e.Body = keyValue
+				return e
+			},
+			func() *entry.Entry {
+				e := entry.New()
+				e.ObservedTimestamp = now
+				e.Attributes = map[string]interface{}{
+					"one": map[string]interface{}{
+						"two": map[string]interface{}{
+							"key": "value",
+						},
+					},
+				}
+				return e
+			},
+		},
+		{
+			"ParseToResourceField",
+			func(cfg *ParserConfig) {
+				cfg.ParseTo = entry.NewResourceField("one", "two")
+			},
+			func() *entry.Entry {
+				e := entry.New()
+				e.ObservedTimestamp = now
+				e.Body = keyValue
+				return e
+			},
+			func() *entry.Entry {
+				e := entry.New()
+				e.ObservedTimestamp = now
+				e.Resource = map[string]interface{}{
+					"one": map[string]interface{}{
+						"two": map[string]interface{}{
+							"key": "value",
+						},
+					},
+				}
+				return e
+			},
+		},
+		{
+			"ParseFromBodyField",
+			func(cfg *ParserConfig) {
+				cfg.ParseFrom = entry.NewBodyField("one", "two")
+			},
+			func() *entry.Entry {
+				e := entry.New()
+				e.ObservedTimestamp = now
+				e.Body = map[string]interface{}{
+					"one": map[string]interface{}{
+						"two": keyValue,
+					},
+				}
+				return e
+			},
+			func() *entry.Entry {
+				e := entry.New()
+				e.ObservedTimestamp = now
+				e.Body = map[string]interface{}{
+					"one": map[string]interface{}{},
+				}
+				e.Attributes = map[string]interface{}{
+					"key": "value",
+				}
+				return e
+			},
+		},
+		{
+			"ParseFromAttributeField",
+			func(cfg *ParserConfig) {
+				cfg.ParseFrom = entry.NewAttributeField("one", "two")
+			},
+			func() *entry.Entry {
+				e := entry.New()
+				e.ObservedTimestamp = now
+				e.Attributes = map[string]interface{}{
+					"one": map[string]interface{}{
+						"two": keyValue,
+					},
+				}
+				return e
+			},
+			func() *entry.Entry {
+				e := entry.New()
+				e.ObservedTimestamp = now
+				e.Attributes = map[string]interface{}{
+					"key": "value",
+					"one": map[string]interface{}{},
+				}
+				return e
+			},
+		},
+		{
+			"ParseFromResourceField",
+			func(cfg *ParserConfig) {
+				cfg.ParseFrom = entry.NewResourceField("one", "two")
+			},
+			func() *entry.Entry {
+				e := entry.New()
+				e.ObservedTimestamp = now
+				e.Resource = map[string]interface{}{
+					"one": map[string]interface{}{
+						"two": keyValue,
+					},
+				}
+				return e
+			},
+			func() *entry.Entry {
+				e := entry.New()
+				e.ObservedTimestamp = now
+				e.Attributes = map[string]interface{}{
+					"key": "value",
+				}
+				e.Resource = map[string]interface{}{
+					"one": map[string]interface{}{},
+				}
+				return e
+			},
+		},
+		{
+			"AllFields",
+			func(cfg *ParserConfig) {
+				cfg.ParseFrom = entry.NewBodyField("one", "two")
+				cfg.ParseTo = entry.NewAttributeField()
+				dst := entry.NewResourceField("foo")
+				cfg.PreserveTo = &dst
+			},
+			func() *entry.Entry {
+				e := entry.New()
+				e.ObservedTimestamp = now
+				e.Body = map[string]interface{}{
+					"one": map[string]interface{}{
+						"two": keyValue,
+					},
+				}
+				return e
+			},
+			func() *entry.Entry {
+				e := entry.New()
+				e.ObservedTimestamp = now
+				e.Body = map[string]interface{}{
+					"one": map[string]interface{}{},
+				}
+				e.Attributes = map[string]interface{}{
+					"key": "value",
+				}
+				e.Resource = map[string]interface{}{
+					"foo": keyValue,
+				}
+				return e
+			},
+		},
 		{
 			"NoPreserve",
 			func(cfg *ParserConfig) {},
-			"key:value",
-			map[string]interface{}{"key": "value"},
+			func() *entry.Entry {
+				e := entry.New()
+				e.ObservedTimestamp = now
+				e.Body = keyValue
+				return e
+			},
+			func() *entry.Entry {
+				e := entry.New()
+				e.ObservedTimestamp = now
+				e.Attributes = map[string]interface{}{"key": "value"}
+				return e
+			},
 		},
 		{
 			"PreserveToSubkey",
@@ -350,17 +638,44 @@ func TestParserPreserve(t *testing.T) {
 				dst := entry.NewBodyField("original")
 				cfg.PreserveTo = &dst
 			},
-			"key:value",
-			map[string]interface{}{"key": "value", "original": "key:value"},
+			func() *entry.Entry {
+				e := entry.New()
+				e.ObservedTimestamp = now
+				e.Body = keyValue
+				return e
+			},
+			func() *entry.Entry {
+				e := entry.New()
+				e.ObservedTimestamp = now
+				e.Body = map[string]interface{}{
+					"original": keyValue,
+				}
+				e.Attributes = map[string]interface{}{
+					"key": "value",
+				}
+				return e
+			},
 		},
 		{
 			"PreserveToOverwrite",
 			func(cfg *ParserConfig) {
-				dst := entry.NewBodyField("key")
+				dst := entry.NewAttributeField("key")
 				cfg.PreserveTo = &dst
 			},
-			"key:value",
-			map[string]interface{}{"key": "key:value"},
+			func() *entry.Entry {
+				e := entry.New()
+				e.ObservedTimestamp = now
+				e.Body = keyValue
+				return e
+			},
+			func() *entry.Entry {
+				e := entry.New()
+				e.ObservedTimestamp = now
+				e.Attributes = map[string]interface{}{
+					"key": keyValue,
+				}
+				return e
+			},
 		},
 		{
 			"PreserveToRoot",
@@ -368,8 +683,21 @@ func TestParserPreserve(t *testing.T) {
 				dst := entry.NewBodyField()
 				cfg.PreserveTo = &dst
 			},
-			"key:value",
-			"key:value",
+			func() *entry.Entry {
+				e := entry.New()
+				e.ObservedTimestamp = now
+				e.Body = keyValue
+				return e
+			},
+			func() *entry.Entry {
+				e := entry.New()
+				e.ObservedTimestamp = now
+				e.Body = keyValue
+				e.Attributes = map[string]interface{}{
+					"key": "value",
+				}
+				return e
+			},
 		},
 		{
 			"AlternativeParseFrom",
@@ -378,8 +706,25 @@ func TestParserPreserve(t *testing.T) {
 				cfg.PreserveTo = &dst
 				cfg.ParseFrom = dst
 			},
-			map[string]interface{}{"source": "key:value"},
-			map[string]interface{}{"source": "key:value", "key": "value"},
+			func() *entry.Entry {
+				e := entry.New()
+				e.ObservedTimestamp = now
+				e.Body = map[string]interface{}{
+					"source": keyValue,
+				}
+				return e
+			},
+			func() *entry.Entry {
+				e := entry.New()
+				e.ObservedTimestamp = now
+				e.Body = map[string]interface{}{
+					"source": keyValue,
+				}
+				e.Attributes = map[string]interface{}{
+					"key": "value",
+				}
+				return e
+			},
 		},
 		{
 			"AlternativeParseTo",
@@ -388,12 +733,22 @@ func TestParserPreserve(t *testing.T) {
 				cfg.PreserveTo = &dst
 				cfg.ParseTo = entry.NewBodyField("source_parsed")
 			},
-			"key:value",
-			map[string]interface{}{
-				"source_parsed": map[string]interface{}{
-					"key": "value",
-				},
-				"original": "key:value",
+			func() *entry.Entry {
+				e := entry.New()
+				e.ObservedTimestamp = now
+				e.Body = keyValue
+				return e
+			},
+			func() *entry.Entry {
+				e := entry.New()
+				e.ObservedTimestamp = now
+				e.Body = map[string]interface{}{
+					"source_parsed": map[string]interface{}{
+						"key": "value",
+					},
+					"original": keyValue,
+				}
+				return e
 			},
 		},
 	}
@@ -411,38 +766,43 @@ func TestParserPreserve(t *testing.T) {
 			parser, err := cfg.Build(testutil.Logger(t))
 			require.NoError(t, err)
 
-			e := entry.New()
-			e.Body = tc.inputBody
+			e := tc.input()
 			err = parser.ProcessWith(context.Background(), e, parse)
-			require.NoError(t, err)
 
-			require.Equal(t, tc.outputBody, e.Body)
+			require.NoError(t, err)
+			require.Equal(t, tc.output(), e)
 		})
 	}
 }
+
 func NewTestParserConfig() ParserConfig {
-	except := NewParserConfig("parser_config", "test_type")
-	except.ParseFrom = entry.NewBodyField("from")
-	except.ParseTo = entry.NewBodyField("to")
+	expect := NewParserConfig("parser_config", "test_type")
+	expect.ParseFrom = entry.NewBodyField("from")
+	expect.ParseTo = entry.NewBodyField("to")
 	tp := NewTimeParser()
+	expect.TimeParser = &tp
+
 	sp := NewSeverityParserConfig()
 	sp.Mapping = map[interface{}]interface{}{
 		"info": "3xx",
-		"warn": "4xx"}
-	except.TimeParser = &tp
-	except.SeverityParserConfig = &sp
+		"warn": "4xx",
+	}
+	expect.SeverityParserConfig = &sp
 
-	return except
+	lnp := NewScopeNameParser()
+	lnp.ParseFrom = entry.NewBodyField("logger")
+	expect.ScopeNameParser = &lnp
+	return expect
 }
 
 func TestMapStructureDecodeParserConfigWithHook(t *testing.T) {
-	except := NewTestParserConfig()
+	expect := NewTestParserConfig()
 	input := map[string]interface{}{
 		"id":         "parser_config",
 		"type":       "test_type",
 		"on_error":   "send",
-		"parse_from": "$body.from",
-		"parse_to":   "$body.to",
+		"parse_from": "body.from",
+		"parse_to":   "body.to",
 		"timestamp": map[string]interface{}{
 			"layout_type": "strptime",
 		},
@@ -452,6 +812,9 @@ func TestMapStructureDecodeParserConfigWithHook(t *testing.T) {
 				"warn": "4xx",
 			},
 		},
+		"scope_name": map[string]interface{}{
+			"parse_from": "body.logger",
+		},
 	}
 
 	var actual ParserConfig
@@ -460,11 +823,11 @@ func TestMapStructureDecodeParserConfigWithHook(t *testing.T) {
 	require.NoError(t, err)
 	err = ms.Decode(input)
 	require.NoError(t, err)
-	require.Equal(t, except, actual)
+	require.Equal(t, expect, actual)
 }
 
 func TestMapStructureDecodeParserConfig(t *testing.T) {
-	except := NewTestParserConfig()
+	expect := NewTestParserConfig()
 	input := map[string]interface{}{
 		"id":         "parser_config",
 		"type":       "test_type",
@@ -480,12 +843,15 @@ func TestMapStructureDecodeParserConfig(t *testing.T) {
 				"warn": "4xx",
 			},
 		},
+		"scope_name": map[string]interface{}{
+			"parse_from": entry.NewBodyField("logger"),
+		},
 	}
 
 	var actual ParserConfig
 	err := mapstructure.Decode(input, &actual)
 	require.NoError(t, err)
-	require.Equal(t, except, actual)
+	require.Equal(t, expect, actual)
 }
 
 func writerWithFakeOut(t *testing.T) (*WriterOperator, *testutil.FakeOutput) {
