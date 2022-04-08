@@ -179,14 +179,17 @@ func (l *atomicLimiter) init() {
 	})
 }
 
-// increment increments the attomic counter
+// increment increments the atomic counter
 func (l *atomicLimiter) increment() {
+	if l.count == l.max {
+		return
+	}
 	atomic.AddUint64(&l.count, 1)
 }
 
 // Returns true if the cache is currently throttled, meaning a high
 // number of evictions have recently occurred due to the cache being
-// full. When the cache is contantly locked, reads and writes are
+// full. When the cache is constantly locked, reads and writes are
 // blocked, causing the regex parser to be slower than if it was
 // not caching at all.
 func (l *atomicLimiter) throttled() bool {
