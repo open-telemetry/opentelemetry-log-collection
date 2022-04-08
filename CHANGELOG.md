@@ -4,6 +4,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.29.0] - 2022-04-11
+
+### Breaking Changes
+
+- The default value of `parse_to` field in all parsers has been changed to `attributes`. ([PR463](https://github.com/open-telemetry/opentelemetry-log-collection/pull/463))
+- Parsers that contain a `parse_to` setting will no longer delete the `parse_from` field. ([PR464](https://github.com/open-telemetry/opentelemetry-log-collection/pull/464))
+- The `preserve_to` setting has been removed from parsers. ([PR464](https://github.com/open-telemetry/opentelemetry-log-collection/pull/464))
+
+### Added 
+
+- `key_value_parser` ([PR459](https://github.com/open-telemetry/opentelemetry-log-collection/pull/459))
+- `severity` parsign can now use `preset: otel` to recognize both numeric and text representations of OpenTelemetry's log data model. ([PR460](https://github.com/open-telemetry/opentelemetry-log-collection/pull/460))
+- `regex_parser` can now cache parsing parsing results using the `cache` setting. This can dramatically increase performance in cases where the same string is parsed repeatedly. ([PR440](https://github.com/open-telemetry/opentelemetry-log-collection/pull/440))
+
+### Fixed
+
+- Issue where scope name parser would fail to initialize. ([PR465](https://github.com/open-telemetry/opentelemetry-log-collection/pull/465))
+
 ## [0.28.0] - 2022-03-28
 
 ### Breaking Changes
