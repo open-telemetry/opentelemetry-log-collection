@@ -152,7 +152,11 @@ func TestProcess(t *testing.T) {
 				SpanId:     testSpanIDBytes,
 				TraceId:    testTraceIDBytes,
 				TraceFlags: testTraceFlagsBytes,
-				Body:       map[string]interface{}{},
+				Body: map[string]interface{}{
+					"app_span_id":       "480140f3d770a5ae32f0a22b6a812cff",
+					"app_trace_id":      "92c3792d54ba94f3",
+					"trace_flags_field": "01",
+				},
 			},
 		},
 	}
@@ -186,7 +190,11 @@ func TestTraceParserParse(t *testing.T) {
 				"span_id":     "92c3792d54ba94f3",
 				"trace_flags": "01",
 			},
-			map[string]interface{}{},
+			map[string]interface{}{
+				"trace_id":    "480140f3d770a5ae32f0a22b6a812cff",
+				"span_id":     "92c3792d54ba94f3",
+				"trace_flags": "01",
+			},
 			false,
 			"480140f3d770a5ae32f0a22b6a812cff",
 			"92c3792d54ba94f3",
@@ -214,7 +222,9 @@ func TestTraceParserParse(t *testing.T) {
 			map[string]interface{}{
 				"trace_id": "480140f3d770a5ae32f0a22b6a812cff",
 			},
-			map[string]interface{}{},
+			map[string]interface{}{
+				"trace_id": "480140f3d770a5ae32f0a22b6a812cff",
+			},
 			false,
 			"480140f3d770a5ae32f0a22b6a812cff",
 			"",
@@ -227,7 +237,11 @@ func TestTraceParserParse(t *testing.T) {
 				"span_id":     "92c3792d54ba94f3",
 				"trace_flags": "01",
 			},
-			map[string]interface{}{},
+			map[string]interface{}{
+				"trace_id":    "foo_bar",
+				"span_id":     "92c3792d54ba94f3",
+				"trace_flags": "01",
+			},
 			true,
 			"",
 			"92c3792d54ba94f3",
@@ -240,24 +254,15 @@ func TestTraceParserParse(t *testing.T) {
 				"span_id":     "92c3792d54ba94f3",
 				"trace_flags": "foo_bar",
 			},
-			map[string]interface{}{},
+			map[string]interface{}{
+				"trace_id":    "480140f3d770a5ae32f0a22b6a812cff",
+				"span_id":     "92c3792d54ba94f3",
+				"trace_flags": "foo_bar",
+			},
 			true,
 			"480140f3d770a5ae32f0a22b6a812cff",
 			"92c3792d54ba94f3",
 			"",
-		},
-		{
-			"AllFields",
-			map[string]interface{}{
-				"trace_id":    "480140f3d770a5ae32f0a22b6a812cff",
-				"span_id":     "92c3792d54ba94f3",
-				"trace_flags": "01",
-			},
-			map[string]interface{}{},
-			false,
-			"480140f3d770a5ae32f0a22b6a812cff",
-			"92c3792d54ba94f3",
-			"01",
 		},
 	}
 

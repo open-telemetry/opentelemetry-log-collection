@@ -51,6 +51,7 @@ func TestScopeNameParser(t *testing.T) {
 			}(),
 			expected: func() *entry.Entry {
 				e := entry.New()
+				e.Body = testScopeName
 				e.ScopeName = testScopeName
 				e.ObservedTimestamp = now
 				return e
@@ -88,7 +89,7 @@ func TestScopeNameParser(t *testing.T) {
 			}(),
 			expected: func() *entry.Entry {
 				e := entry.New()
-				e.Body = map[string]interface{}{}
+				e.Body = map[string]interface{}{"logger": testScopeName}
 				e.ScopeName = testScopeName
 				e.ObservedTimestamp = now
 				return e

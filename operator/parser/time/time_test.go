@@ -119,7 +119,9 @@ func TestProcess(t *testing.T) {
 			expect: &entry.Entry{
 				ObservedTimestamp: now,
 				Timestamp:         time.Date(2006, time.January, 2, 15, 4, 5, 0, time.UTC),
-				Body:              map[string]interface{}{},
+				Body: map[string]interface{}{
+					"app_time": "Mon Jan 2 15:04:05 UTC 2006",
+				},
 			},
 		},
 	}

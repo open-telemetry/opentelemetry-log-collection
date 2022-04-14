@@ -31,7 +31,7 @@ func NewScopeNameParser() ScopeNameParser {
 
 // Parse will parse severity from a field and attach it to the entry
 func (p *ScopeNameParser) Parse(ent *entry.Entry) error {
-	value, ok := ent.Delete(p.ParseFrom)
+	value, ok := ent.Get(p.ParseFrom)
 	if !ok {
 		return errors.NewError(
 			"log entry does not have the expected parse_from field",

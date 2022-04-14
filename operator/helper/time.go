@@ -131,7 +131,7 @@ func (t *TimeParser) setLocation() error {
 
 // Parse will parse time from a field and attach it to the entry
 func (t *TimeParser) Parse(entry *entry.Entry) error {
-	value, ok := entry.Delete(t.ParseFrom)
+	value, ok := entry.Get(t.ParseFrom)
 	if !ok {
 		return errors.NewError(
 			"log entry does not have the expected parse_from field",

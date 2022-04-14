@@ -87,7 +87,7 @@ func (t *TraceParser) Validate() error {
 
 // Best effort hex parsing for trace, spans and flags
 func parseHexField(entry *entry.Entry, field *entry.Field) ([]byte, error) {
-	value, ok := entry.Delete(field)
+	value, ok := entry.Get(field)
 	if !ok {
 		return nil, nil
 	}
