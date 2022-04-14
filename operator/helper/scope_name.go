@@ -21,8 +21,7 @@ import (
 
 // ScopeNameParser is a helper that parses severity onto an entry.
 type ScopeNameParser struct {
-	ParseFrom  entry.Field  `mapstructure:"parse_from,omitempty"  json:"parse_from,omitempty"  yaml:"parse_from,omitempty"`
-	PreserveTo *entry.Field `mapstructure:"preserve_to,omitempty"  json:"preserve_to,omitempty"  yaml:"preserve_to,omitempty"`
+	ParseFrom entry.Field `mapstructure:"parse_from,omitempty"  json:"parse_from,omitempty"  yaml:"parse_from,omitempty"`
 }
 
 // NewScopeNameParser creates a new scope parser with default values
@@ -55,11 +54,5 @@ func (p *ScopeNameParser) Parse(ent *entry.Entry) error {
 	}
 
 	ent.ScopeName = strVal
-	if p.PreserveTo != nil {
-		if err := ent.Set(p.PreserveTo, value); err != nil {
-			return errors.Wrap(err, "set preserve_to")
-		}
-	}
-
 	return nil
 }

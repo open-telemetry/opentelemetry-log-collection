@@ -50,7 +50,6 @@ type TimeParser struct {
 	ParseFrom  *entry.Field `mapstructure:"parse_from,omitempty"  json:"parse_from,omitempty"  yaml:"parse_from,omitempty"`
 	Layout     string       `mapstructure:"layout,omitempty"      json:"layout,omitempty"      yaml:"layout,omitempty"`
 	LayoutType string       `mapstructure:"layout_type,omitempty" json:"layout_type,omitempty" yaml:"layout_type,omitempty"`
-	PreserveTo *entry.Field `mapstructure:"preserve_to,omitempty" json:"preserve_to,omitempty" yaml:"preserve_to,omitempty"`
 	Location   string       `mapstructure:"location,omitempty"    json:"location,omitempty"    yaml:"location,omitempty"`
 
 	location *time.Location
@@ -162,12 +161,6 @@ func (t *TimeParser) Parse(entry *entry.Entry) error {
 		entry.Timestamp = setTimestampYear(timeValue)
 	default:
 		return fmt.Errorf("unsupported layout type: %s", t.LayoutType)
-	}
-
-	if t.PreserveTo != nil {
-		if err := entry.Set(t.PreserveTo, value); err != nil {
-			return errors.Wrap(err, "set preserve_to")
-		}
 	}
 
 	return nil

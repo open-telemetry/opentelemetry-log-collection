@@ -1,8 +1,8 @@
 ## `csv_parser` operator
 
 The `csv_parser` operator parses the string-type field selected by `parse_from` with the given header values.
- 
-### Configuration Fields 
+
+### Configuration Fields
 
 | Field              | Default                                  | Description  |
 | ---                | ---                                      | ---          |
@@ -14,7 +14,6 @@ The `csv_parser` operator parses the string-type field selected by `parse_from` 
 | `lazy_quotes`      | `false`                                  | If true, a quote may appear in an unquoted field and a non-doubled quote may appear in a quoted field. |
 | `parse_from`       | `body`                                   | The [field](/docs/types/field.md) from which the value will be parsed. |
 | `parse_to`         | `body`                                   | The [field](/docs/types/field.md) to which the value will be parsed. |
-| `preserve_to`      |                                          | Preserves the unparsed value at the specified [field](/docs/types/field.md). |
 | `on_error`         | `send`                                   | The behavior of the operator if it encounters an error. See [on_error](/docs/types/on_error.md). |
 | `timestamp`        | `nil`                                    | An optional [timestamp](/docs/types/timestamp.md) block which will parse a timestamp field before passing the entry to the output operator. |
 | `severity`         | `nil`                                    | An optional [severity](/docs/types/severity.md) block which will parse a severity field before passing the entry to the output operator. |
@@ -111,7 +110,7 @@ Configuration:
     layout_type: strptime
     layout: '%Y-%m-%d'
 ```
- 
+
 <table>
 <tr><td> Input Entry </td> <td> Output Entry </td></tr>
 <tr>
