@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+//go:build windows
 // +build windows
 
 package windows
@@ -32,11 +33,11 @@ type EventXML struct {
 	Channel     string      `xml:"System>Channel"`
 	RecordID    uint64      `xml:"System>EventRecordID"`
 	TimeCreated TimeCreated `xml:"System>TimeCreated"`
-	Message     string      `xml:"RenderingInfo>Message"`
-	Level       string      `xml:"RenderingInfo>Level"`
-	Task        string      `xml:"RenderingInfo>Task"`
-	Opcode      string      `xml:"RenderingInfo>Opcode"`
-	Keywords    []string    `xml:"RenderingInfo>Keywords>Keyword"`
+	Message     string      `xml:"EventData>Data"`
+	Level       string      `xml:"System>Level"`
+	Task        string      `xml:"System>Task"`
+	Opcode      string      `xml:"System>Opcode"`
+	Keywords    []string    `xml:"System>Keywords>Keyword"`
 }
 
 // parseTimestamp will parse the timestamp of the event.
