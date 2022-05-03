@@ -27,17 +27,22 @@ import (
 
 // EventXML is the rendered xml of an event.
 type EventXML struct {
-	EventID     EventID     `xml:"System>EventID"`
-	Provider    Provider    `xml:"System>Provider"`
-	Computer    string      `xml:"System>Computer"`
-	Channel     string      `xml:"System>Channel"`
-	RecordID    uint64      `xml:"System>EventRecordID"`
-	TimeCreated TimeCreated `xml:"System>TimeCreated"`
-	Message     string      `xml:"EventData>Data"`
-	Level       string      `xml:"System>Level"`
-	Task        string      `xml:"System>Task"`
-	Opcode      string      `xml:"System>Opcode"`
-	Keywords    []string    `xml:"System>Keywords>Keyword"`
+	EventID          EventID     `xml:"System>EventID"`
+	Provider         Provider    `xml:"System>Provider"`
+	Computer         string      `xml:"System>Computer"`
+	Channel          string      `xml:"System>Channel"`
+	RecordID         uint64      `xml:"System>EventRecordID"`
+	TimeCreated      TimeCreated `xml:"System>TimeCreated"`
+	Message          string      `xml:"RenderingInfo>Message"`
+	RenderedLevel    string      `xml:"RenderingInfo>Level"`
+	Level            string      `xml:"System>Level"`
+	RenderedTask     string      `xml:"RenderingInfo>Task"`
+	Task             string      `xml:"System>Task"`
+	RenderedOpcode   string      `xml:"RenderingInfo>Opcode"`
+	Opcode           string      `xml:"System>Opcode"`
+	RenderedKeywords []string    `xml:"RenderingInfo>Keywords>Keyword"`
+	Keywords         []string    `xml:"System>Keywords"`
+	EventData        []string    `xml:"EventData>Data"`
 }
 
 // parseTimestamp will parse the timestamp of the event.
@@ -77,15 +82,20 @@ func (e *EventXML) parseBody() map[string]interface{} {
 			"guid":         e.Provider.GUID,
 			"event_source": e.Provider.EventSourceName,
 		},
-		"system_time": e.TimeCreated.SystemTime,
-		"computer":    e.Computer,
-		"channel":     e.Channel,
-		"record_id":   e.RecordID,
-		"level":       e.Level,
-		"message":     message,
-		"task":        e.Task,
-		"opcode":      e.Opcode,
-		"keywords":    e.Keywords,
+		"system_time":       e.TimeCreated.SystemTime,
+		"computer":          e.Computer,
+		"channel":           e.Channel,
+		"record_id":         e.RecordID,
+		"level":             e.Level,
+		"rendered_level":    e.RenderedLevel,
+		"message":           message,
+		"task":              e.Task,
+		"rendered_task":     e.RenderedTask,
+		"opcode":            e.Opcode,
+		"rendered_opcode":   e.RenderedOpcode,
+		"keywords":          e.Keywords,
+		"rendered_keywords": e.RenderedKeywords,
+		"event_data":        e.EventData,
 	}
 	if len(details) > 0 {
 		body["details"] = details
