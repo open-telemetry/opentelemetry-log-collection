@@ -53,6 +53,9 @@ Configuration:
 {
   "timestamp": "",
   "body": {
+    "message": "Host=127.0.0.1, Type=HTTP"
+  },
+  "attributes:" {
     "host": "127.0.0.1",
     "type": "HTTP"
   }
@@ -93,7 +96,8 @@ Configuration:
 ```json
 {
   "timestamp": "2020-01-31T00:00:00-00:00",
-  "body": {
+  "body": "Time=2020-01-31, Host=127.0.0.1, Type=HTTP"
+  "attributes": {
     "host": "127.0.0.1",
     "type": "HTTP"
   }
@@ -134,75 +138,11 @@ Configuration:
 ```json
 {
   "body": {
-    "host": "testhost",
-    "type": "hostname"
-  }
-}
-```
-
-</td>
-</tr>
-
-<tr>
-<td>
-
-```json
-{
-  "body": {
-    "message": "Key=value",
-    "type": "keypair"
-  }
-}
-```
-
-</td>
-<td>
-
-```json
-{
-  "body": {
-    "message": "Key=value",
-    "type": "keypair"
-  }
-}
-```
-
-</td>
-</tr>
-</table>
-
-#### Parse the message field only if "type" is "hostname"
-
-Configuration:
-```yaml
-- type: regex_parser
-  regex: '^Host=(?<host>)$'
-  parse_from: body.message
-  if: 'body.type == "hostname"'
-```
-
-<table>
-<tr><td> Input body </td> <td> Output body </td></tr>
-<tr>
-<td>
-
-```json
-{
-  "body": {
     "message": "Host=testhost",
     "type": "hostname"
-  }
-}
-```
-
-</td>
-<td>
-
-```json
-{
-  "body": {
-    "host": "testhost",
-    "type": "hostname"
+  },
+  "attributes": {
+    "host": "testhost"
   }
 }
 ```
