@@ -52,16 +52,26 @@ func TestParseInvalidTimestamp(t *testing.T) {
 }
 
 func TestParseSeverity(t *testing.T) {
-	xmlCritical := EventXML{Level: "Critical"}
-	xmlError := EventXML{Level: "Error"}
-	xmlWarning := EventXML{Level: "Warning"}
-	xmlInformation := EventXML{Level: "Information"}
-	xmlUnknown := EventXML{Level: "Unknown"}
-	require.Equal(t, entry.Fatal, xmlCritical.parseSeverity())
-	require.Equal(t, entry.Error, xmlError.parseSeverity())
-	require.Equal(t, entry.Warn, xmlWarning.parseSeverity())
-	require.Equal(t, entry.Info, xmlInformation.parseSeverity())
-	require.Equal(t, entry.Default, xmlUnknown.parseSeverity())
+	xmlRenderedCritical := EventXML{RenderedLevel: "Critical"}
+	xmlRenderedError := EventXML{RenderedLevel: "Error"}
+	xmlRenderedWarning := EventXML{RenderedLevel: "Warning"}
+	xmlRenderedInformation := EventXML{RenderedLevel: "Information"}
+	xmlRenderedUnknown := EventXML{RenderedLevel: "Unknown"}
+	xmlCritical := EventXML{Level: "1"}
+	xmlError := EventXML{Level: "2"}
+	xmlWarning := EventXML{Level: "3"}
+	xmlInformation := EventXML{Level: "4"}
+	xmlUnknown := EventXML{Level: "0"}
+	require.Equal(t, entry.Fatal, xmlRenderedCritical.parseRenderedSeverity())
+	require.Equal(t, entry.Error, xmlRenderedError.parseRenderedSeverity())
+	require.Equal(t, entry.Warn, xmlRenderedWarning.parseRenderedSeverity())
+	require.Equal(t, entry.Info, xmlRenderedInformation.parseRenderedSeverity())
+	require.Equal(t, entry.Default, xmlRenderedUnknown.parseRenderedSeverity())
+	require.Equal(t, entry.Fatal, xmlCritical.parseRenderedSeverity())
+	require.Equal(t, entry.Error, xmlError.parseRenderedSeverity())
+	require.Equal(t, entry.Warn, xmlWarning.parseRenderedSeverity())
+	require.Equal(t, entry.Info, xmlInformation.parseRenderedSeverity())
+	require.Equal(t, entry.Default, xmlUnknown.parseRenderedSeverity())
 }
 
 func TestParseBody(t *testing.T) {
@@ -103,26 +113,72 @@ func TestParseBody(t *testing.T) {
 			"guid":         "guid",
 			"event_source": "event source",
 		},
-		"system_time":       "2020-07-30T01:01:01.123456789Z",
-		"computer":          "computer",
-		"channel":           "application",
-		"record_id":         uint64(1),
-		"level":             "Information",
-		"message":           "message",
-		"task":              "task",
-		"opcode":            "opcode",
-		"keywords":          []string{"keyword"},
-		"rendered_level":    "rendered_level",
-		"rendered_task":     "rendered_task",
-		"rendered_opcode":   "rendered_opcode",
-		"rendered_keywords": []string{"RenderedKeywords"},
-		"event_data":        []string{"this", "is", "some", "sample", "data"},
+		"system_time": "2020-07-30T01:01:01.123456789Z",
+		"computer":    "computer",
+		"channel":     "application",
+		"record_id":   uint64(1),
+		"level":       "rendered_level",
+		"message":     "message",
+		"task":        "rendered_task",
+		"opcode":      "rendered_opcode",
+		"keywords":    []string{"RenderedKeywords"},
+		"event_data":  []string{"this", "is", "some", "sample", "data"},
 	}
 
 	require.Equal(t, expected, xml.parseBody())
 }
 
-func TestParseBody2(t *testing.T) {
+func TestParseNoRendered(t *testing.T) {
+	xml := EventXML{
+		EventID: EventID{
+			ID:         1,
+			Qualifiers: 2,
+		},
+		Provider: Provider{
+			Name:            "provider",
+			GUID:            "guid",
+			EventSourceName: "event source",
+		},
+		TimeCreated: TimeCreated{
+			SystemTime: "2020-07-30T01:01:01.123456789Z",
+		},
+		Computer:  "computer",
+		Channel:   "application",
+		RecordID:  1,
+		Level:     "Information",
+		Message:   "message",
+		Task:      "task",
+		Opcode:    "opcode",
+		Keywords:  []string{"keyword"},
+		EventData: []string{"this", "is", "some", "sample", "data"},
+	}
+
+	expected := map[string]interface{}{
+		"event_id": map[string]interface{}{
+			"id":         uint32(1),
+			"qualifiers": uint16(2),
+		},
+		"provider": map[string]interface{}{
+			"name":         "provider",
+			"guid":         "guid",
+			"event_source": "event source",
+		},
+		"system_time": "2020-07-30T01:01:01.123456789Z",
+		"computer":    "computer",
+		"channel":     "application",
+		"record_id":   uint64(1),
+		"level":       "Information",
+		"message":     "message",
+		"task":        "task",
+		"opcode":      "opcode",
+		"keywords":    []string{"keyword"},
+		"event_data":  []string{"this", "is", "some", "sample", "data"},
+	}
+
+	require.Equal(t, expected, xml.parseBody())
+}
+
+func TestParseBodySecurity(t *testing.T) {
 	xml := EventXML{
 		EventID: EventID{
 			ID:         1,
@@ -161,20 +217,16 @@ func TestParseBody2(t *testing.T) {
 			"guid":         "guid",
 			"event_source": "event source",
 		},
-		"system_time":       "2020-07-30T01:01:01.123456789Z",
-		"computer":          "computer",
-		"channel":           "Security",
-		"record_id":         uint64(1),
-		"level":             "Information",
-		"message":           "message",
-		"task":              "task",
-		"opcode":            "opcode",
-		"keywords":          []string{"keyword"},
-		"rendered_level":    "rendered_level",
-		"rendered_task":     "rendered_task",
-		"rendered_opcode":   "rendered_opcode",
-		"rendered_keywords": []string{"RenderedKeywords"},
-		"event_data":        []string{"this", "is", "some", "sample", "data"},
+		"system_time": "2020-07-30T01:01:01.123456789Z",
+		"computer":    "computer",
+		"channel":     "Security",
+		"record_id":   uint64(1),
+		"level":       "rendered_level",
+		"message":     "message",
+		"task":        "rendered_task",
+		"opcode":      "rendered_opcode",
+		"keywords":    []string{"RenderedKeywords"},
+		"event_data":  []string{"this", "is", "some", "sample", "data"},
 	}
 
 	require.Equal(t, expected, xml.parseBody())
