@@ -18,6 +18,8 @@ package windows
 
 import (
 	"fmt"
+	
+	"go.uber.org/zap"
 )
 
 // Event is an event stored in windows event log.
@@ -26,7 +28,9 @@ type Event struct {
 }
 
 // RenderSimple will render the event as EventXML without formatted info.
-func (e *Event) RenderSimple(buffer Buffer) (EventXML, error) {
+func (e *Event) RenderSimple(buffer Buffer, logger *zap.SugaredLogger) (EventXML, error) {
+	buffer.Reset()
+
 	if e.handle == 0 {
 		return EventXML{}, fmt.Errorf("event handle does not exist")
 	}
@@ -35,11 +39,18 @@ func (e *Event) RenderSimple(buffer Buffer) (EventXML, error) {
 	err := evtRender(0, e.handle, EvtRenderEventXML, buffer.SizeBytes(), buffer.FirstByte(), &bufferUsed, &propertyCount)
 	if err == ErrorInsufficientBuffer {
 		buffer.UpdateSizeBytes(bufferUsed)
-		return e.RenderSimple(buffer)
+		return e.RenderSimple(buffer, logger)
 	}
+
 
 	if err != nil {
 		return EventXML{}, fmt.Errorf("syscall to 'EvtRender' failed: %s", err)
+	}
+
+
+	if bufferUsed == 0 {
+		bufferUsed = buffer.SizeBytes()
+		logger.Info("Setting buffersize to max buffer")
 	}
 
 	bytes, err := buffer.ReadBytes(bufferUsed)

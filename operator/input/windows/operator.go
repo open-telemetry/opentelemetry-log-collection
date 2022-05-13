@@ -196,7 +196,7 @@ func (e *EventLogInput) read(ctx context.Context) int {
 
 // processEvent will process and send an event retrieved from windows event log.
 func (e *EventLogInput) processEvent(ctx context.Context, event Event) {
-	simpleEvent, err := event.RenderSimple(e.buffer)
+	simpleEvent, err := event.RenderSimple(e.buffer, e.Logger())
 	if err != nil {
 		e.Errorf("Failed to render simple event: %s", err)
 		return

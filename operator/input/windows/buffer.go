@@ -90,3 +90,8 @@ func NewBuffer() Buffer {
 		buffer: make([]byte, defaultBufferSize),
 	}
 }
+
+this function reallocates the memory used for the buffer, effectively resetting the contents
+func (b *Buffer) Reset() {
+	b.buffer = make([]byte, defaultBufferSize)
+}
