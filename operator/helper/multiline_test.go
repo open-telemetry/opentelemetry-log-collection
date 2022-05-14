@@ -256,6 +256,19 @@ func TestLineStartSplitFunc(t *testing.T) {
 			Sleep:                sleepDuration,
 		},
 		{
+			Name:    "LogsWithLongFlusherWithMultipleLogsInBuffer",
+			Pattern: `^LOGSTART \d+`,
+			Raw:     []byte("LOGPART log1\nLOGSTART 123\nLOGPART log1\t   \n"),
+			ExpectedTokenized: []string{
+				"LOGPART log1",
+			},
+			Flusher: &Flusher{
+				forcePeriod: forcePeriod,
+			},
+			AdditionalIterations: 1,
+			Sleep:                forcePeriod / 2,
+		},
+		{
 			Name:    "LogsWithFlusherWithLogStartingWithWhiteChars",
 			Pattern: `^LOGSTART \d+`,
 			Raw:     []byte("\nLOGSTART 333"),
@@ -419,6 +432,19 @@ func TestLineEndSplitFunc(t *testing.T) {
 			},
 			AdditionalIterations: 1,
 			Sleep:                sleepDuration,
+		},
+		{
+			Name:    "LogsWithLongFlusherWithMultipleLogsInBuffer",
+			Pattern: `^LOGEND.*$`,
+			Raw:     []byte("LOGPART log1\nLOGEND\nLOGPART log1\t   \n"),
+			ExpectedTokenized: []string{
+				"LOGPART log1\nLOGEND",
+			},
+			Flusher: &Flusher{
+				forcePeriod: forcePeriod,
+			},
+			AdditionalIterations: 1,
+			Sleep:                forcePeriod/2,
 		},
 		{
 			Name:    "LogsWithFlusherWithLogStartingWithWhiteChars",
