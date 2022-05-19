@@ -444,7 +444,7 @@ func TestLineEndSplitFunc(t *testing.T) {
 				forcePeriod: forcePeriod,
 			},
 			AdditionalIterations: 1,
-			Sleep:                forcePeriod/2,
+			Sleep:                forcePeriod / 2,
 		},
 		{
 			Name:    "LogsWithFlusherWithLogStartingWithWhiteChars",
